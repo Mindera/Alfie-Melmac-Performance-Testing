@@ -1,0 +1,76 @@
+# Kotlin/Java
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.log
+*.kotlin_module
+/build/
+out/
+.idea/
+*.swp
+*.swo
+
+# Gradle
+.gradle/
+build/
+.gradle-cache/
+gradle-app.setting
+gradlew
+gradlew.bat
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.ipr
+*.iml
+
+# Logs
+*.log
+logs/
+log/
+*.out
+
+# Test Results
+/test-results/
+/test-output/
+/reports/
+/coverage/
+*.tmp
+
+# Android Debug Bridge
+*.apk
+adbkey*
+*.keystore
+
+# Xcode & XCUI
+*.xcworkspace
+*.xcodeproj
+*.xcuserstate
+*.xcuserdatad/
+DerivedData/
+*.xcresult
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE-specific
+.vscode/
+*.vscode
+
+# CI/CD
+.env
+node_modules/
+coverage/
+*.lock
+dist/
+build/
+.tmp/
+
+# Reports
+*.csv
+*.json
+*.html
