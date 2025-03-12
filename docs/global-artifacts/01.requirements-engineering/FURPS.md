@@ -30,6 +30,14 @@ _Specifies functionalities that:_
   - **Standard deviation**
 - Supports **exporting reports in JSON, CSV, or HTML**.
 
+### **Database Model for Performance Tracking**
+- A **database model** will be designed and implemented to track:
+  - **Test execution history**
+  - **Performance trends over time**
+  - **Detailed logs of each test iteration**
+  - **Aggregated analytics for deeper insights**
+- The database will support **queries and filtering** for historical analysis.
+
 ### **Developer Alerts**
 - Developers **must be notified** of performance test results.
 - Notification methods include:
@@ -81,11 +89,13 @@ _Specifies functionalities that:_
 | --- | --- | --- |
 | Tools | ADB | Executes Android performance tests. |
 | Tools | XCUI | Executes iOS performance tests. |
+| Storage | Database | Tracks and logs test results for historical analysis. |
 
 ### **Interface Constraints**
 - Provides CLI commands for test execution.
 - Exports reports in **JSON, CSV, or HTML**.
+- Database allows querying and analytics.
 
 ### **Physical Constraints**
 - Runs on developer machines and CI/CD environments.
-
+- Database must handle **large volumes of test data efficiently**.

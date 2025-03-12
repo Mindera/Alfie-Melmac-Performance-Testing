@@ -20,26 +20,35 @@
 
 - **T4:** Implement a performance testing task – evaluating one of the metrics identified - that will serve as a Proof of Concept (POC).  
 
-- **T5:** Iterate on other implementations/metrics gathered and defined in T3 – depending on the results of iteration T4.  
+- **T5:** Implement Database Model to record performance tests results.
 
-- **T6:** Produce technical documentation and user guides on the final state of the implemented tool.  
+- **T6:** Iterate on other implementations/metrics gathered and defined in T3 – depending on the results of iteration T4.  
 
-- **T7:** Analyse the potential of the tool, notably identifying current advantages, improvements recorded in the projects where it was used, and identifying next iterations in the development.  
+- **T7:** Produce technical documentation and user guides on the final state of the implemented tool.  
 
-- **T8:** Produce Final Report for University.  
+- **T8:** Analyse the potential of the tool, notably identifying current advantages, improvements recorded in the projects where it was used, and identifying next iterations in the development.  
+
+- **T9:** Produce Final Report for University.  
 
 ## 3. Tasks Planning
 
-| Task | Fev | Mar | Abr | Mai | Jun |
-|------|-----|-----|-----|-----|-----|
-| T1   | ■   |     |     |     |     |
-| T2   | ■   | ■   |     |     |     |
-| T3   |     | ■   |     |     |     |
-| T4   |     | ■   | ■   |     |     |
-| T5   |     |     | ■   | ■   |     |
-| T6   |     |     |     | ■   |     |
-| T7   |     |     |     | ■   | ■   |
-| T8   |     |     |     |     | ■   |
+| Task | Fev  |     | Mar  |     | Abr  |     | Mai  |     | Jun  |     |
+|------|------|-----|------|-----|------|-----|------|-----|------|-----|
+| T1   |      |  █  |      |     |      |     |      |     |      |     |
+| T2   |      |  █  |  █   |     |      |     |      |     |      |     |
+| T3   |      |     |  █   |     |      |     |      |     |      |     |
+| T4   |      |     |      |  █  |  █   |  █  |      |     |      |     |
+| T5   |      |     |      |     |      |  █  |  █   |     |      |     |
+| T6   |      |     |      |     |      |     |  █   |  █  |      |     |
+| T7   |      |     |      |     |      |     |  █   |  █  |      |     |
+| T8   |      |     |      |     |      |     |  █   |  █  |      |     |
+| T9   |      |     |      |     |      |     |      |  █  |  █   |     |
+
+### Legend:
+
+- **Each "█" symbol represents the time period in which the task is active.**
+- **Each month is divided into two columns, each representing two weeks.**
+- **Tasks are scheduled across multiple months.**
 
 
 ## 4. Global Artifacts
