@@ -1,0 +1,42 @@
+{
+  "configurations" : [
+    {
+      "id" : "68E435EA-E78F-4F62-A8DC-DE553BF5DDC0",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "environmentVariableEntries" : [
+      {
+        "key" : "COMMAND",
+        "value" : "tapButton"
+      }
+    ],
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:DriverRunner.xcodeproj",
+      "identifier" : "B2F6335F2D96F66F00F89D97",
+      "name" : "DriverRunner"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:DriverRunner.xcodeproj",
+        "identifier" : "B2F6336F2D96F67100F89D97",
+        "name" : "DriverRunnerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:DriverRunner.xcodeproj",
+        "identifier" : "B2F633792D96F67100F89D97",
+        "name" : "DriverRunnerUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

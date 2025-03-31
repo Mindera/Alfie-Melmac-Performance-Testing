@@ -1,0 +1,27 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.8.0'
+    id 'application' // Use the application plugin for a Kotlin JVM app
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Kotlin dependencies
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0"
+
+    // Testing dependencies
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.3"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.9.3"
+
+    // Koin for Dependency Injection
+    implementation "io.insert-koin:koin-core:3.4.0"
+    testImplementation "io.insert-koin:koin-test:3.4.0"
+}
+
+application {
+    // Specify the main class for the application
+    mainClass.set("core.MainKt")
+}

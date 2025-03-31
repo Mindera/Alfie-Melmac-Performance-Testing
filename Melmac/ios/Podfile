@@ -1,0 +1,6 @@
+platform :ios, '12.0'
+
+target 'YourTargetName' do
+  use_frameworks!
+  pod 'XCUITest'
+end
