@@ -4,14 +4,14 @@
 
 _Specifies functionalities that:_
 
-- Execute **mobile performance tests** using **ADB (Android) & XCUI (iOS)**.
+- Execute **mobile performance tests** using **ADB (Android)** & **XCUI (iOS)**.
 - Process test results and generate reports using **Kotlin**.
 - Support **logging, reporting, and automation**.
 
 ### **Startup Time Testing**
 - Executes startup time measurements via:
   - **ADB shell commands** (Android)
-  - **XCUI test commands** (iOS)
+  - **XCUI test commands written in Swift** (iOS)
 - Measures:
   - **Cold start** – launch from terminated state.
   - **Warm start** – launch from background (app still in memory).
@@ -72,6 +72,7 @@ _Specifies functionalities that:_
 ## **Supportability**
 - **Kotlin** processes data and generates reports.
 - Uses **ADB (Android)** and **XCUI (iOS)** for test execution.
+- **Swift** is used for writing XCUI test commands for iOS device interaction.
 - Designed for **modularity** to support future features.
 
 ---
@@ -79,17 +80,18 @@ _Specifies functionalities that:_
 ## **+ (Additional Constraints)**
 
 ### **Design Constraints**
-| Subcategory | Category | Description |
-| --- | --- | --- |
-| Programming Languages | Kotlin | Used for data processing and reporting. |
-| Tools | ADB & XCUI | Primary tools for executing mobile performance tests. |
+| Subcategory          | Category | Description                                   |
+| -------------------- | -------- | --------------------------------------------- |
+| Programming Languages | Kotlin   | Used for data processing and reporting.       |
+| Programming Languages | Swift    | Used for XCUI test commands for iOS devices.  |
+| Tools                | ADB & XCUI | Primary tools for executing mobile performance tests. |
 
 ### **Implementation Constraints**
-| Subcategory | Category | Description |
-| --- | --- | --- |
-| Tools | ADB | Executes Android performance tests. |
-| Tools | XCUI | Executes iOS performance tests. |
-| Storage | Database | Tracks and logs test results for historical analysis. |
+| Subcategory | Category | Description                                   |
+| ----------- | -------- | --------------------------------------------- |
+| Tools       | ADB      | Executes Android performance tests.           |
+| Tools       | XCUI     | Executes iOS performance tests using Swift.   |
+| Storage     | Database | Tracks and logs test results for historical analysis. |
 
 ### **Interface Constraints**
 - Provides CLI commands for test execution.

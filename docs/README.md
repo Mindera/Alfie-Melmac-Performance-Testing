@@ -8,7 +8,6 @@
 |:---------------------:|:-----------------:|:---------------------------------------:|
 | QAE Intern | Vasco Sousa | [<img src="https://avatars.githubusercontent.com/u/199751114?v=4" height="40" alt="Vasco profile"/>](https://github.com/vascosousamindera) |
 | QAE & Supervisor| Aires Oliveira | [<img src="https://avatars.githubusercontent.com/u/190511400?v=4" height="40" alt="Aires profile"/>](https://github.com/airesoliveira-mindera) |
-| QAE & Supervisor | Luís Esteves | [<img src="https://avatars.githubusercontent.com/u/10520263?v=4" height="40" alt="Luís profile"/>](https://github.com/luisesteves) |
 
 ## 2. Tasks List
 

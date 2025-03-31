@@ -51,6 +51,12 @@ adbkey*
 *.xcuserdatad/
 DerivedData/
 *.xcresult
+*.app
+*.ipa
+*.dSYM
+*.plist
+*.xcconfig
+*.xcsettings
 
 # Operating System Files
 .DS_Store
@@ -74,3 +80,9 @@ build/
 *.csv
 *.json
 *.html
+
+# Include config.json
+!config.json
+
+# Ignore ui_dumps folder
+ui_dumps/
