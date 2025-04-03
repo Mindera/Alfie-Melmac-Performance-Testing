@@ -11,6 +11,7 @@ dependencies {
     // Kotlin dependencies
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
 
     // Testing dependencies
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.3"
@@ -19,6 +20,16 @@ dependencies {
     // Koin for Dependency Injection
     implementation "io.insert-koin:koin-core:3.4.0"
     testImplementation "io.insert-koin:koin-test:3.4.0"
+
+    // Ktor server dependencies
+    implementation "io.ktor:ktor-server-core:2.3.0"
+    implementation "io.ktor:ktor-server-netty:2.3.0"
+    implementation "io.ktor:ktor-server-content-negotiation:2.3.0"
+    implementation "io.ktor:ktor-serialization-jackson:2.3.0"
+    implementation "org.slf4j:slf4j-simple:2.0.9"
+
+    // Compose for Desktop    
+    implementation "org.jetbrains.compose.desktop:desktop:1.4.0"
 }
 
 application {

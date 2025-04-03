@@ -1,4 +1,8 @@
 {
+  "server": {
+    "host": "localhost",
+    "port": 8080
+  },
   "ios": {
     "device_name": "iPhone 16 Pro",
     "app_path": "../Alfie.app",
