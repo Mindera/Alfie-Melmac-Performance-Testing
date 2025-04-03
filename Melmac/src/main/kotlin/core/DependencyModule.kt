@@ -3,20 +3,47 @@ package core
 import android.AndroidAppManager
 import android.AndroidDeviceManager
 import android.AndroidTestRunner
-import ios.IosAppManager
-import ios.IosDeviceManager
-import ios.IosTestRunner
+import ios.IOSAppManager
+import ios.IOSDeviceManager
+import ios.IOSTestRunner
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
+/**
+ * Dependency injection module for managing platform-specific dependencies.
+ * Provides Android and iOS implementations for device management, app management, and test runners.
+ */
 val appModule = module {
+
     // Android dependencies
-    single<DeviceManager>(qualifier = named("android")) { AndroidDeviceManager } // Bind AndroidDeviceManager with a qualifier
+    /**
+     * Provides the Android implementation of [DeviceManager].
+     */
+    single<DeviceManager>(qualifier = named("android")) { AndroidDeviceManager }
+
+    /**
+     * Provides the Android implementation of [AppManager].
+     */
     single<AppManager>(qualifier = named("android")) { AndroidAppManager }
+
+    /**
+     * Provides the Android test runner.
+     */
     single { AndroidTestRunner() }
 
     // iOS dependencies
-    single<DeviceManager>(qualifier = named("ios")) { IosDeviceManager } // Bind IosDeviceManager with a qualifier
-    single<AppManager>(qualifier = named("ios")) { IosAppManager }
-    single { IosTestRunner() }
+    /**
+     * Provides the iOS implementation of [DeviceManager].
+     */
+    single<DeviceManager>(qualifier = named("ios")) { IOSDeviceManager }
+
+    /**
+     * Provides the iOS implementation of [AppManager].
+     */
+    single<AppManager>(qualifier = named("ios")) { IOSAppManager }
+
+    /**
+     * Provides the iOS test runner.
+     */
+    single { IOSTestRunner() }
 }
