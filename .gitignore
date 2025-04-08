@@ -46,7 +46,6 @@ adbkey*
 
 # Xcode & XCUI
 *.xcworkspace
-*.xcodeproj
 *.xcuserstate
 *.xcuserdatad/
 DerivedData/
@@ -66,6 +65,7 @@ desktop.ini
 # IDE-specific
 .vscode/
 *.vscode
+local.properties
 
 # CI/CD
 .env

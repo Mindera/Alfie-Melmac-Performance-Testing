@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "21C9ACB7-80E8-4824-B54D-A0CB45E6DCEB",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:DriverRunner.xcodeproj",
+        "identifier" : "B2B6925F2DA423280009743A",
+        "name" : "DriverRunnerUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
