@@ -26,25 +26,32 @@ class IOSTestRunner : KoinComponent {
      * @param config A JSON node containing the test configuration.
      * - `device_name`: The name of the iOS simulator to use.
      * - `app_path`: The file path to the `.app` bundle to be installed.
-     * - `target_resource_id`: The resource ID of the target UI element to locate.
-     * - `bundle_id`: The bundle identifier of the app to be uninstalled after the test.
+     * - `target_resource_id`: The accessibility ID of the UI element to wait for.
+     * - `bundle_id`: The bundle identifier of the app to uninstall after the test.
+     * - `driver_runner_path`: Path to the Xcode project folder (e.g., `../../DriverRunner`)
      */
     fun run(config: JsonNode) {
         val deviceName = config["device_name"].asText()
         val appPath = config["app_path"].asText()
         val targetResourceId = config["target_resource_id"].asText()
-        val appId = config["bundle_id"].asText()
+        val bundleId = config["bundle_id"].asText()
 
         try {
             // Start the iOS simulator
-            Logger.info("🚀 Starting iOS test...")
+            Logger.info("🚀 Starting iOS test on device: $deviceName")
             deviceManager.startDevice(deviceName)
 
             // Install the app
+            Logger.info("📲 Installing app at $appPath")
             appManager.installApp(appPath)
 
-            // Run XCUITest
-            val testPassed = XCUITestCommands.runXCUITest(targetResourceId)
+            // Run XCUITest via HTTP runner
+            Logger.info("🧪 Running test for element: $targetResourceId")
+            val testPassed = XCUITestCommands.runLaunchTestForElement(
+                bundleId = bundleId,
+                elementId = targetResourceId,
+                deviceName = deviceName
+            )
 
             Logger.info(if (testPassed) "✅ iOS Test Passed" else "❌ iOS Test Failed")
         } catch (e: Exception) {
@@ -52,12 +59,13 @@ class IOSTestRunner : KoinComponent {
         } finally {
             // Cleanup operations
             try {
-                appManager.uninstallApp(appId) // Uninstall the app using `bundle_id`
+                Logger.info("🧼 Uninstalling app: $bundleId")
             } catch (e: Exception) {
                 Logger.error("❌ Failed to uninstall iOS app: ${e.message}")
             }
             try {
-                deviceManager.shutdownDevice(deviceName) // Shut down the simulator
+                Logger.info("🧯 Shutting down simulator: $deviceName")
+                deviceManager.shutdownDevice(deviceName)
             } catch (e: Exception) {
                 Logger.error("❌ Failed to shut down iOS simulator: ${e.message}")
             }
