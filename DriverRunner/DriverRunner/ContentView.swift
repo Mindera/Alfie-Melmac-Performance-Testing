@@ -1,3 +1,10 @@
+//
+//  ContentView.swift
+//  DriverRunner
+//
+//  Created by (Admin) Vasco Sousa on 07/04/2025.
+//
+
 import SwiftUI
 
 struct ContentView: View {
@@ -7,14 +14,6 @@ struct ContentView: View {
                 .imageScale(.large)
                 .foregroundStyle(.tint)
             Text("Hello, world!")
-            
-            // Add a button
-            Button(action: {
-                print("Button tapped!")
-            }) {
-                Text("Tap Me")
-            }
-            .accessibilityIdentifier("ButtonIdentifier") // Set the accessibility identifier
         }
         .padding()
     }

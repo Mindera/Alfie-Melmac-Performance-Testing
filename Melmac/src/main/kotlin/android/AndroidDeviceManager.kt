@@ -4,6 +4,7 @@ import core.DeviceManager
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import utils.Logger
+import utils.Tools
 
 /**
  * Object responsible for managing Android devices (emulators).
@@ -41,7 +42,7 @@ object AndroidDeviceManager : DeviceManager {
     override fun shutdownDevice(deviceName: String) {
         try {
             Logger.info("Shutting down Android emulator: $deviceName")
-            val emulatorSerial = getEmulatorSerial(deviceName)
+            val emulatorSerial = Tools.getEmulatorSerial(deviceName)
             if (emulatorSerial != null) {
                 Logger.info("Targeting emulator with serial: $emulatorSerial")
                 val process = ProcessBuilder("adb", "-s", emulatorSerial, "emu", "kill").start()
@@ -58,40 +59,6 @@ object AndroidDeviceManager : DeviceManager {
         } catch (e: Exception) {
             Logger.error("❌ Failed to shut down Android emulator: ${e.message}")
         }
-    }
-
-    /**
-     * Retrieves the serial number of the specified Android emulator.
-     *
-     * @param deviceName The name of the Android emulator (AVD).
-     * @return The serial number of the emulator, or `null` if no matching emulator is found.
-     */
-    private fun getEmulatorSerial(deviceName: String): String? {
-        try {
-            Logger.info("Fetching emulator serial for device name: $deviceName")
-            val process = ProcessBuilder("adb", "devices").start()
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val devices = reader.readLines()
-            reader.close()
-
-            for (line in devices) {
-                if (line.startsWith("emulator-")) {
-                    val serial = line.split("\\s+".toRegex())[0] // Extract the serial number
-                    val avdNameProcess = ProcessBuilder(
-                        "adb", "-s", serial, "shell", "getprop", "ro.boot.qemu.avd_name"
-                    ).start()
-                    val avdName = avdNameProcess.inputStream.bufferedReader().readText().trim()
-                    if (avdName == deviceName) {
-                        Logger.info("Match found! Serial: $serial for AVD name: $avdName")
-                        return serial
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Logger.error("❌ Error while fetching emulator serial: ${e.message}")
-        }
-        Logger.error("❌ No matching emulator found for device name: $deviceName")
-        return null
     }
 
     /**

@@ -11,26 +11,31 @@ dependencies {
     // Kotlin dependencies
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.0"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
 
-    // Testing dependencies
+    // Testing
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.3"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:5.9.3"
 
-    // Koin for Dependency Injection
+    // Koin DI
     implementation "io.insert-koin:koin-core:3.4.0"
+    implementation "io.insert-koin:koin-ktor:3.4.0"
     testImplementation "io.insert-koin:koin-test:3.4.0"
 
-    // Ktor server dependencies
+    // Ktor server
     implementation "io.ktor:ktor-server-core:2.3.0"
     implementation "io.ktor:ktor-server-netty:2.3.0"
     implementation "io.ktor:ktor-server-content-negotiation:2.3.0"
     implementation "io.ktor:ktor-serialization-jackson:2.3.0"
     implementation "org.slf4j:slf4j-simple:2.0.9"
+    implementation "io.ktor:ktor-server-status-pages:2.3.0"
 
-    // Compose for Desktop    
+
+    // Compose for Desktop
     implementation "org.jetbrains.compose.desktop:desktop:1.4.0"
 }
+
 
 application {
     // Specify the main class for the application

@@ -46,11 +46,16 @@ adbkey*
 
 # Xcode & XCUI
 *.xcworkspace
-*.xcodeproj
 *.xcuserstate
 *.xcuserdatad/
 DerivedData/
 *.xcresult
+*.app
+*.ipa
+*.dSYM
+*.plist
+*.xcconfig
+*.xcsettings
 
 # Operating System Files
 .DS_Store
@@ -60,6 +65,7 @@ desktop.ini
 # IDE-specific
 .vscode/
 *.vscode
+local.properties
 
 # CI/CD
 .env
@@ -74,3 +80,9 @@ build/
 *.csv
 *.json
 *.html
+
+# Include config.json
+!config.json
+
+# Ignore ui_dumps folder
+ui_dumps/
