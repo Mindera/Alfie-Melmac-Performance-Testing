@@ -59,4 +59,18 @@ object Tools {
         Logger.error("❌ No matching emulator found for device name: $deviceName")
         return null
     }
+
+    fun run(command: String): String {
+        return try {
+            val process = ProcessBuilder(*command.split(" ").toTypedArray())
+                .redirectErrorStream(true)
+                .start()
+
+            val output = BufferedReader(InputStreamReader(process.inputStream)).readText()
+            process.waitFor()
+            output
+        } catch (e: Exception) {
+            "ERROR: ${e.message}"
+        }
+    }
 }
