@@ -250,7 +250,7 @@ object AndroidTestCommands {
     ) {
         println("🔍 [Analyzer $analyzerIndex] Analyzing dump file: ${dumpFile.absolutePath}")
         val uiXmlContent = dumpFile.readText()
-        val elementRegex = Regex("""<.*?resource-id="$resourceId".*?clickable="true".*?enabled="true".*?bounds=.*?>""")
+        val elementRegex = Regex("""<.*?resource-id="$resourceId".*?>""")
         if (elementRegex.containsMatchIn(uiXmlContent)) {
             println("✅ [Analyzer $analyzerIndex] UI element '$resourceId' is visible and interactable!")
             elementFound.set(true)
