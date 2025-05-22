@@ -1,64 +1,81 @@
 package core
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import config.Config
+import controllers.IControllers.*
+import io.ktor.http.*
+import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
-import io.ktor.server.response.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import org.koin.core.context.startKoin
-import config.Config
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
+import org.koin.ktor.plugin.Koin
+import services.IServices.IDeviceService
+import services.IServices.IMetricService
 
-/**
- * Starts the Ktor server for the Melmac Performance Testing backend.
- *
- * This function initializes the Koin dependency injection framework and sets up
- * the Ktor server with the specified port. It includes routes for:
- * - A root endpoint (`GET /`) that returns a welcome message.
- * - A `/run-test` endpoint (`POST /run-test`) that triggers a test for a specified platform.
- *
- * @param port The port on which the server will listen.
- */
 fun startServer(port: Int = Config.getServerConfig()["port"].asInt()) {
-    startKoin {
-        modules(appModule)
-    }
-
     embeddedServer(Netty, port = port) {
-        install(ContentNegotiation) {
-            jackson()
-        }
-        routing {
-            /**
-             * Root endpoint that returns a welcome message.
-             */
-            get("/") {
-                call.respondText("Welcome to the Melmac Performance Testing Backend!")
-            }
+                install(ContentNegotiation) {
+                    jackson {
+                        registerModule(JavaTimeModule())
+                        disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                    }
+                }
 
-            /**
-             * Endpoint to trigger a test for a specific platform.
-             *
-             * Expects a JSON payload with a `platform` key, e.g.:
-             * ```
-             * {
-             *   "platform": "ios"
-             * }
-             * ```
-             * Responds with a success message if the platform is valid, or an error message otherwise.
-             */
-            post("/run-test") {
-                val platform = call.receive<Map<String, String>>()["platform"]
-                if (platform != null) {
-                    TestRunner.run(platform)
-                    call.respond(HttpStatusCode.OK, "Test for $platform started.")
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "Platform not specified.")
+                install(Koin) { modules(appModule) }
+
+                install(StatusPages) {
+                    exception<IllegalArgumentException> { call, cause ->
+                        call.respond(HttpStatusCode.BadRequest, cause.message ?: "Bad Request")
+                    }
+                    exception<NoSuchElementException> { call, cause ->
+                        call.respond(HttpStatusCode.NotFound, cause.message ?: "Not found")
+                    }
+                    exception<Throwable> { call, cause ->
+                        call.respond(HttpStatusCode.InternalServerError, cause.message ?: "Something went wrong")
+                    }
+                }
+
+                routing {
+                    get("/") {
+                        call.respondText(
+                                "Welcome to the Melmac Performance Testing API!",
+                                ContentType.Text.Plain
+                        )
+                    }
+
+                    val metricService by inject<IMetricService>()
+                    metricService.loadFromJson()
+
+                    val deviceService by inject<IDeviceService>()
+                    deviceService.syncAllDevices()
+
+                    val metricController by inject<IMetricController>()
+                    with(metricController) { routes() }
+
+                    val testSuiteController by inject<ITestSuiteController>()
+                    with(testSuiteController) { routes() }
+
+                    val testExecutionController by inject<ITestExecutionController>()
+                    with(testExecutionController) { routes() }
+
+                    val appController by inject<IAppController>()
+                    with(appController) { routes() }
+
+                    val deviceController by inject<IDeviceController>()
+                    with(deviceController) { routes() }
+
+                    val thresholdTypeController by inject<IThresholdTypeController>()
+                    with(thresholdTypeController) { routes() }
+
+                    val thresholdController by inject<IThresholdController>()
+                    with(thresholdController) { routes() }
                 }
             }
-        }
-    }.start(wait = true)
+            .start(wait = true)
 }

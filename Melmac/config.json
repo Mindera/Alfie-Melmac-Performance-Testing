@@ -7,7 +7,7 @@
     "device_name": "iPhone 16 Pro",
     "app_path": "../Alfie.app",
     "bundle_id": "com.mindera.alfie.debug",
-    "target_resource_id": "HomeTab"
+    "target_resource_id": "account-btn"
   },
   "android": {
     "device_name": "Medium_Phone_API_35",
