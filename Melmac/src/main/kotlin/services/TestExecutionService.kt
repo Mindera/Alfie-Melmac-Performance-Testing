@@ -1,177 +1,260 @@
 package services
 
+import core.runners.ITestRunner
 import domain.*
-import domain.dtos.*
+import dtos.TestExecutionConfigDTO
+import dtos.TestExecutionResponseDTO
+import java.time.Instant
+import java.time.ZoneId
 import repos.IRepos.*
 import services.IServices.ITestExecutionService
 
 class TestExecutionService(
-        private val executionRepo: ITestExecutionRepository,
-        private val metricRepo: IMetricRepository,
-        private val typeRepo: IExecutionTypeRepository,
-        private val suiteRepo: ITestSuiteRepository,
-        private val appVersionRepo: IAppVersionRepository,
-        private val execParamRepo: IExecutionTypeParameterRepository,
-        private val metricParamRepo: IMetricParameterRepository,
-        private val testExecParamRepo: ITestExecutionTypeParameterRepository,
-        private val testMetricParamRepo: ITestMetricParameterRepository
+        private val testExecutionRepository: ITestExecutionRepository,
+        private val testPlanVersionRepository: ITestPlanVersionRepository,
+        private val metricRepository: IMetricRepository,
+        private val metricOutputRepository: IMetricOutputRepository,
+        private val executionTypeRepository: IExecutionTypeRepository,
+        private val deviceRepository: IDeviceRepository,
+        private val osVersionRepository: IOperSysVersionRepository,
+        private val osRepository: IOperSysRepository,
+        private val appVersionRepository: IAppVersionRepository,
+        private val appRepository: IAppRepository,
+        private val testPlanExecutionTypeParamValueRepo:
+                ITestPlanExecutionTypeParameterValueRepository,
+        private val testPlanMetricParamValueRepo: ITestPlanMetricParameterValueRepository,
+        private val testPlanRepository: ITestPlanRepository,
+        private val metricParameterRepository: IMetricParameterRepository,
+        private val executionTypeParameterRepository: IExecutionTypeParameterRepository,
+        private val testThresholdRepository: IThresholdRepository,
+        private val thresholdTypeRepository: IThresholdTypeRepository,
+        private val testMetricOutputResultRepository: ITestMetricOutputResultRepository,
+        private val testRunner: ITestRunner
 ) : ITestExecutionService {
 
-        override fun create(request: TestExecutionRequestDTO): TestExecutionResponseDTO {
-                val suite =
-                        suiteRepo.findById(request.testSuiteId)
-                                ?: throw IllegalArgumentException("Test suite not found")
-
-                val appVersion =
-                        appVersionRepo.findById(request.appVersionId)
-                                ?: throw IllegalArgumentException("App version not found")
-
-                val metric =
-                        metricRepo.findById(request.metricId)
-                                ?: throw IllegalArgumentException("Metric not found")
-
-                val type =
-                        typeRepo.findById(request.executionTypeId)
-                                ?: throw IllegalArgumentException("Execution type not found")
-
-                // Save TestExecution first
-                val execution =
-                        TestExecution(
-                                testSuiteId = suite.id!!,
-                                appVersionId = appVersion.id!!,
-                                deviceId = request.deviceId,
-                                metricId = metric.id!!,
-                                executionTypeId = type.id!!
+        override fun getAllTestExecutions(): List<TestExecutionResponseDTO> {
+                return testExecutionRepository.findAll().map {
+                        TestExecutionResponseDTO(
+                                testExecutionId = it.testExecutionId!!,
+                                initialTimestamp = it.initialTimestamp,
+                                endTimestamp = it.endTimestamp,
+                                passed = it.passed,
+                                testPlanVersionTestPlanVersionId =
+                                        it.testPlanVersionTestPlanVersionId
                         )
-                val executionId = executionRepo.save(execution)
+                }
+        }
 
-                // Validate and save execution parameters
-                val allowedExecParams = execParamRepo.getAllByExecutionType(type.id)
-                val executionParams =
-                        request.executionParameters.map { dto ->
-                                val param =
-                                        allowedExecParams.find { it.id == dto.parameterId }
-                                                ?: throw IllegalArgumentException(
-                                                        "Invalid execution parameter ID: ${dto.parameterId}"
-                                                )
-                                TestExecutionTypeParameter(
-                                        id = 0,
-                                        executionId = executionId,
-                                        executionTypeParameterId = param.id!!,
-                                        value = dto.value
-                                )
-                        }
-                testExecParamRepo.saveAll(executionParams)
-
-                // Validate and save metric parameters
-                val allowedMetricParams = metricParamRepo.findByMetricId(metric.id)
-                val metricParams =
-                        request.metricParameters.map { dto ->
-                                val param =
-                                        allowedMetricParams.find { it.id == dto.parameterId }
-                                                ?: throw IllegalArgumentException(
-                                                        "Invalid metric parameter ID: ${dto.parameterId}"
-                                                )
-                                TestMetricParameter(
-                                        id = 0,
-                                        testExecutionId = executionId,
-                                        metricParameterId = param.id!!,
-                                        value = dto.value
-                                )
-                        }
-                testMetricParamRepo.saveAll(metricParams)
-
-                // Build response
+        override fun getTestExecutionById(id: Int): TestExecutionResponseDTO? {
+                val execution = testExecutionRepository.findById(id) ?: return null
                 return TestExecutionResponseDTO(
-                        id = executionId,
-                        testSuiteId = suite.id,
-                        appVersionId = appVersion.id,
-                        deviceId = execution.deviceId,
-                        metricId = metric.id,
-                        executionTypeId = type.id,
-                        startTimestamp = execution.startTimestamp,
+                        testExecutionId = execution.testExecutionId!!,
+                        initialTimestamp = execution.initialTimestamp,
                         endTimestamp = execution.endTimestamp,
-                        executionParameters =
-                                executionParams.map {
-                                        val def =
-                                                allowedExecParams.find { p ->
-                                                        p.id == it.executionTypeParameterId
-                                                }!!
-                                        ExecutionParameterValueResponseDTO(
-                                                id = it.id,
-                                                parameterId = def.id!!,
-                                                name = def.name,
-                                                value = it.value,
-                                                type = def.type
-                                        )
-                                },
-                        metricParameters =
-                                metricParams.map {
-                                        val def =
-                                                allowedMetricParams.find { p ->
-                                                        p.id == it.metricParameterId
-                                                }!!
-                                        MetricParameterValueResponseDTO(
-                                                id = it.id,
-                                                parameterId = def.id!!,
-                                                name = def.name,
-                                                value = it.value,
-                                                type = def.type
-                                        )
-                                }
+                        passed = execution.passed,
+                        testPlanVersionTestPlanVersionId =
+                                execution.testPlanVersionTestPlanVersionId
                 )
         }
 
-        override fun listAll(): List<TestExecutionResponseDTO> =
-                executionRepo.findAll().map { toResponse(it) }
+        override fun runTestExecution(testPlanVersionId: Int): TestExecutionResponseDTO {
+                val testPlanVersion =
+                        testPlanVersionRepository.findById(testPlanVersionId)
+                                ?: throw IllegalStateException(
+                                        "TestPlanVersion with ID $testPlanVersionId not found"
+                                )
 
-        override fun listBySuiteId(suiteId: Int): List<TestExecutionResponseDTO> =
-                executionRepo.findBySuiteId(suiteId).map { toResponse(it) }
+                val testPlan =
+                        testPlanRepository.findById(testPlanVersion.testPlanTestPlanId)
+                                ?: throw IllegalStateException(
+                                        "TestPlan ${testPlanVersion.testPlanTestPlanId} not found"
+                                )
 
-        private fun toResponse(exec: TestExecution): TestExecutionResponseDTO {
-                val executionParams = testExecParamRepo.findByExecutionId(exec.id)
-                val metricParams = testMetricParamRepo.findByExecutionId(exec.id)
+                val metric =
+                        metricRepository.findById(testPlan.metricMetricId)
+                                ?: throw IllegalStateException(
+                                        "Metric ${testPlan.metricMetricId} not found"
+                                )
 
-                val execParamDefs = execParamRepo.getAllByExecutionType(exec.executionTypeId)
-                val metricParamDefs = metricParamRepo.findByMetricId(exec.metricId)
+                val executionType =
+                        executionTypeRepository.findById(
+                                testPlanVersion.executionTypeExecutionTypeId
+                        )
+                                ?: throw IllegalStateException(
+                                        "ExecutionType ${testPlanVersion.executionTypeExecutionTypeId} not found"
+                                )
+
+                val device =
+                        deviceRepository.findById(testPlanVersion.deviceDeviceId)
+                                ?: throw IllegalStateException(
+                                        "Device ${testPlanVersion.deviceDeviceId} not found"
+                                )
+
+                val os =
+                        osRepository.findById(device.osVersionOsVersionId)
+                                ?: throw IllegalStateException(
+                                        "OS ${device.osVersionOsVersionId} not found"
+                                )
+
+                val appVersion =
+                        appVersionRepository.findById(testPlanVersion.appVersionAppVersionId)
+                                ?: throw IllegalStateException(
+                                        "AppVersion ${testPlanVersion.appVersionAppVersionId} not found"
+                                )
+
+                val app =
+                        appRepository.findById(appVersion.appId)
+                                ?: throw IllegalStateException("App ${appVersion.appId} not found")
+
+                val execTypeParamsValues =
+                        testPlanExecutionTypeParamValueRepo.findByTestPlanVersionId(
+                                testPlanVersionId
+                        )
+                val metricParamsValues =
+                        testPlanMetricParamValueRepo.findByTestPlanVersionId(testPlanVersionId)
+
+                val execTypeParams =
+                        execTypeParamsValues.mapNotNull { paramValue ->
+                                executionTypeParameterRepository.findById(
+                                        paramValue.executionTypeParameterExecutionTypeParameterId
+                                )
+                        }
+
+                val metricParams =
+                        metricParamsValues.mapNotNull { paramValue ->
+                                metricParameterRepository.findById(
+                                        paramValue.metricParameterMetricParameterId
+                                )
+                        }
+
+                val metricOutputs =
+                        metricOutputRepository.findByMetricId(
+                                metric.metricId
+                                        ?: throw IllegalStateException("Metric ID cannot be null")
+                        )
+
+                val thresholds =
+                        testThresholdRepository.findByTestPlanVersionId(testPlanVersionId).map {
+                                threshold ->
+                                val thresholdType =
+                                        thresholdTypeRepository.findById(
+                                                threshold.thresholdTypeThresholdTypeId
+                                        )
+                                                ?: throw IllegalStateException(
+                                                        "ThresholdType ${threshold.thresholdTypeThresholdTypeId} not found"
+                                                )
+                                val metricOutput =
+                                        metricOutputs.find {
+                                                it.metricOutputId ==
+                                                        threshold.metricOutputMetricOutputId
+                                        }
+                                                ?: throw IllegalStateException(
+                                                        "MetricOutput ${threshold.metricOutputMetricOutputId} not found"
+                                                )
+                                Triple(
+                                        threshold.targetValue.toString(),
+                                        thresholdType.thresholdTypeName,
+                                        metricOutput.outputName ?: ""
+                                )
+                        }
+
+                val configDTO =
+                        TestExecutionConfigDTO(
+                                executionTypeName = executionType.executionTypeName,
+                                metricName = metric.metricName,
+                                metricParams =
+                                        metricParams.associate { metricParam ->
+                                                val paramValue =
+                                                        metricParamsValues.firstOrNull {
+                                                                it.metricParameterMetricParameterId ==
+                                                                        metricParam
+                                                                                .metricParameterId
+                                                        }
+                                                metricParam.parameterName to
+                                                        (paramValue?.parameterValue ?: "")
+                                        },
+                                executionTypeParams =
+                                        execTypeParams.associate { execTypeParam ->
+                                                val paramValue =
+                                                        execTypeParamsValues.firstOrNull {
+                                                                it.executionTypeParameterExecutionTypeParameterId ==
+                                                                        execTypeParam
+                                                                                .executionTypeParameterId
+                                                        }
+                                                execTypeParam.parameterName to
+                                                        (paramValue?.parameterValue ?: "")
+                                        },
+                                testThresholds =
+                                        thresholds.takeIf { it.isNotEmpty() }?.map { triple ->
+                                                Triple(
+                                                        triple.first,
+                                                        triple.second,
+                                                        triple.third
+                                                )
+                                        },
+                                deviceName = device.deviceName,
+                                deviceSerialNumber = device.deviceSerialNumber,
+                                platform = os.operSysName,
+                                appName = app.appName,
+                                appVersion = appVersion.appVersion,
+                                appPackage = testPlanVersion.appPackage,
+                                mainActivity = testPlanVersion.mainActivity,
+                        )
+
+                val start =
+                        Instant.ofEpochMilli(System.currentTimeMillis())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+
+                // Call the test runner and expect it to return a map with at least "success" and
+                // "value"
+                val resultOutputs = testRunner.run(configDTO)
+
+                val end =
+                        Instant.ofEpochMilli(System.currentTimeMillis())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+
+                // Use the "success" field from the test output, default to false if missing
+                val passed = resultOutputs["success"]?.toBoolean() ?: false
+
+                val testExecution =
+                        TestExecution(
+                                testExecutionId = null,
+                                testPlanVersionTestPlanVersionId = testPlanVersion.testPlanVersionId
+                                                ?: throw IllegalStateException(
+                                                        "TestPlanVersionId cannot be null"
+                                                ),
+                                initialTimestamp = start,
+                                endTimestamp = end,
+                                passed = passed.toString()
+                        )
+                val testExecutionId = testExecutionRepository.save(testExecution)
+
+                (metricOutputs as Iterable<MetricOutput>).forEach { output ->
+                        val outputId =
+                                output.metricOutputId
+                                        ?: throw IllegalStateException(
+                                                "MetricOutput ID cannot be null"
+                                        )
+                        val value = resultOutputs[output.outputName] ?: ""
+                        testMetricOutputResultRepository.save(
+                                TestMetricOutputResult(
+                                        testMetricOutputResultId = null,
+                                        testExecutionTestExecutionId = testExecutionId,
+                                        metricOutputMetricOutputId = outputId,
+                                        value = value,
+                                )
+                        )
+                }
 
                 return TestExecutionResponseDTO(
-                        id = exec.id,
-                        testSuiteId = exec.testSuiteId,
-                        appVersionId = exec.appVersionId,
-                        deviceId = exec.deviceId,
-                        metricId = exec.metricId,
-                        executionTypeId = exec.executionTypeId,
-                        startTimestamp = exec.startTimestamp,
-                        endTimestamp = exec.endTimestamp,
-                        executionParameters =
-                                executionParams.map { ep ->
-                                        val def =
-                                                execParamDefs.find {
-                                                        it.id == ep.executionTypeParameterId
-                                                }!!
-                                        ExecutionParameterValueResponseDTO(
-                                                id = ep.id,
-                                                parameterId = def.id!!,
-                                                name = def.name,
-                                                value = ep.value,
-                                                type = def.type
-                                        )
-                                },
-                        metricParameters =
-                                metricParams.map { mp ->
-                                        val def =
-                                                metricParamDefs.find {
-                                                        it.id == mp.metricParameterId
-                                                }!!
-                                        MetricParameterValueResponseDTO(
-                                                id = mp.id,
-                                                parameterId = def.id!!,
-                                                name = def.name,
-                                                value = mp.value,
-                                                type = def.type
-                                        )
-                                }
+                        testExecutionId = testExecutionId,
+                        initialTimestamp = testExecution.initialTimestamp,
+                        endTimestamp = testExecution.endTimestamp,
+                        passed = testExecution.passed,
+                        testPlanVersionTestPlanVersionId =
+                                testExecution.testPlanVersionTestPlanVersionId
                 )
         }
 }

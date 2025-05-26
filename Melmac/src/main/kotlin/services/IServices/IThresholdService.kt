@@ -1,10 +1,9 @@
 package services.IServices
 
-import domain.dtos.ThresholdRequestDTO
-import domain.dtos.ThresholdResponseDTO
+import dtos.*
 
 interface IThresholdService {
-    suspend fun getAll(): List<ThresholdResponseDTO>
-    suspend fun create(dto: ThresholdRequestDTO): ThresholdResponseDTO
-    suspend fun delete(id: Int)
+    fun getThresholdByTestPlanVersionId(testPlanVersionId: Int): List<TestThresholdResponseDTO>
+    fun getThresholdById(id: Int): TestThresholdResponseDTO?
+    fun createTestThreshold(request: TestThresholdRequestDTO): TestThresholdResponseDTO
 }

@@ -1,12 +1,14 @@
 package services.IServices
 
-import domain.App
-import domain.AppVersion
+import dtos.AppResponseDTO
+import dtos.AppVersionResponseDTO
 
 interface IAppService {
-    fun registerAppAndVersion(appName: String, version: AppVersion): AppVersion
-    fun listApps(): List<App>
-    fun listVersions(appId: Int): List<AppVersion>
-    fun getAppById(id: Int): App?
-    fun getVersionById(id: Int): AppVersion?
+
+    fun getAllAppsFromDatabase(): List<AppResponseDTO>
+    fun getAppVersionsByAppIdFromDatabase(appId: Int): List<AppVersionResponseDTO>
+    fun getAllAppsFromFolder(): List<AppResponseDTO>
+    fun getAppVersionsFromFolder(appName: String): List<AppVersionResponseDTO>
+    fun getAppByNameFromFolder(appName: String): AppResponseDTO
+    fun getAppVersionByNameFromFolder(appName: String, appVersion: String): AppVersionResponseDTO
 }

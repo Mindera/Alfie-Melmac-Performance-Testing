@@ -1,11 +1,9 @@
 package services.IServices
 
-import domain.dtos.TestExecutionRequestDTO
-import domain.dtos.TestExecutionResponseDTO
+import dtos.TestExecutionResponseDTO
 
 interface ITestExecutionService {
-    fun create(request: TestExecutionRequestDTO): TestExecutionResponseDTO
-    fun listAll(): List<TestExecutionResponseDTO>
-    fun listBySuiteId(suiteId: Int): List<TestExecutionResponseDTO>
+    fun getAllTestExecutions(): List<TestExecutionResponseDTO>
+    fun getTestExecutionById(id: Int): TestExecutionResponseDTO?
+    fun runTestExecution(testPlanVersionId: Int): TestExecutionResponseDTO
 }
-

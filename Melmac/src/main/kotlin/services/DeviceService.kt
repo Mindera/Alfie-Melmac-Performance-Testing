@@ -1,98 +1,60 @@
 package services
 
-import domain.Device
-import domain.OS
-import domain.OSVersion
-import domain.dtos.DeviceResponseDTO
-import domain.dtos.OSResponseDTO
-import domain.dtos.OSVersionResponseDTO
-import repos.IRepos.IDeviceRepository
-import repos.IRepos.IOSRepository
-import repos.IRepos.IOSVersionRepository
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import dtos.AvailableDeviceDTO
+import java.io.File
 import services.IServices.IDeviceService
 import utils.Tools
 
-class DeviceService(
-        private val osRepo: IOSRepository,
-        private val osVersionRepo: IOSVersionRepository,
-        private val deviceRepo: IDeviceRepository
-) : IDeviceService {
+class DeviceService : IDeviceService {
 
-    override fun syncAllDevices() {
-        syncIOSDevices()
-        syncAndroidDevices()
+    override fun getAllAvailableDevices(): List<AvailableDeviceDTO> {
+        return fetchAllDevices()
     }
 
-    override fun getAllDevices(): List<DeviceResponseDTO> =
-            deviceRepo.findAll().map {
-                DeviceResponseDTO(id = it.id, name = it.name, osVersionId = it.osVersionId)
+    override fun getAvailableDevicesByMinVersion(minOsVersion: String): List<AvailableDeviceDTO> {
+        val minVersionParts = minOsVersion.split(".").map { it.toIntOrNull() ?: 0 }
+
+        return fetchAllDevices().filter { device ->
+            compareVersions(device.osVersion, minVersionParts) >= 0
+        }
+    }
+
+    override fun getDeviceBySerialNumber(serialNumber: String): AvailableDeviceDTO? {
+        return fetchAllDevices().find { it.deviceSerialNumber == serialNumber }
+    }
+
+    override fun getDeviceByName(name: String): AvailableDeviceDTO? {
+        return fetchAllDevices().find { it.deviceName == name }
+    }
+
+    private fun fetchAllDevices(): List<AvailableDeviceDTO> {
+        val iosDevices = fetchIOSDevices()
+        val androidDevices = fetchAndroidDevices()
+        return iosDevices + androidDevices
+    }
+
+    private fun compareVersions(versionStr: String, minVersionParts: List<Int>): Int {
+        val versionParts = versionStr.split(".").map { it.toIntOrNull() ?: 0 }
+
+        for (i in 0 until maxOf(versionParts.size, minVersionParts.size)) {
+            val vPart = versionParts.getOrElse(i) { 0 }
+            val minPart = minVersionParts.getOrElse(i) { 0 }
+
+            if (vPart != minPart) {
+                return vPart - minPart
             }
+        }
+        return 0
+    }
 
-    override fun getAllOS(): List<OSResponseDTO> =
-            osRepo.findAll().map { OSResponseDTO(id = it.id!!, name = it.name) }
-
-    override fun getAllOSVersions(): List<OSVersionResponseDTO> =
-            osVersionRepo.findAll().map {
-                OSVersionResponseDTO(id = it.id!!, versionName = it.versionName, osId = it.osId)
-            }
-
-    private fun syncIOSDevices() {
-        val os = getOrCreateOS("iOS")
+    private fun fetchIOSDevices(): List<AvailableDeviceDTO> {
         val output = Tools.run("xcrun simctl list devices -j")
-
-        val devices = parseIOSDevices(output)
-        devices.forEach { device ->
-            val osVersion = getOrCreateOSVersion(device.second, os.id!!)
-            val d = Device(id = device.first, name = device.first, osVersionId = osVersion.id!!)
-            if (deviceRepo.findById(d.id) == null) {
-                deviceRepo.save(d)
-            }
-        }
-    }
-
-    private fun syncAndroidDevices() {
-        val os = getOrCreateOS("Android")
-
-        val output = Tools.run("emulator -list-avds")
-        val avds =
-                if (output.startsWith("ERROR:")) {
-                    readAVDsFromDirectory()
-                } else {
-                    output.lines().filter { it.isNotBlank() }.map { it.trim() }
-                }
-
-        avds.forEach { avdName ->
-            val versionName = readAndroidAVDVersion(avdName)
-            val osVersion = getOrCreateOSVersion(versionName, os.id!!)
-            val d = Device(id = avdName, name = avdName, osVersionId = osVersion.id!!)
-            if (deviceRepo.findById(d.id) == null) {
-                deviceRepo.save(d)
-            }
-        }
-    }
-
-    private fun getOrCreateOS(name: String): OS {
-        return osRepo.findByName(name)
-                ?: run {
-                    val id = osRepo.save(OS(name = name))
-                    OS(id = id, name = name)
-                }
-    }
-
-    private fun getOrCreateOSVersion(version: String, osId: Int): OSVersion {
-        return osVersionRepo.findByVersionNameAndOS(version, osId)
-                ?: run {
-                    val id = osVersionRepo.save(OSVersion(versionName = version, osId = osId))
-                    OSVersion(id = id, versionName = version, osId = osId)
-                }
-    }
-
-    private fun parseIOSDevices(json: String): List<Pair<String, String>> {
-        val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
-        val root = mapper.readTree(json)
+        val mapper = jacksonObjectMapper()
+        val root = mapper.readTree(output)
         val devicesNode = root["devices"] ?: return emptyList()
 
-        val result = mutableListOf<Pair<String, String>>()
+        val result = mutableListOf<AvailableDeviceDTO>()
 
         for ((runtimeKey, deviceArray) in devicesNode.fields()) {
             if (!runtimeKey.startsWith("com.apple.CoreSimulator.SimRuntime.iOS")) continue
@@ -105,7 +67,15 @@ class DeviceService(
                 val udid = device["udid"]?.asText() ?: name
 
                 if (available) {
-                    result.add(udid to version)
+                    result.add(
+                            AvailableDeviceDTO(
+                                    id = null,
+                                    deviceName = name,
+                                    deviceSerialNumber = udid,
+                                    osName = "iOS",
+                                    osVersion = version
+                            )
+                    )
                 }
             }
         }
@@ -113,32 +83,47 @@ class DeviceService(
         return result
     }
 
-    private fun readAndroidAVDVersion(avdName: String): String {
-        val home = System.getProperty("user.home")
-        val configPath = "$home/.android/avd/$avdName.avd/config.ini"
-        val file = java.io.File(configPath)
+    private fun fetchAndroidDevices(): List<AvailableDeviceDTO> {
+        val avds = readAVDsFromDirectory()
 
-        if (!file.exists()) return "unknown"
-
-        val configLines = file.readLines()
-
-        configLines.find { it.startsWith("target=android-") }?.let {
-            return it.substringAfter("android-").trim()
+        return avds.map { avdName ->
+            val version = readAndroidAVDVersion(avdName)
+            AvailableDeviceDTO(
+                    id = null,
+                    deviceName = avdName,
+                    deviceSerialNumber = null,
+                    osName = "Android",
+                    osVersion = version
+            )
         }
-
-        configLines.find { it.contains("android-") }?.let {
-            return it.substringAfter("android-").substringBefore("/").trim()
-        }
-
-        return "unknown"
     }
 
     private fun readAVDsFromDirectory(): List<String> {
-        val home = System.getProperty("user.home")
-        val avdPath = java.io.File("$home/.android/avd")
-        return avdPath.listFiles { file -> file.isDirectory && file.name.endsWith(".avd") }?.map {
-            it.name.removeSuffix(".avd")
+        val avdDir = File(System.getProperty("user.home"), ".android/avd")
+
+        return avdDir.listFiles { file -> file.isFile && file.name.endsWith(".ini") }?.mapNotNull {
+                iniFile ->
+            val avdId =
+                    iniFile.readLines()
+                            .firstOrNull { it.startsWith("AvdId=") }
+                            ?.substringAfter("AvdId=")
+                            ?.trim()
+                            ?: iniFile.name.removeSuffix(".ini")
+            avdId
         }
                 ?: emptyList()
+    }
+
+    private fun readAndroidAVDVersion(avdName: String): String {
+        val iniFile = File(System.getProperty("user.home"), ".android/avd/$avdName.ini")
+        if (!iniFile.exists()) return "unknown"
+
+        val lines = iniFile.readLines()
+
+        lines.firstOrNull { it.startsWith("target=android-") }?.let {
+            return it.substringAfter("target=android-").trim()
+        }
+
+        return "unknown"
     }
 }
