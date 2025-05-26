@@ -3,8 +3,9 @@ package repos.IRepos
 import domain.MetricParameter
 
 interface IMetricParameterRepository {
-    fun findByMetricId(metricId: Int): List<MetricParameter>
     fun findById(id: Int): MetricParameter?
-    fun save(param: MetricParameter): Int
-    fun saveAll(params: List<MetricParameter>)
+    fun findByMetricId(metricId: Int): List<MetricParameter>
+    fun findByMetricIdAndName(metricId: Int, parameterName: String): MetricParameter?
+    fun save(metricParameter: MetricParameter): Int
+    fun update(metricParameter: MetricParameter)
 }

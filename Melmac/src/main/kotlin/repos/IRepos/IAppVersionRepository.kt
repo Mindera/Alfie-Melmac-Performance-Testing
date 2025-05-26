@@ -3,9 +3,9 @@ package repos.IRepos
 import domain.AppVersion
 
 interface IAppVersionRepository {
-    fun save(version: AppVersion): Int
-    fun findById(id: Int): AppVersion?
-    fun findAll(): List<AppVersion>
     fun findByAppId(appId: Int): List<AppVersion>
-    fun findByAppIdAndVersionName(appId: Int, versionName: String): AppVersion?
+    fun findById(id: Int): AppVersion?
+    fun findByName(appVersion: String): AppVersion?
+    fun findByAppIdAndVersion(appId: Int, version: String): AppVersion?
+    fun save(appVersion: AppVersion): Int
 }

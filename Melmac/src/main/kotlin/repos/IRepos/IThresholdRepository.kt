@@ -1,10 +1,9 @@
 package repos.IRepos
 
-import domain.Threshold
+import domain.TestThreshold
 
 interface IThresholdRepository {
-    suspend fun getAll(): List<Threshold>
-    suspend fun getById(id: Int): Threshold?
-    suspend fun create(threshold: Threshold): Threshold
-    suspend fun deleteById(id: Int)
+    fun findById(id: Int): TestThreshold?
+    fun findByTestPlanVersionId(testPlanVersionId: Int): List<TestThreshold>
+    fun save(testThreshold: TestThreshold): Int
 }

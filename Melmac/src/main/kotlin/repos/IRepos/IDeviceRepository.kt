@@ -3,7 +3,8 @@ package repos.IRepos
 import domain.Device
 
 interface IDeviceRepository {
-    fun findAll(): List<Device>
-    fun findById(id: String): Device?
-    fun save(device: Device)
+    fun findById(id: Int): Device?
+    fun save(device: Device): Int
+    fun findByName(name: String): Device?
+    fun findBySerialNumber(serialNumber: String): Device?
 }
