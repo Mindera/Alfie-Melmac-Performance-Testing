@@ -1,8 +1,9 @@
-package domain
+package dtos
 
-data class TestMetricParameter(
-    val testMetricParameterId: Int? = null,
+data class TestMetricParameterResponseDTO(
+    val testMetricParameterId: Int,
     val parameterValue: String,
     val metricParameterMetricParameterId: Int,
     val testPlanVersionTestPlanVersionId: Int
 )
+

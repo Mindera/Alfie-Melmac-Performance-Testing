@@ -1,8 +1,8 @@
-package domain.dtos
+package dtos
 
 data class MetricParameterResponseDTO(
-    val id: Int,
-    val name: String,
-    val type: String,
-    val metricId: Int
+    val metricParameterId: Int,
+    val parameterName: String,
+    val parameterType: String,
+    val metricMetricId: Int
 )

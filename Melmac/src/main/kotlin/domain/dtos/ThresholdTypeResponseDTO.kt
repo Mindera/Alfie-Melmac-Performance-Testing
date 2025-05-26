@@ -1,6 +1,7 @@
-package domain.dtos
+package dtos
 
 data class ThresholdTypeResponseDTO(
-    val id: Int,
-    val name: String
+    val thresholdTypeId: Int,
+    val thresholdTypeName: String,
+    val thresholdTypeDescription: String?
 )

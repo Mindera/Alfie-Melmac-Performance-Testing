@@ -1,7 +1,8 @@
 package domain
 
 data class Device(
-    val id: String,
-    val name: String,
-    val osVersionId: Int
+    val deviceId: Int? = null,
+    val deviceName: String,
+    val deviceSerialNumber: String? = null,
+    val osVersionOsVersionId: Int
 )

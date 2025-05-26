@@ -1,7 +1,7 @@
-package domain
+package dtos
 
-data class TestExecutionTypeParameter(
-    val testExecutionTypeParameterId: Int? = null,
+data class TestExecutionTypeParameterResponseDTO(
+    val testExecutionTypeParameterId: Int,
     val parameterValue: String,
     val executionTypeParameterExecutionTypeParameterId: Int,
     val testPlanVersionTestPlanVersionId: Int

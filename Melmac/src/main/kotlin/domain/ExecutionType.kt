@@ -1,7 +1,7 @@
 package domain
 
 data class ExecutionType(
-    val id: Int? = null,
-    val name: String,
-    val description: String? = null
+    val executionTypeId: Int? = null,
+    val executionTypeName: String,
+    val executionTypeDescription: String?
 )

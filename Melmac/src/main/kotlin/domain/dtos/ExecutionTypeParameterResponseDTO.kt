@@ -1,8 +1,8 @@
-package domain.dtos
+package dtos
 
 data class ExecutionTypeParameterResponseDTO(
-    val id: Int,
-    val name: String,
-    val type: String,
-    val executionTypeId: Int
+    val executionTypeParameterId: Int,
+    val parameterName: String,
+    val parameterType: String,
+    val executionTypeExecutionTypeId: Int
 )
