@@ -1,7 +1,8 @@
 package ios
 
 import core.AppManager
-import utils.Logger
+import utils.*
+import config.Config
 
 /**
  * Manages iOS app installation and uninstallation on a booted iOS simulator.
@@ -17,9 +18,12 @@ object IOSAppManager : AppManager {
      * @param appPath The file path to the `.app` bundle to be installed.
      * @throws RuntimeException If the installation process fails.
      */
-    override fun installApp(appPath: String) {
-        Logger.info("Installing iOS app: $appPath")
-        val process = ProcessBuilder("xcrun", "simctl", "install", "booted", appPath).start()
+    override fun installApp(app: String) {
+        val resolvedAppPath = Tools.resolvePath(Config.getAppFolderPath()) + '/' + app
+        Logger.info("Installing iOS app: $app")
+        val process = ProcessBuilder("xcrun", "simctl", "install", "booted", resolvedAppPath)
+            .redirectErrorStream(true)
+            .start()
         process.waitFor()
         if (process.exitValue() != 0) {
             throw RuntimeException("Failed to install iOS app.")

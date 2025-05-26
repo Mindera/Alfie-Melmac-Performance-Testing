@@ -1,5 +1,5 @@
-import XCTest
 import Swifter
+import XCTest
 
 final class DriverRunnerUITests: XCTestCase {
     private var app: XCUIApplication!
@@ -13,7 +13,9 @@ final class DriverRunnerUITests: XCTestCase {
         continueAfterFailure = false
         print("🧪 setUp() called")
 
-        let bundleID = ProcessInfo.processInfo.environment["COMMAND_BUNDLE_ID"] ?? "com.mindera.alfie.debug"
+        let bundleID =
+            ProcessInfo.processInfo.environment["COMMAND_BUNDLE_ID"] ?? "com.mindera.alfie.debug"
+
         app = XCUIApplication(bundleIdentifier: bundleID)
 
         endExpectation = XCTestExpectation(description: "Waiting for test request")
@@ -40,37 +42,71 @@ final class DriverRunnerUITests: XCTestCase {
         server = HttpServer()
 
         server?["/health"] = { _ in
-            .ok(.text("OK"))
+            HttpResponse.ok(.text("OK"))
         }
 
         server?["/test-launch"] = { request in
-            defer {
+            guard let elementID = request.queryParams.first(where: { $0.0 == "element" })?.1 else {
+                XCTFail("❌ Missing 'element' query parameter")
+                return HttpResponse.badRequest(.text("Missing 'element' query parameter"))
+            }
+
+            guard let timeoutString = request.queryParams.first(where: { $0.0 == "timeout" })?.1,
+                let timeout = Double(timeoutString)
+            else {
+                XCTFail("❌ Missing or invalid 'timeout' query parameter")
+                return HttpResponse.badRequest(
+                    .text("Missing or invalid 'timeout' query parameter"))
+            }
+
+            // Threshold support
+            let thresholdType = request.queryParams.first(where: { $0.0 == "thresholdType" })?.1
+            let thresholdValueString = request.queryParams.first(where: { $0.0 == "thresholdValue" }
+            )?.1
+            let thresholdValue = thresholdValueString.flatMap { Double($0) }
+
+            var results: [TestStepResult] = []
+            var launchFailed = false
+            var failureReason: String? = nil
+
+            DispatchQueue.main.sync {
+                results = self.runAppLaunchTest(
+                    waitForElement: elementID,
+                    timeout: timeout,
+                    thresholdType: thresholdType,
+                    thresholdValue: thresholdValue
+                )
+
+                // Check for any failed step
+                if let failed = results.first(where: { !$0.success }) {
+                    launchFailed = true
+                    failureReason = failed.error
+                }
+            }
+
+            let responseText = TestResultLogger.toJSON(from: results)
+
+            // Send HTTP response **before** failing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                if launchFailed {
+                    XCTFail(failureReason ?? "Unknown failure")
+                }
                 self.endExpectation?.fulfill()
             }
 
-            guard let elementID = request.queryParams.first(where: { $0.0 == "element" })?.1 else {
-                XCTFail("❌ Missing 'element' query parameter")
-                return .badRequest(.text("Missing 'element' query parameter"))
-            }
+            return HttpResponse.ok(.text(responseText))
 
-            var results: [TestStepResult] = []
-            DispatchQueue.main.sync {
-                results = self.runAppLaunchTest(waitForElement: elementID)
-            }
-
-            return .ok(.text(TestResultLogger.toJSON(from: results)))
         }
 
-
         server?["/hierarchy"] = { _ in
-            .ok(.text(self.app.debugDescription))
+            HttpResponse.ok(.text(self.app.debugDescription))
         }
 
         server?["/finish"] = { _ in
             DispatchQueue.main.sync {
                 self.endExpectation?.fulfill()
             }
-            return .ok(.text("Test manually completed"))
+            return HttpResponse.ok(.text("Test manually completed"))
         }
 
         do {
@@ -83,28 +119,53 @@ final class DriverRunnerUITests: XCTestCase {
 
     // MARK: - App Test Logic
 
-    private func runAppLaunchTest(waitForElement identifier: String) -> [TestStepResult] {
+    private func runAppLaunchTest(
+        waitForElement identifier: String,
+        timeout: Double,
+        thresholdType: String?,
+        thresholdValue: Double?
+    ) -> [TestStepResult] {
         TestResultLogger.shared.reset()
 
         let start = Date()
         app.launch()
 
         let element = app.descendants(matching: .any)[identifier]
-        let appeared = element.waitForExistence(timeout: 10)
+        let appeared = element.waitForExistence(timeout: timeout)
 
-        let duration = Date().timeIntervalSince(start)
-        let success = appeared
-        let error = appeared ? nil : "Element \(identifier) did not appear"
+        let duration = Int((Date().timeIntervalSince(start)) * 1000)
+        var success = appeared
+        var error: String? = appeared ? nil : "Element \(identifier) did not appear"
 
-        if !appeared {
-            XCTFail("❌ Element '\(identifier)' did not appear within timeout.")
+        // Threshold evaluation (if both are present and element appeared)
+        if appeared, let type = thresholdType, let value = thresholdValue {
+            switch type.uppercased() {
+            case "MAX":
+                if Double(duration) > value {
+                    success = false
+                    error = "Launch time \(duration)ms exceeded MAX threshold \(value)ms"
+                }
+            case "MIN":
+                if Double(duration) < value {
+                    success = false
+                    error = "Launch time \(duration)ms below MIN threshold \(value)ms"
+                }
+            case "TARGET":
+                if Double(duration) != value {
+                    success = false
+                    error = "Launch time \(duration)ms not equal to threshold \(value)ms"
+                }
+            default:
+                // Unknown type, do not fail
+                break
+            }
         }
 
         TestResultLogger.shared.log(
             step: TestStep(
                 action: "measureStartup",
                 target: identifier,
-                value: String(format: "%.3f", duration),
+                value: "\(duration)",
                 metric: "launchDuration"
             ),
             success: success,
@@ -142,15 +203,16 @@ final class TestResultLogger {
 
     func log(step: TestStep, success: Bool, error: String?) {
         let formatter = ISO8601DateFormatter()
-        steps.append(TestStepResult(
-            action: step.action,
-            target: step.target,
-            value: step.value,
-            metric: step.metric,
-            success: success,
-            error: error,
-            timestamp: formatter.string(from: Date())
-        ))
+        steps.append(
+            TestStepResult(
+                action: step.action,
+                target: step.target,
+                value: step.value,
+                metric: step.metric,
+                success: success,
+                error: error,
+                timestamp: formatter.string(from: Date())
+            ))
     }
 
     func reset() {
@@ -161,7 +223,8 @@ final class TestResultLogger {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         guard let data = try? encoder.encode(results),
-              let json = String(data: data, encoding: .utf8) else {
+            let json = String(data: data, encoding: .utf8)
+        else {
             return "[]"
         }
         return json

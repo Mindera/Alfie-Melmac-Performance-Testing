@@ -1,7 +1,8 @@
 package android
 
 import core.AppManager
-import utils.Logger
+import utils.*
+import config.Config
 
 /**
  * Object responsible for managing Android apps.
@@ -15,9 +16,12 @@ object AndroidAppManager : AppManager {
      * @param appPath The file path to the APK to be installed.
      * @throws RuntimeException if the installation fails.
      */
-    override fun installApp(appPath: String) {
-        Logger.info("Installing Android app: $appPath")
-        val process = ProcessBuilder("adb", "install", "-r", appPath).start()
+    override fun installApp(app: String) {
+        val resolvedAppPath = Tools.resolvePath(Config.getAppFolderPath()) + '/' + app
+        Logger.info("Installing Android app: $app")
+        val process = ProcessBuilder("adb", "install", "-r", resolvedAppPath)
+            .redirectErrorStream(true)
+            .start()
         process.waitFor()
         if (process.exitValue() != 0) {
             throw RuntimeException("Failed to install Android app.")

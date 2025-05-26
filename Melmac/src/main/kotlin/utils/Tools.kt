@@ -73,4 +73,52 @@ object Tools {
             "ERROR: ${e.message}"
         }
     }
+
+    /**
+     * Resolves a path to an absolute path, supporting both absolute and relative input.
+     * If the input is already absolute, returns it as-is.
+     * If relative, resolves it from the current working directory.
+     */
+    fun resolvePath(path: String): String {
+        val expanded = if (path.startsWith("~")) {
+            System.getProperty("user.home") + path.drop(1)
+        } else path
+        val file = java.io.File(expanded)
+        return if (file.isAbsolute) file.absolutePath
+        else java.io.File(System.getProperty("user.dir"), expanded).absolutePath
+    }
+
+
+    /**
+     * Retrieves the version of an APK file.
+     *
+     * @param apkPath The file path to the APK.
+     * @return The version name of the APK, or null if not found.
+     */
+    fun getApkVersion(apkPath: String): String? {
+        val aaptPath = Tools.resolvePath("~/Library/Android/sdk/build-tools/34.0.0/aapt")
+        val process = ProcessBuilder(aaptPath, "dump", "badging", apkPath).start()
+        val output = process.inputStream.bufferedReader().readText()
+        val match = Regex("versionName='([^']+)'").find(output)
+        return match?.groups?.get(1)?.value
+    }
+
+    /**
+     * Retrieves the version of an iOS app bundle.
+     *
+     * @param appPath The file path to the app bundle.
+     * @return The version of the app bundle, or null if not found.
+     */
+    fun getAppBundleVersion(appPath: String): String? {
+        val plistPath = "$appPath/Info.plist"
+        val process =
+                ProcessBuilder(
+                                "/usr/libexec/PlistBuddy",
+                                "-c",
+                                "Print :CFBundleShortVersionString",
+                                plistPath
+                        )
+                        .start()
+        return process.inputStream.bufferedReader().readText().trim().ifEmpty { null }
+    }
 }

@@ -1,14 +1,12 @@
 package android
 
 import core.DeviceManager
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import utils.Logger
 import utils.Tools
 
 /**
- * Object responsible for managing Android devices (emulators).
- * Provides functionality to start and shut down Android emulators.
+ * Object responsible for managing Android devices (emulators). Provides functionality to start and
+ * shut down Android emulators.
  */
 object AndroidDeviceManager : DeviceManager {
 
@@ -20,15 +18,26 @@ object AndroidDeviceManager : DeviceManager {
      */
     override fun startDevice(deviceName: String) {
         Logger.info("📱 Starting Android emulator: $deviceName")
-        val emulatorPath = "${System.getProperty("user.home")}/Library/Android/sdk/emulator/emulator"
-        val process = ProcessBuilder(
-            emulatorPath,
-            "-avd",
-            deviceName,
-            "-no-snapshot-load",
-            "-no-snapshot-save",
-            "-no-boot-anim"
-        ).start()
+        val sdkHome =
+                System.getenv("ANDROID_HOME")
+                        ?: System.getenv("ANDROID_SDK_ROOT")
+                                ?: "${System.getProperty("user.home")}/Library/Android/sdk"
+        val emulatorPath = "$sdkHome/emulator/emulator"
+
+        val args =
+                mutableListOf(
+                        emulatorPath,
+                        "-avd",
+                        deviceName,
+                        "-no-snapshot-load",
+                        "-no-snapshot-save",
+                        "-no-boot-anim"
+                )
+        if (System.getenv("CI") == "true") {
+            args.add("-no-window")
+        }
+
+        val process = ProcessBuilder(args).start()
 
         Logger.info("⏳ Waiting for Android emulator device...")
         waitForDeviceBoot(process)
@@ -74,12 +83,13 @@ object AndroidDeviceManager : DeviceManager {
         ProcessBuilder("adb", "wait-for-device").start().waitFor()
 
         while (true) {
-            val bootStatus = ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
-                .start()
-                .inputStream
-                .bufferedReader()
-                .readText()
-                .trim()
+            val bootStatus =
+                    ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
+                            .start()
+                            .inputStream
+                            .bufferedReader()
+                            .readText()
+                            .trim()
 
             if (bootStatus == "1") {
                 Logger.info("✅ Android emulator boot completed!")
