@@ -42,7 +42,7 @@ jobs:
       #   run: xcrun simctl create "iPhone 16 Pro" com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro com.apple.CoreSimulator.SimRuntime.iOS-18-4
 
       - name: Start backend
-        run: ./gradlew run &
+        run: cd Melmac && ./gradlew run &
 
       - name: Wait for backend to be ready
         run: |
