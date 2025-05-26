@@ -5,6 +5,7 @@ import domain.AppVersion
 import dtos.AppResponseDTO
 import dtos.AppVersionResponseDTO
 import java.io.File
+import java.nio.file.Paths
 import repos.IRepos.IAppRepository
 import repos.IRepos.IAppVersionRepository
 import services.IServices.IAppService
@@ -125,8 +126,8 @@ class AppService(
     }
 
     override fun getAppVersionByNameFromFolder(appName: String, appVersion: String): AppVersionResponseDTO {
-        val resolvedFolderPath = Tools.resolvePath(Config.getAppFolderPath())
-        val folder = File(resolvedFolderPath)
+        val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")        
+        val folder = File(appFolder.toString())
         if (!folder.exists() || !folder.isDirectory) {
             throw IllegalArgumentException("Invalid folder path: ${folder.absolutePath}")
         }

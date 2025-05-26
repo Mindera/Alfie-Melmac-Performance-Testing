@@ -42,21 +42,20 @@ jobs:
       #   run: xcrun simctl create "iPhone 16 Pro" com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro com.apple.CoreSimulator.SimRuntime.iOS-18-4
 
       - name: Generate Gradle Wrapper
+        working-directory: Melmac
         run: |
-          cd Melmac
           gradle wrapper --gradle-version 8.13
 
       - name: Make Gradle Wrapper executable
         run: |
-          chmod +x Melmac/gradlew
+          chmod +x gradlew
 
       - name: Build Melmac
         run: |
-          cd Melmac
           ./gradlew build
 
       - name: Start backend
-        run: cd Melmac && ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
+        run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
 
       - name: Wait for backend to be ready
         run: |
@@ -82,16 +81,19 @@ jobs:
 
       - name: Create test suite
         run: |
-          curl -X POST http://localhost:8080/test-suites \
+          mkdir -p results
+          curl -s -X POST http://localhost:8080/test-suites \
             -H "Content-Type: application/json" \
             -d '{
               "testSuiteName": "My Test Suite",
               "testSuiteDescription": "Description of my test suite"
-            }'
+            }' | tee results/test_suite.json
+          export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
       - name: Create Android test plan
         run: |
-          curl -X POST http://localhost:8080/test-plans \
+          curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
             -d '{
               "notes": "Test plan for App Startup Time metric",
@@ -122,7 +124,7 @@ jobs:
 
       - name: Create iOS test plan
         run: |
-          curl -X POST http://localhost:8080/test-plans \
+          curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
             -d '{
               "notes": "Test plan for App Startup Time metric",
@@ -157,8 +159,7 @@ jobs:
       - name: Run full test suite
         run: |
           mkdir -p results
-          curl -X POST "http://localhost:8080/test-suites/1/run" | tee results/suite_execution.json
-        
+          curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" | tee results/suite_execution.json
       # --- Results summary generation in table format ---
       - name: Generate Markdown summary from suite results
         run: |
