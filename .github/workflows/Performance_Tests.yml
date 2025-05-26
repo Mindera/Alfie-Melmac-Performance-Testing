@@ -20,7 +20,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: "17"
 
       # Android SDK setup
@@ -40,6 +40,20 @@ jobs:
       # Optionally, create a specific iOS simulator if needed
       # - name: Create iOS Simulator
       #   run: xcrun simctl create "iPhone 16 Pro" com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro com.apple.CoreSimulator.SimRuntime.iOS-18-4
+
+      - name: Generate Gradle Wrapper
+        run: |
+          cd Melmac
+          gradle wrapper --gradle-version 8.13
+
+      - name: Make Gradle Wrapper executable
+        run: |
+          chmod +x Melmac/gradlew
+
+      - name: Build Melmac
+        run: |
+          cd Melmac
+          ./gradlew build
 
       - name: Start backend
         run: cd Melmac && ./gradlew run &

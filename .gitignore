@@ -18,6 +18,8 @@ bin/
 build/
 .gradle-cache/
 gradle-app.setting
+gradlew
+gradlew.bat
 
 # IntelliJ IDEA
 .idea/
