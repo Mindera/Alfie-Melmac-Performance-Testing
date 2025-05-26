@@ -56,11 +56,11 @@ jobs:
           ./gradlew build
 
       - name: Start backend
-        run: cd Melmac && ./gradlew run &
+        run: cd Melmac && ./gradlew run > ../../backend.log 2>&1 &
 
       - name: Wait for backend to be ready
         run: |
-          for i in {1..30}; do
+          for i in {1..60}; do  # Wait up to 2 minutes
             if curl -s http://localhost:8080/; then
               echo "Backend is up!"
               exit 0
@@ -69,6 +69,16 @@ jobs:
           done
           echo "Backend did not start in time" >&2
           exit 1
+
+      - name: Debug backend process if startup fails
+        if: failure()
+        run: |
+          echo "==== Java processes ===="
+          ps aux | grep '[j]ava' || true
+          echo "==== Ports in use ===="
+          lsof -i :8080 || true
+          echo "==== Backend logs ===="
+          cat Melmac/build/libs/*.log || echo "No log file found"
 
       - name: Create test suite
         run: |
