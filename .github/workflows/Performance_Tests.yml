@@ -56,11 +56,11 @@ jobs:
           ./gradlew build
 
       - name: Start backend
-        run: cd Melmac && ./gradlew run > ../../backend.log 2>&1 &
+        run: cd Melmac && ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
 
       - name: Wait for backend to be ready
         run: |
-          for i in {1..60}; do  # Wait up to 2 minutes
+          for i in {1..30}; do  # Wait up to 1 minute
             if curl -s http://localhost:8080/; then
               echo "Backend is up!"
               exit 0
@@ -69,7 +69,10 @@ jobs:
           done
           echo "Backend did not start in time" >&2
           exit 1
-          
+
+      - name: List files in workspace
+        run: ls -al $GITHUB_WORKSPACE
+
       - name: Debug backend process if startup fails
         if: failure()
         run: |
