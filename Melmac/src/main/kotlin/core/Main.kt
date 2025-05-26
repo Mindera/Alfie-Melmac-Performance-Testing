@@ -1,10 +1,10 @@
 package core
 
 /**
- * The entry point of the Melmac Performance Testing backend application.
+ * Entry point for running the Ktor application.
  *
- * This function starts the Ktor server by calling the [startServer] function.
+ * Uses EngineMain and application.conf for configuration.
  */
 fun main() {
-    startServer()
+    // Nothing needed here – Ktor loads everything via EngineMain.
 }

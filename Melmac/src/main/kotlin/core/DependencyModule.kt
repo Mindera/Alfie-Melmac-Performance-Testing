@@ -1,9 +1,12 @@
 package core
 
 import android.*
+import config.Config
 import controllers.*
 import controllers.IControllers.*
+import core.runners.*
 import ios.*
+import java.sql.DriverManager
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import repos.*
@@ -16,68 +19,162 @@ import services.IServices.*
  * implementations for device management, app management, and test runners.
  */
 val appModule = module {
-    // Metric + execution setup
-    single<IMetricRepository> { MetricRepository() }
-    single<IOutputRepository> { OutputRepository() }
-    single<IMetricParameterRepository> { MetricParameterRepository() }
-    single<IExecutionTypeRepository> { ExecutionTypeRepository() }
-    single<IExecutionTypeParameterRepository> { ExecutionTypeParameterRepository() }
-    single<IExecutionTypeMetricRepository> { ExecutionTypeMetricRepository() }
 
-    // Suite & Test Execution
-    single<ITestSuiteRepository> { TestSuiteRepository() }
-    single<ITestExecutionRepository> { TestExecutionRepository() }
-    single<ITestExecutionTypeParameterRepository> { TestExecutionTypeParameterRepository() }
-    single<ITestMetricParameterRepository> { TestMetricParameterRepository() }
+    // --- Database Connection ---
+    single<java.sql.Connection> {
+        val dbConfig = Config.getDatabaseConfig()
+        val database =
+                dbConfig["database"]?.asText()
+                        ?: throw IllegalArgumentException("Database name not found")
+        val host =
+                dbConfig["host"]?.asText()
+                        ?: throw IllegalArgumentException("Database host not found")
+        val port =
+                dbConfig["port"]?.asInt()
+                        ?: throw IllegalArgumentException("Database port not found")
+        val user =
+                dbConfig["user"]?.asText()
+                        ?: throw IllegalArgumentException("Database user not found")
+        val password =
+                dbConfig["password"]?.asText()
+                        ?: throw IllegalArgumentException("Database password not found")
+        val encrypt = dbConfig["encrypt"]?.asBoolean() ?: true
+        val trustServerCertificate = dbConfig["trustServerCertificate"]?.asBoolean() ?: true
+        val driver = dbConfig["driver"]?.asText() ?: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+
+        val dbUrl =
+                "jdbc:sqlserver://$host:$port;databaseName=$database;encrypt=$encrypt;trustServerCertificate=$trustServerCertificate"
+        Class.forName(driver)
+        DriverManager.getConnection(dbUrl, user, password)
+    }
+
+    single<String>(qualifier = named("metricsConfigPath")) { "data.json" }
+
+    // --- Repositories ---
+
+    // Metrics
+    single<IMetricRepository> { MetricRepository(get()) }
+    single<IMetricOutputRepository> { MetricOutputRepository(get()) }
+    single<IMetricParameterRepository> { MetricParameterRepository(get()) }
+
+    // Execution Types
+    single<IExecutionTypeRepository> { ExecutionTypeRepository(get()) }
+    single<IExecutionTypeParameterRepository> { ExecutionTypeParameterRepository(get()) }
+    single<IExecutionTypeMetricRepository> { ExecutionTypeMetricRepository(get()) }
+
+    // TestPlan and Versions
+    single<ITestPlanRepository> { TestPlanRepository(get()) }
+    single<ITestPlanVersionRepository> { TestPlanVersionRepository(get()) }
+
+    // Parameters and Thresholds
+    single<ITestPlanExecutionTypeParameterValueRepository> {
+        TestPlanExecutionTypeParameterValueRepository(get())
+    }
+    single<ITestPlanMetricParameterValueRepository> {
+        TestPlanMetricParameterValueRepository(get())
+    }
+    single<IThresholdRepository> { ThresholdRepository(get()) }
+    single<IThresholdTypeRepository> { ThresholdTypeRepository(get()) }
+
+    // Test Execution
+    single<ITestExecutionRepository> { TestExecutionRepository(get()) }
+    single<ITestMetricOutputResultRepository> { TestMetricOutputResultRepository(get()) }
+
+    // Test Suite
+    single<ITestSuiteRepository> { TestSuiteRepository(get()) }
+    single<ITestSuiteVersionRepository> { TestSuiteVersionRepository(get()) }
+    single<ITestSuiteVersionPlanRepository> { TestSuiteVersionPlanRepository(get()) }
+    single<ITestSuiteExecutionRepository> { TestSuiteExecutionRepository(get()) }
 
     // App & Device
-    single<IAppRepository> { AppRepository() }
-    single<IAppVersionRepository> { AppVersionRepository() }
-    single<IDeviceRepository> { DeviceRepository() }
-    single<IOSRepository> { OSRepository() }
-    single<IOSVersionRepository> { OSVersionRepository() }
+    single<IAppRepository> { AppRepository(get()) }
+    single<IAppVersionRepository> { AppVersionRepository(get()) }
+    single<IDeviceRepository> { DeviceRepository(get()) }
+    single<IOperSysRepository> { OperSysRepository(get()) }
+    single<IOperSysVersionRepository> { OperSysVersionRepository(get()) }
 
-    // Threshold and Threshold Type
-    single<IThresholdTypeRepository> { ThresholdTypeRepository() }
-    single<IThresholdRepository> { ThresholdRepository() }
-
-    // Services
-    single<ITestSuiteService> { TestSuiteService(get()) }
+    // --- Services ---
     single<IAppService> { AppService(get(), get()) }
-    single<IDeviceService> { DeviceService(get(), get(), get()) }
-    single<IMetricService> { MetricService(get(), get(), get(), get(), get(), get()) }
-    single<ITestExecutionService> {
-        TestExecutionService(
-                get(), // ITestExecutionRepository
-                get(), // IMetricRepository
-                get(), // IExecutionTypeRepository
-                get(), // ITestSuiteRepository
-                get(), // IAppVersionRepository
-                get(), // IExecutionTypeParameterRepository
-                get(), // IMetricParameterRepository
-                get(), // ITestExecutionParameterRepository
-                get() // ITestMetricParameterRepository
+    single<IDeviceService> { DeviceService() }
+    single<IMetricService> { MetricService(get(), get(), get(), get(), get()) }
+    single<ILoaderService> {
+        LoaderService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(named("metricsConfigPath"))
         )
     }
-    single<IThresholdTypeService> { ThresholdTypeService(get()) }
+    single<ITestExecutionService> {
+        TestExecutionService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get()
+        )
+    }
     single<IThresholdService> { ThresholdService(get()) }
+    single<IThresholdTypeService> { ThresholdTypeService(get()) }
+    single<ITestPlanService> {
+        TestPlanService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get()
+        )
+    }
+    single<ITestMetricOutputResultService> { TestMetricOutputResultService(get()) }
+    single<ITestSuiteService> {
+        TestSuiteService(get(), get(), get(), get(), get(), get(), get(), get(), get())
+    }
 
-    // Controllers
-    single<ITestSuiteController> { TestSuiteController() }
-    single<IAppController> { AppController() }
-    single<IDeviceController> { DeviceController() }
-    single<IMetricController> { MetricController() }
-    single<ITestExecutionController> { TestExecutionController() }
+    // --- Controllers ---
+    single<IAppController> { AppController(get()) }
+    single<IDeviceController> { DeviceController(get()) }
+    single<IMetricController> { MetricController(get()) }
+    single<ITestExecutionController> { TestExecutionController(get(), get()) }
     single<IThresholdController> { ThresholdController(get()) }
     single<IThresholdTypeController> { ThresholdTypeController(get()) }
+    single<ITestSuiteController> { TestSuiteController(get(), get()) }
+    single<ITestPlanController> { TestPlanController(get()) }
 
-    // Android dependencies
-    single<DeviceManager>(qualifier = named("android")) { AndroidDeviceManager }
-    single<AppManager>(qualifier = named("android")) { AndroidAppManager }
-    single { AndroidTestRunner() }
+    single<ITestRunner> { TestRunner(get(), get()) }
 
-    // iOS dependencies
-    single<DeviceManager>(qualifier = named("ios")) { IOSDeviceManager }
-    single<AppManager>(qualifier = named("ios")) { IOSAppManager }
-    single { IOSTestRunner() }
+    // --- Platform-specific dependencies ---
+    single<DeviceManager>(named("android")) { AndroidDeviceManager }
+    single<AppManager>(named("android")) { AndroidAppManager }
+    single<AndroidTestRunner> { AndroidTestRunner(get(named("android")), get(named("android"))) }
+
+    single<DeviceManager>(named("ios")) { IOSDeviceManager }
+    single<AppManager>(named("ios")) { IOSAppManager }
+    single<IOSTestRunner> { IOSTestRunner(get(named("ios")), get(named("ios"))) }
 }
