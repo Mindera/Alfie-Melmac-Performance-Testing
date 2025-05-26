@@ -84,6 +84,7 @@ build/
 
 # Include config.json
 !config.json
+!data.json
 
 # Ignore ui_dumps folder
 ui_dumps/

@@ -1,0 +1,48 @@
+{
+  "thresholdTypes": [
+    {
+      "thresholdTypeName": "Min",
+      "thresholdTypeDescription": "Checks if the value is above a specific minimum threshold."
+    },
+    {
+      "thresholdTypeName": "Max",
+      "thresholdTypeDescription": "Checks if the value is below a specific maximum threshold."
+    },
+    {
+      "thresholdTypeName": "Target",
+      "thresholdTypeDescription": "Checks if the value matches a specific target."
+    }
+  ],
+  "metrics": [
+    {
+      "name": "App Startup Time",
+      "metricParameters": [
+        {
+          "parameterName": "elementToWaitFor",
+          "parameterType": "string"
+        },
+        {
+          "parameterName": "timeout",
+          "parameterType": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "outputName": "launchTime",
+          "unit": "ms"
+        },
+        {
+          "outputName": "elementFound",
+          "unit": "boolean"
+        }
+      ],
+      "executionTypes": [
+        {
+          "executionTypeName": "Cold Start",
+          "executionTypeDescription": "Primeira vez que a app é iniciada.",
+          "parameters": []
+        }
+      ]
+    }
+  ]
+}
