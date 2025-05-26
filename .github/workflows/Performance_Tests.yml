@@ -47,14 +47,17 @@ jobs:
           gradle wrapper --gradle-version 8.13
 
       - name: Make Gradle Wrapper executable
+        working-directory: Melmac
         run: |
           chmod +x gradlew
 
       - name: Build Melmac
+        working-directory: Melmac
         run: |
           ./gradlew build
 
       - name: Start backend
+        working-directory: Melmac
         run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
 
       - name: Wait for backend to be ready
@@ -80,6 +83,7 @@ jobs:
           cat backend.log || echo "No backend.log file found"
 
       - name: Create test suite
+        working-directory: Melmac
         run: |
           mkdir -p results
           curl -s -X POST http://localhost:8080/test-suites \
@@ -92,6 +96,7 @@ jobs:
           echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
       - name: Create Android test plan
+        working-directory: Melmac
         run: |
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
@@ -123,6 +128,7 @@ jobs:
             }'
 
       - name: Create iOS test plan
+        working-directory: Melmac
         run: |
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
@@ -157,6 +163,7 @@ jobs:
             }'
 
       - name: Run full test suite
+        working-directory: Melmac
         run: |
           mkdir -p results
           curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" | tee results/suite_execution.json
