@@ -1,38 +1,44 @@
 package controllers
 
 import controllers.IControllers.IDeviceController
-import domain.dtos.DeviceResponseDTO
-import domain.dtos.OSResponseDTO
-import domain.dtos.OSVersionResponseDTO
+import dtos.AvailableDeviceDTO
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.http.*
-import org.koin.ktor.ext.inject
 import services.IServices.IDeviceService
 
-class DeviceController : IDeviceController {
+class DeviceController(private val deviceService: IDeviceService) : IDeviceController {
+
     override fun Route.routes() {
-        val service by inject<IDeviceService>()
 
         route("/devices") {
+
+            // Endpoint to get all available devices
             get {
-                val devices: List<DeviceResponseDTO> = service.getAllDevices()
+                val platform = call.request.queryParameters["platform"]?.lowercase()
+                val devices: List<AvailableDeviceDTO> = deviceService.getAllAvailableDevices()
+                    .filter { platform == null || it.osName.lowercase() == platform }
                 call.respond(devices)
             }
-        }
 
-        route("/os-versions") {
-            get {
-                val osVersions: List<OSVersionResponseDTO> = service.getAllOSVersions()
-                call.respond(osVersions)
-            }
-        }
+            // Endpoint to get devices by minimum OS version
+            get("/os-minimum/{minOsVersionId}") {
+                val minVersion = call.parameters["minOsVersionId"]
+                val platform = call.request.queryParameters["platform"]?.lowercase()
 
-        route("/oses") {
-            get {
-                val osList: List<OSResponseDTO> = service.getAllOS()
-                call.respond(osList)
+                val devices =
+                        if (minVersion != null) {
+                            deviceService.getAvailableDevicesByMinVersion(minVersion).filter {
+                                platform == null || it.osName.lowercase() == platform
+                            }
+                        } else {
+                            deviceService.getAllAvailableDevices().filter {
+                                platform == null || it.osName.lowercase() == platform
+                            }
+                        }
+
+                call.respond(devices)
             }
         }
     }
