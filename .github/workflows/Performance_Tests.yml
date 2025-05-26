@@ -98,69 +98,70 @@ jobs:
       - name: Create Android test plan
         working-directory: Melmac
         run: |
-          curl -s -X POST http://localhost:8080/test-plans \
-            -H "Content-Type: application/json" \
-            -d '{
-              "notes": "Test plan for App Startup Time metric",
-              "testName": "Startup Time Plan",
-              "metricMetricId": 1,
-              "deviceName": "Medium_Phone_API_35",
-              "appName": "Alfie.apk",
-              "appVersion": "0.8.0",
-              "appPackage": "au.com.alfie.ecomm.debug",
-              "mainActivity": "au.com.alfie.ecomm.MainActivity",
-              "executionTypeExecutionTypeId": 1,
-              "thresholds": [
-                {
-                  "targetValue": 100,
-                  "thresholdTypeThresholdTypeId": 2,
-                  "metricOutputMetricOutputId": 1
-                }
-              ],
-              "metricParameters": [
-                {
-                  "parameterValue": "home-tab",
-                  "metricParameterMetricParameterId": 1
-                }
-              ],
-              "executionTypeParameters": [],
-              "testSuiteVersionId": ${TEST_SUITE_ID}
-            }'
+            curl -s -X POST http://localhost:8080/test-plans \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"notes\": \"Test plan for App Startup Time metric\",
+                \"testName\": \"Startup Time Plan\",
+                \"metricMetricId\": 1,
+                \"deviceName\": \"Medium_Phone_API_35\",
+                \"appName\": \"Alfie.apk\",
+                \"appVersion\": \"0.8.0\",
+                \"appPackage\": \"au.com.alfie.ecomm.debug\",
+                \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
+                \"executionTypeExecutionTypeId\": 1,
+                \"thresholds\": [
+                  {
+                    \"targetValue\": 100,
+                    \"thresholdTypeThresholdTypeId\": 2,
+                    \"metricOutputMetricOutputId\": 1
+                  }
+                ],
+                \"metricParameters\": [
+                  {
+                    \"parameterValue\": \"home-tab\",
+                    \"metricParameterMetricParameterId\": 1
+                  }
+                ],
+                \"executionTypeParameters\": [],
+                \"testSuiteVersionId\": ${TEST_SUITE_ID}
+              }"
+
 
       - name: Create iOS test plan
         working-directory: Melmac
         run: |
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
-            -d '{
-              "notes": "Test plan for App Startup Time metric",
-              "testName": "Startup Time Plan",
-              "metricMetricId": 1,
-              "deviceName": "iPhone 16 Pro",
-              "appName": "Alfie.app",
-              "appVersion": "0.8.1",
-              "appPackage": "com.mindera.alfie.debug",
-              "executionTypeExecutionTypeId": 1,
-              "thresholds": [
+            -d "{
+              \"notes\": \"Test plan for App Startup Time metric\",
+              \"testName\": \"Startup Time Plan\",
+              \"metricMetricId\": 1,
+              \"deviceName\": \"iPhone 16 Pro\",
+              \"appName\": \"Alfie.app\",
+              \"appVersion\": \"0.8.1\",
+              \"appPackage\": \"com.mindera.alfie.debug\",
+              \"executionTypeExecutionTypeId\": 1,
+              \"thresholds\": [
                 {
-                  "targetValue": 10000,
-                  "thresholdTypeThresholdTypeId": 1,
-                  "metricOutputMetricOutputId": 1
+                  \"targetValue\": 10000,
+                  \"thresholdTypeThresholdTypeId\": 1,
+                  \"metricOutputMetricOutputId\": 1
                 }
               ],
-              "metricParameters": [
+              \"metricParameters\": [
                 {
-                  "parameterValue": "account-btn",
-                  "metricParameterMetricParameterId": 1
+                  \"parameterValue\": \"account-btn\",
+                  \"metricParameterMetricParameterId\": 1
                 },
                 {
-                  "parameterValue": "50000",
-                  "metricParameterMetricParameterId": 2
+                  \"parameterValue\": \"50000\",
+                  \"metricParameterMetricParameterId\": 2
                 }
               ],
-              "executionTypeParameters": [],
-              "testSuiteVersionId": ${TEST_SUITE_ID}
-            }'
+              \"executionTypeParameters\": [],
+              \"testSuiteVersionId\": ${TEST_SUITE_ID}
+            }"
 
       - name: Run full test suite
         working-directory: Melmac
