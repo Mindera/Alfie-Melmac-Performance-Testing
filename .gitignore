@@ -11,6 +11,7 @@ out/
 .idea/
 *.swp
 *.swo
+bin/
 
 # Gradle
 .gradle/
