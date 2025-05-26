@@ -124,7 +124,7 @@ jobs:
                 }
               ],
               "executionTypeParameters": [],
-              "testSuiteVersionId": 1
+              "testSuiteVersionId": ${TEST_SUITE_ID}
             }'
 
       - name: Create iOS test plan
@@ -159,7 +159,7 @@ jobs:
                 }
               ],
               "executionTypeParameters": [],
-              "testSuiteVersionId": 1
+              "testSuiteVersionId": ${TEST_SUITE_ID}
             }'
 
       - name: Run full test suite
