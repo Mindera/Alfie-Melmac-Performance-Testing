@@ -3,6 +3,7 @@ package android
 import core.AppManager
 import utils.*
 import config.Config
+import java.nio.file.Paths
 
 /**
  * Object responsible for managing Android apps.
@@ -17,9 +18,10 @@ object AndroidAppManager : AppManager {
      * @throws RuntimeException if the installation fails.
      */
     override fun installApp(app: String) {
-        val resolvedAppPath = Tools.resolvePath(Config.getAppFolderPath()) + '/' + app
+        val appPath = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps").resolve(app)
+        Logger.info(appPath.toString())
         Logger.info("Installing Android app: $app")
-        val process = ProcessBuilder("adb", "install", "-r", resolvedAppPath)
+        val process = ProcessBuilder("adb", "install", "-r", appPath.toString())
             .redirectErrorStream(true)
             .start()
         process.waitFor()

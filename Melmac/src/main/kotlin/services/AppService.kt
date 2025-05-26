@@ -50,8 +50,8 @@ class AppService(
 
     // --- Folder Methods ---
     override fun getAllAppsFromFolder(): List<AppResponseDTO> {
-        val resolvedFolderPath = Tools.resolvePath(Config.getAppFolderPath())
-        val folder = File(resolvedFolderPath)
+        val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")        
+        val folder = File(appFolder.toString())
         if (!folder.exists() || !folder.isDirectory) {
             throw IllegalArgumentException("Invalid folder path: ${folder.absolutePath}")
         }
@@ -71,8 +71,8 @@ class AppService(
     }
 
     override fun getAppByNameFromFolder(appName: String): AppResponseDTO {
-        val resolvedFolderPath = Tools.resolvePath(Config.getAppFolderPath())
-        val folder = File(resolvedFolderPath)
+        val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")        
+        val folder = File(appFolder.toString())
         if (!folder.exists() || !folder.isDirectory) {
             throw IllegalArgumentException("Invalid folder path: ${folder.absolutePath}")
         }
@@ -92,8 +92,8 @@ class AppService(
     }
 
     override fun getAppVersionsFromFolder(appName: String): List<AppVersionResponseDTO> {
-        val resolvedFolderPath = Tools.resolvePath(Config.getAppFolderPath())
-        val folder = File(resolvedFolderPath)
+        val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")        
+        val folder = File(appFolder.toString())
         if (!folder.exists() || !folder.isDirectory) {
             throw IllegalArgumentException("Invalid folder path: ${folder.absolutePath}")
         }

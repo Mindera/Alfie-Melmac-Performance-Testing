@@ -42,17 +42,6 @@ object Config {
     }
 
     /**
-     * Retrieves the app folder path from the configuration.
-     *
-     * @return A [String] representing the app folder path.
-     * @throws IllegalArgumentException If the app folder path is not found.
-     */
-    fun getAppFolderPath(): String {
-        return config["appFolder"]?.get("path")?.asText()
-            ?: throw IllegalArgumentException("App folder path not found")
-    }
-
-    /**
      * Retrieves the database configuration.
      *
      * @return A [JsonNode] containing the database configuration (e.g., URL, username, password).

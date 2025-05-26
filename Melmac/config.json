@@ -3,9 +3,6 @@
     "host": "localhost",
     "port": 8080
   },
-  "appFolder": {
-    "path": "./src/main/resources/apps"
-  },
   "database": {
     "host": "vsgate-s1.dei.isep.ipp.pt",
     "port": 10704,
