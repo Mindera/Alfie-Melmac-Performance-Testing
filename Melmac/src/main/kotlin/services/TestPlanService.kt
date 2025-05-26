@@ -309,7 +309,8 @@ class TestPlanService(
                                     testPlanVersionTestPlanVersionId =
                                             parameter.testPlanVersionTestPlanVersionId
                             )
-                        }
+                        },
+                testSuiteVersionId = request.testSuiteVersionId
         )
     }
 }

@@ -16,6 +16,7 @@ data class TestPlanVersionResponseDTO(
     val thresholds: List<TestThresholdResponseDTO>,
     val metricParameters: List<TestMetricParameterResponseDTO>,
     val executionTypeParameters: List<TestExecutionTypeParameterResponseDTO>,
+    val testSuiteVersionId: Int
 )
 
 

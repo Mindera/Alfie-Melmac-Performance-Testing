@@ -123,7 +123,8 @@ class TestSuiteService(
                             executionTypeParameterExecutionTypeParameterId = parameter.executionTypeParameterExecutionTypeParameterId,
                             testPlanVersionTestPlanVersionId = parameter.testPlanVersionTestPlanVersionId
                         )
-                    }
+                    },
+                    testSuiteVersionId = latestVersion.testSuiteVersionId
                 )
             }
         }
