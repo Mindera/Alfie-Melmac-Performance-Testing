@@ -1,0 +1,206 @@
+name: Alfie Melmac Test Automation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # Every day at 3am UTC
+
+jobs:
+  test:
+    runs-on: macos-latest # Use macos-latest for both Android and iOS support
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+
+      # Android SDK setup
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android system image
+        run: sdkmanager "system-images;android-35;google_apis;x86_64"
+
+      - name: Create Android AVD
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+
+      # iOS tools (Xcode command line tools are pre-installed on macos-latest)
+      - name: List available iOS simulators
+        run: xcrun simctl list devices
+
+      # Optionally, create a specific iOS simulator if needed
+      # - name: Create iOS Simulator
+      #   run: xcrun simctl create "iPhone 16 Pro" com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro com.apple.CoreSimulator.SimRuntime.iOS-18-4
+
+      - name: Start backend
+        run: ./gradlew run &
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/; then
+              echo "Backend is up!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend did not start in time" >&2
+          exit 1
+
+      - name: Create test suite
+        run: |
+          curl -X POST http://localhost:8080/test-suites \
+            -H "Content-Type: application/json" \
+            -d '{
+              "testSuiteName": "My Test Suite",
+              "testSuiteDescription": "Description of my test suite"
+            }'
+
+      - name: Create Android test plan
+        run: |
+          curl -X POST http://localhost:8080/test-plans \
+            -H "Content-Type: application/json" \
+            -d '{
+              "notes": "Test plan for App Startup Time metric",
+              "testName": "Startup Time Plan",
+              "metricMetricId": 1,
+              "deviceName": "Medium_Phone_API_35",
+              "appName": "Alfie.apk",
+              "appVersion": "0.8.0",
+              "appPackage": "au.com.alfie.ecomm.debug",
+              "mainActivity": "au.com.alfie.ecomm.MainActivity",
+              "executionTypeExecutionTypeId": 1,
+              "thresholds": [
+                {
+                  "targetValue": 100,
+                  "thresholdTypeThresholdTypeId": 2,
+                  "metricOutputMetricOutputId": 1
+                }
+              ],
+              "metricParameters": [
+                {
+                  "parameterValue": "home-tab",
+                  "metricParameterMetricParameterId": 1
+                }
+              ],
+              "executionTypeParameters": [],
+              "testSuiteVersionId": 1
+            }'
+
+      - name: Create iOS test plan
+        run: |
+          curl -X POST http://localhost:8080/test-plans \
+            -H "Content-Type: application/json" \
+            -d '{
+              "notes": "Test plan for App Startup Time metric",
+              "testName": "Startup Time Plan",
+              "metricMetricId": 1,
+              "deviceName": "iPhone 16 Pro",
+              "appName": "Alfie.app",
+              "appVersion": "0.8.1",
+              "appPackage": "com.mindera.alfie.debug",
+              "executionTypeExecutionTypeId": 1,
+              "thresholds": [
+                {
+                  "targetValue": 10000,
+                  "thresholdTypeThresholdTypeId": 1,
+                  "metricOutputMetricOutputId": 1
+                }
+              ],
+              "metricParameters": [
+                {
+                  "parameterValue": "account-btn",
+                  "metricParameterMetricParameterId": 1
+                },
+                {
+                  "parameterValue": "50000",
+                  "metricParameterMetricParameterId": 2
+                }
+              ],
+              "executionTypeParameters": [],
+              "testSuiteVersionId": 1
+            }'
+
+      # Trigger test execution by test plan version and save output for summary
+      - name: Run test execution by test plan version
+        run: |
+          mkdir -p results
+          curl -s -X POST "http://localhost:8080/test-executions/run?testPlanVersionId=1" > results/execution.json
+
+      # --- Results summary generation in table format ---
+      - name: Generate Markdown summary from test results
+        run: |
+          mkdir -p results
+          testExecutionId=$(jq '.testExecutionId' results/execution.json)
+          testPlanVersionId=$(jq '.testPlanVersionTestPlanVersionId' results/execution.json)
+          curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" > results/thresholds.json
+          curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" > results/outputs.json
+
+          echo "## Performance Test Results" > results/summary.md
+          echo "" >> results/summary.md
+          echo "**Test Execution ID:** $testExecutionId  " >> results/summary.md
+          echo "**Test Plan Version ID:** $testPlanVersionId" >> results/summary.md
+          echo "" >> results/summary.md
+
+          # Test Results Table
+          echo "### Test Results" >> results/summary.md
+          echo "| Test Execution ID | Passed | Start Time | End Time |" >> results/summary.md
+          echo "|-------------------|--------|------------|----------|" >> results/summary.md
+          jq -r '"| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) |"' results/execution.json >> results/summary.md
+          echo "" >> results/summary.md
+
+          echo "### Thresholds" >> results/summary.md
+          echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
+          echo "|--------------|---------------|------------------|" >> results/summary.md
+          jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' results/thresholds.json >> results/summary.md
+          echo "" >> results/summary.md
+
+          echo "### Metric Output Results" >> results/summary.md
+          echo "| Metric Output Name | Value |" >> results/summary.md
+          echo "|--------------------|-------|" >> results/summary.md
+          jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' results/outputs.json >> results/summary.md
+          echo "" >> results/summary.md
+
+          echo "### Raw Execution Result" >> results/summary.md
+          jq . results/execution.json >> results/summary.md
+
+      - name: Upload test results artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: results/summary.md
+
+      - name: Add results to GitHub Actions summary
+        if: always()
+        run: |
+          if [ -f results/summary.md ]; then
+            cat results/summary.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No summary file found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = "No summary file found.";
+            if (fs.existsSync('results/summary.md')) {
+              body = fs.readFileSync('results/summary.md', 'utf8');
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### 📝 Performance Test Results\n\n${body}`
+            });
