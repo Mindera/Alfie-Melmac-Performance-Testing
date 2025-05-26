@@ -69,7 +69,7 @@ jobs:
           done
           echo "Backend did not start in time" >&2
           exit 1
-
+          
       - name: Debug backend process if startup fails
         if: failure()
         run: |
@@ -78,7 +78,13 @@ jobs:
           echo "==== Ports in use ===="
           lsof -i :8080 || true
           echo "==== Backend logs ===="
-          cat Melmac/build/libs/*.log || echo "No log file found"
+          cat backend.log || echo "No backend.log file found"
+
+      - name: Tail backend log (for debugging)
+        if: always()
+        run: |
+          echo "==== Last 50 lines of backend.log ===="
+          tail -n 50 backend.log || echo "No backend.log file found"
 
       - name: Create test suite
         run: |
