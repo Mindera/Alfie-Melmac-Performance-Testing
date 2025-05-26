@@ -70,9 +70,6 @@ jobs:
           echo "Backend did not start in time" >&2
           exit 1
 
-      - name: List files in workspace
-        run: ls -al $GITHUB_WORKSPACE
-
       - name: Debug backend process if startup fails
         if: failure()
         run: |
@@ -82,12 +79,6 @@ jobs:
           lsof -i :8080 || true
           echo "==== Backend logs ===="
           cat backend.log || echo "No backend.log file found"
-
-      - name: Tail backend log (for debugging)
-        if: always()
-        run: |
-          echo "==== Last 50 lines of backend.log ===="
-          tail -n 50 backend.log || echo "No backend.log file found"
 
       - name: Create test suite
         run: |
@@ -163,48 +154,50 @@ jobs:
               "testSuiteVersionId": 1
             }'
 
-      # Trigger test execution by test plan version and save output for summary
-      - name: Run test execution by test plan version
+      - name: Run full test suite
         run: |
           mkdir -p results
-          curl -s -X POST "http://localhost:8080/test-executions/run?testPlanVersionId=1" > results/execution.json
-
+          curl -X POST "http://localhost:8080/test-suites/1/run" | tee results/suite_execution.json
+        
       # --- Results summary generation in table format ---
-      - name: Generate Markdown summary from test results
+      - name: Generate Markdown summary from suite results
         run: |
           mkdir -p results
-          testExecutionId=$(jq '.testExecutionId' results/execution.json)
-          testPlanVersionId=$(jq '.testPlanVersionTestPlanVersionId' results/execution.json)
-          curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" > results/thresholds.json
-          curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" > results/outputs.json
+          suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
+          testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
 
-          echo "## Performance Test Results" > results/summary.md
+          echo "## Performance Test Suite Results" > results/summary.md
           echo "" >> results/summary.md
-          echo "**Test Execution ID:** $testExecutionId  " >> results/summary.md
-          echo "**Test Plan Version ID:** $testPlanVersionId" >> results/summary.md
+          echo "**Suite Execution ID:** $suiteExecutionId  " >> results/summary.md
+          echo "**Test Suite Version ID:** $testSuiteVersionId" >> results/summary.md
           echo "" >> results/summary.md
 
-          # Test Results Table
-          echo "### Test Results" >> results/summary.md
-          echo "| Test Execution ID | Passed | Start Time | End Time |" >> results/summary.md
-          echo "|-------------------|--------|------------|----------|" >> results/summary.md
-          jq -r '"| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) |"' results/execution.json >> results/summary.md
+          echo "### Test Execution Results" >> results/summary.md
+          echo "| Test Execution ID | Passed | Start Time | End Time | Test Plan Version ID |" >> results/summary.md
+          echo "|-------------------|--------|------------|----------|----------------------|" >> results/summary.md
+          jq -r '.executionResults[] | "| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) | \(.testPlanVersionTestPlanVersionId) |"' results/suite_execution.json >> results/summary.md
           echo "" >> results/summary.md
 
-          echo "### Thresholds" >> results/summary.md
-          echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
-          echo "|--------------|---------------|------------------|" >> results/summary.md
-          jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' results/thresholds.json >> results/summary.md
-          echo "" >> results/summary.md
+          # For each test execution, fetch and print thresholds and metric outputs
+          jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
+            testExecutionId=$(echo "$exec" | jq '.testExecutionId')
+            testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
 
-          echo "### Metric Output Results" >> results/summary.md
-          echo "| Metric Output Name | Value |" >> results/summary.md
-          echo "|--------------------|-------|" >> results/summary.md
-          jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' results/outputs.json >> results/summary.md
-          echo "" >> results/summary.md
+            echo "#### Thresholds for Test Execution ID $testExecutionId" >> results/summary.md
+            echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
+            echo "|--------------|---------------|------------------|" >> results/summary.md
+            curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" | jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' >> results/summary.md
+            echo "" >> results/summary.md
 
-          echo "### Raw Execution Result" >> results/summary.md
-          jq . results/execution.json >> results/summary.md
+            echo "#### Metric Output Results for Test Execution ID $testExecutionId" >> results/summary.md
+            echo "| Metric Output Name | Value |" >> results/summary.md
+            echo "|--------------------|-------|" >> results/summary.md
+            curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" | jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' >> results/summary.md
+            echo "" >> results/summary.md
+          done
+
+          echo "### Raw Suite Execution Result" >> results/summary.md
+          jq . results/suite_execution.json >> results/summary.md
 
       - name: Upload test results artifact
         if: always()
