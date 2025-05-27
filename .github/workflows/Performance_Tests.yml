@@ -31,12 +31,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android system image
-        run: sdkmanager "system-images;android-35;google_apis;x86_64"
-
-      - name: Create Android AVD
-        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
-
+      - name: Install Android system image (arm64)
+        run: sdkmanager "system-images;android-35;google_apis;arm64-v8a"
+      
+      - name: Create Android AVD (arm64)
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;arm64-v8a"
+        
       # iOS tools (Xcode command line tools are pre-installed on macos-latest)
       - name: List available iOS simulators
         run: xcrun simctl list devices
