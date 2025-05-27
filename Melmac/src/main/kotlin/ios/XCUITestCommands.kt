@@ -72,18 +72,42 @@ object XCUITestCommands {
         processBuilder.redirectErrorStream(true)
         val startedProcess = processBuilder.start()
 
-        // Espera o processo terminar
-        startedProcess.waitFor(timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+        // Create a buffer for output
+        val outputBuffer = StringBuilder()
+        
+        // Read output in real-time
+        val outputThread = Thread {
+            startedProcess.inputStream.bufferedReader().useLines { lines ->
+                lines.forEach { line ->
+                    println("[xcodebuild] $line")
+                    outputBuffer.append(line).append("\n")
+                }
+            }
+        }
+        outputThread.start()
 
-        // Lê toda a saída de uma vez só
-        val fullOutput = startedProcess.inputStream.bufferedReader().readText()
-        println("[xcodebuild] Full output:\n$fullOutput")
+        // Wait for process to complete with timeout
+        val completed = startedProcess.waitFor(timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+        outputThread.join(5000) // Give output thread 5 seconds to finish
 
-        // Extrai o JSON depois do marcador "✅ Result JSON:"
-        val jsonText = fullOutput.substringAfter("✅ Result JSON:").trim()
+        if (!completed) {
+            Logger.error("❌ xcodebuild process timed out after $timeoutInSeconds seconds")
+            startedProcess.destroyForcibly()
+            return Triple("Not Found", "False", "False")
+        }
 
+        val exitCode = startedProcess.exitValue()
+        if (exitCode != 0) {
+            Logger.error("❌ xcodebuild process failed with exit code: $exitCode")
+            Logger.error("Full output:\n$outputBuffer")
+            return Triple("Not Found", "False", "False")
+        }
+
+        // Extract JSON from output
+        val jsonText = outputBuffer.toString().substringAfter("✅ Result JSON:", "").trim()
         if (jsonText.isEmpty()) {
-            Logger.error("❌ JSON output not found or empty")
+            Logger.error("❌ JSON output not found in xcodebuild output")
+            Logger.error("Full output:\n$outputBuffer")
             return Triple("Not Found", "False", "False")
         }
 
@@ -95,7 +119,8 @@ object XCUITestCommands {
             val success = result.optString("success", "False")
             Triple(value, elementFound, success)
         } catch (e: Exception) {
-            println("❌ Failed to parse JSON: ${e.message}")
+            Logger.error("❌ Failed to parse JSON: ${e.message}")
+            Logger.error("JSON text was: $jsonText")
             Triple("Not Found", "False", "False")
         }
     }
