@@ -76,6 +76,10 @@ jobs:
         working-directory: Melmac
         run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
 
+      - name: Tail backend logs in background
+        working-directory: Melmac
+        run: tail -F ../backend.log &
+
       - name: Wait for backend to be ready
         run: |
           for i in {1..30}; do  # Wait up to 1 minute
@@ -182,7 +186,8 @@ jobs:
         working-directory: Melmac
         run: |
           mkdir -p results
-          curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" | tee results/suite_execution.json
+          curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/execution.json
+    
       # --- Results summary generation in table format ---
       - name: Generate Markdown summary from suite results
         run: |
