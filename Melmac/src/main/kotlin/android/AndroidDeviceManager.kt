@@ -32,7 +32,8 @@ object AndroidDeviceManager : DeviceManager {
                         "-no-snapshot-load",
                         "-no-snapshot-save",
                         "-no-boot-anim",
-                        "-no-window"
+                        "-no-window",
+                        "-accel", "off"
                 )
 
         Logger.info("Emulator command: ${args.joinToString(" ")}")
