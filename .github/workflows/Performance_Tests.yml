@@ -190,7 +190,7 @@ jobs:
         working-directory: Melmac
         run: |
           mkdir -p results
-          curl --max-time 120 -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/execution.json
+          curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/execution.json
 
       # --- Results summary generation in table format ---
       - name: Generate Markdown summary from suite results
