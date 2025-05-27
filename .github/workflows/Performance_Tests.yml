@@ -6,23 +6,16 @@ on:
       - main
   pull_request:
   workflow_dispatch:
-    inputs:
-      app_url:
-        description: "URL to the Alfie.apk file"
-        required: true
-        type: string
-        default: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
-      app_zip_url:
-        description: "URL to the app.zip file"
-        required: true
-        type: string
-        default: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.zip"
   schedule:
     - cron: "0 3 * * *" # Every day at 3am UTC
 
 jobs:
   test:
-    runs-on: macos-latest # Use macos-latest for both Android and iOS support
+    runs-on: macos-latest
+    env:
+      APP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
+      APP_ZIP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.zip"
+
 
     steps:
       - name: Checkout code
@@ -71,10 +64,10 @@ jobs:
         working-directory: Melmac
         run: |
           mkdir -p src/main/resources/apps
-          echo "Downloading APK from ${{ github.event.inputs.app_url }}"
-          curl -L "${{ github.event.inputs.app_url }}" -o src/main/resources/apps/Alfie.apk
-          echo "Downloading app bundle ZIP from ${{ github.event.inputs.app_zip_url }}"
-          curl -L "${{ github.event.inputs.app_zip_url }}" -o src/main/resources/apps/Alfie.zip
+          echo "Downloading APK from $APP_URL"
+          curl -L "$APP_URL" -o src/main/resources/apps/Alfie.apk
+          echo "Downloading app bundle ZIP from $APP_ZIP_URL"
+          curl -L "$APP_ZIP_URL" -o src/main/resources/apps/Alfie.zip
           cd src/main/resources/apps
           unzip -o Alfie.zip
           rm Alfie.zip
