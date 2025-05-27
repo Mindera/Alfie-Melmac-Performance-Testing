@@ -6,6 +6,17 @@ on:
       - main
   pull_request:
   workflow_dispatch:
+    inputs:
+      app_url:
+        description: "URL to the Alfie.apk file"
+        required: true
+        type: string
+        default: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
+      app_zip_url:
+        description: "URL to the app.zip file"
+        required: true
+        type: string
+        default: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.zip"
   schedule:
     - cron: "0 3 * * *" # Every day at 3am UTC
 
@@ -56,6 +67,18 @@ jobs:
         run: |
           ./gradlew build
 
+      - name: Prepare apps folder and download artifacts
+        working-directory: Melmac
+        run: |
+          mkdir -p src/main/resources/apps
+          echo "Downloading APK from ${{ github.event.inputs.app_url }}"
+          curl -L "${{ github.event.inputs.app_url }}" -o src/main/resources/apps/Alfie.apk
+          echo "Downloading app bundle ZIP from ${{ github.event.inputs.app_zip_url }}"
+          curl -L "${{ github.event.inputs.app_zip_url }}" -o src/main/resources/apps/Alfie.zip
+          cd src/main/resources/apps
+          unzip -o Alfie.zip
+          rm Alfie.zip
+
       - name: Start backend
         working-directory: Melmac
         run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
@@ -98,35 +121,34 @@ jobs:
       - name: Create Android test plan
         working-directory: Melmac
         run: |
-            curl -s -X POST http://localhost:8080/test-plans \
-              -H "Content-Type: application/json" \
-              -d "{
-                \"notes\": \"Test plan for App Startup Time metric\",
-                \"testName\": \"Startup Time Plan\",
-                \"metricMetricId\": 1,
-                \"deviceName\": \"Medium_Phone_API_35\",
-                \"appName\": \"Alfie.apk\",
-                \"appVersion\": \"0.8.0\",
-                \"appPackage\": \"au.com.alfie.ecomm.debug\",
-                \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
-                \"executionTypeExecutionTypeId\": 1,
-                \"thresholds\": [
-                  {
-                    \"targetValue\": 100,
-                    \"thresholdTypeThresholdTypeId\": 2,
-                    \"metricOutputMetricOutputId\": 1
-                  }
-                ],
-                \"metricParameters\": [
-                  {
-                    \"parameterValue\": \"home-tab\",
-                    \"metricParameterMetricParameterId\": 1
-                  }
-                ],
-                \"executionTypeParameters\": [],
-                \"testSuiteVersionId\": ${TEST_SUITE_ID}
-              }"
-
+          curl -s -X POST http://localhost:8080/test-plans \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"notes\": \"Test plan for App Startup Time metric\",
+              \"testName\": \"Startup Time Plan\",
+              \"metricMetricId\": 1,
+              \"deviceName\": \"Medium_Phone_API_35\",
+              \"appName\": \"Alfie.apk\",
+              \"appVersion\": \"0.8.0\",
+              \"appPackage\": \"au.com.alfie.ecomm.debug\",
+              \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
+              \"executionTypeExecutionTypeId\": 1,
+              \"thresholds\": [
+                {
+                  \"targetValue\": 100,
+                  \"thresholdTypeThresholdTypeId\": 2,
+                  \"metricOutputMetricOutputId\": 1
+                }
+              ],
+              \"metricParameters\": [
+                {
+                  \"parameterValue\": \"home-tab\",
+                  \"metricParameterMetricParameterId\": 1
+                }
+              ],
+              \"executionTypeParameters\": [],
+              \"testSuiteVersionId\": ${TEST_SUITE_ID}
+            }"
 
       - name: Create iOS test plan
         working-directory: Melmac
