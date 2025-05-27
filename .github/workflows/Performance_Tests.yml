@@ -76,7 +76,7 @@ jobs:
         working-directory: Melmac
         env:
           CI: true
-        run: stdbuf -oL ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
+        run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
 
       - name: Tail backend logs in background
         working-directory: Melmac
