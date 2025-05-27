@@ -31,16 +31,36 @@ object AndroidDeviceManager : DeviceManager {
                         deviceName,
                         "-no-snapshot-load",
                         "-no-snapshot-save",
-                        "-no-boot-anim"
+                        "-no-boot-anim",
+                        "-no-window"
                 )
-        if (System.getenv("CI") == "true") {
-            args.add("-no-window")
+
+        Logger.info("Emulator command: ${args.joinToString(" ")}")
+        Logger.info("ANDROID_HOME: $sdkHome")
+
+        try {
+            val process = ProcessBuilder(args).start()
+            Thread.sleep(2000)
+            if (!process.isAlive) {
+                val error = process.errorStream.bufferedReader().readText()
+                Logger.error("❌ Emulator process exited early. Error output:\n$error")
+            }
+            Logger.info("⏳ Waiting for Android emulator device...")
+
+            val adbWait = ProcessBuilder("adb", "wait-for-device").start()
+            val adbWaitExit = adbWait.waitFor()
+            Logger.info("adb wait-for-device exited with code $adbWaitExit")
+            if (adbWaitExit != 0) {
+                val error = adbWait.errorStream.bufferedReader().readText()
+                Logger.error("adb wait-for-device error output:\n$error")
+            }
+
+            waitForDeviceBoot(process)
+        } catch (e: Exception) {
+            Logger.error("❌ Exception while starting emulator: ${e.message}")
+            e.printStackTrace()
+            throw e
         }
-
-        val process = ProcessBuilder(args).start()
-
-        Logger.info("⏳ Waiting for Android emulator device...")
-        waitForDeviceBoot(process)
     }
 
     /**
@@ -77,7 +97,7 @@ object AndroidDeviceManager : DeviceManager {
      * @throws RuntimeException if the emulator fails to boot within the timeout period.
      */
     private fun waitForDeviceBoot(process: Process) {
-        val bootTimeout = 300
+        val bootTimeout = 120
         var secondsWaited = 0
 
         ProcessBuilder("adb", "wait-for-device").start().waitFor()
