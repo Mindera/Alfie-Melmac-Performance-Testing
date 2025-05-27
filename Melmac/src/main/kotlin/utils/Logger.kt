@@ -1,38 +1,25 @@
 package utils
 
-/**
- * Utility object for logging messages. Provides methods to log informational, error, and debug
- * messages.
- */
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 object Logger {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-    /**
-     * Logs an informational message.
-     *
-     * @param message The message to log.
-     */
+    private fun timestamp(): String = LocalDateTime.now().format(formatter)
+
     fun info(message: String) {
-        println("INFO: $message")
+        println("[${timestamp()}] INFO: $message")
         System.out.flush()
     }
 
-    /**
-     * Logs an error message.
-     *
-     * @param message The message to log.
-     */
     fun error(message: String) {
-        println("ERROR: $message")
+        println("[${timestamp()}] ERROR: $message")
         System.out.flush()
     }
 
-    /**
-     * Logs a debug message.
-     *
-     * @param message The message to log.
-     */
     fun debug(message: String) {
-        println("DEBUG: $message")
+        println("[${timestamp()}] DEBUG: $message")
         System.out.flush()
     }
 }
