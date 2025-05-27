@@ -264,3 +264,10 @@ jobs:
               repo: context.repo.repo,
               body: `### 📝 Performance Test Results\n\n${body}`
             });
+      
+      - name: Upload backend log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: backend.log
