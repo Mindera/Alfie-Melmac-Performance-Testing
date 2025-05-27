@@ -71,6 +71,8 @@ jobs:
           cd src/main/resources/apps
           unzip -o Alfie.zip
           rm Alfie.zip
+          echo "Listing contents of src/main/resources/apps:"
+          ls -l
 
       - name: Start backend
         working-directory: Melmac
@@ -188,8 +190,8 @@ jobs:
         working-directory: Melmac
         run: |
           mkdir -p results
-          curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/execution.json
-    
+          curl --max-time 120 -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/execution.json
+
       # --- Results summary generation in table format ---
       - name: Generate Markdown summary from suite results
         run: |
