@@ -25,16 +25,18 @@ object AndroidDeviceManager : DeviceManager {
         val emulatorPath = "$sdkHome/emulator/emulator"
 
         val args =
-                mutableListOf(
-                        emulatorPath,
-                        "-avd",
-                        deviceName,
-                        "-no-snapshot-load",
-                        "-no-snapshot-save",
-                        "-no-boot-anim",
-                        "-no-window",
-                        "-accel", "off"
-                )
+            mutableListOf(
+                emulatorPath,
+                "-avd",
+                deviceName,
+                "-no-snapshot-load",
+                "-no-snapshot-save",
+                "-no-boot-anim",
+                "-no-window",
+                "-no-audio",
+                "-gpu", "swiftshader_indirect",
+                "-accel", "off"
+            )
 
         Logger.info("Emulator command: ${args.joinToString(" ")}")
         Logger.info("ANDROID_HOME: $sdkHome")

@@ -1,123 +1,50 @@
-import Swifter
 import XCTest
 
 final class DriverRunnerUITests: XCTestCase {
     private var app: XCUIApplication!
-    private var server: HttpServer?
-    private var endExpectation: XCTestExpectation?
-
-    // MARK: - XCTest Lifecycle
 
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
         print("🧪 setUp() called")
 
-        let bundleID =
-            ProcessInfo.processInfo.environment["COMMAND_BUNDLE_ID"] ?? "com.mindera.alfie.debug"
-
+        let bundleID = ProcessInfo.processInfo.environment["COMMAND_BUNDLE_ID"] ?? "com.mindera.alfie.debug"
         app = XCUIApplication(bundleIdentifier: bundleID)
-
-        endExpectation = XCTestExpectation(description: "Waiting for test request")
-        startServer()
     }
 
-    override func tearDown() {
-        server?.stop()
-        print("🛑 Server stopped")
-        super.tearDown()
-    }
-
-    // MARK: - XCTest Entry Point
-
-    func testWaitForTestRequests() {
-        print("🕹️ Starting testWaitForTestRequests")
-        print("✅ App: \(app.debugDescription)")
-        wait(for: [endExpectation!], timeout: 300)
-    }
-
-    // MARK: - HTTP Server Setup
-
-    private func startServer() {
-        server = HttpServer()
-
-        server?["/health"] = { _ in
-            HttpResponse.ok(.text("OK"))
+    func testAppStartup() {
+        print("📦 All environment variables:")
+        ProcessInfo.processInfo.environment.forEach { print("\($0.key): \($0.value)") }
+        guard let elementID = ProcessInfo.processInfo.environment["TEST_ELEMENT"],
+              let timeoutString = ProcessInfo.processInfo.environment["TEST_TIMEOUT"],
+              let timeout = Double(timeoutString) else {
+            XCTFail("Missing required TEST_ELEMENT or TEST_TIMEOUT")
+            return
         }
 
-        server?["/test-launch"] = { request in
-            guard let elementID = request.queryParams.first(where: { $0.0 == "element" })?.1 else {
-                XCTFail("❌ Missing 'element' query parameter")
-                return HttpResponse.badRequest(.text("Missing 'element' query parameter"))
-            }
+        let thresholdType = ProcessInfo.processInfo.environment["TEST_THRESHOLD_TYPE"]
+        let thresholdValue = ProcessInfo.processInfo.environment["TEST_THRESHOLD_VALUE"]?.toDouble()
 
-            guard let timeoutString = request.queryParams.first(where: { $0.0 == "timeout" })?.1,
-                let timeout = Double(timeoutString)
-            else {
-                XCTFail("❌ Missing or invalid 'timeout' query parameter")
-                return HttpResponse.badRequest(
-                    .text("Missing or invalid 'timeout' query parameter"))
-            }
+        print("📦 Running with:")
+        print("- elementID: \(elementID)")
+        print("- timeout: \(timeout)")
+        print("- thresholdType: \(thresholdType ?? "nil")")
+        print("- thresholdValue: \(thresholdValue?.description ?? "nil")")
 
-            // Threshold support
-            let thresholdType = request.queryParams.first(where: { $0.0 == "thresholdType" })?.1
-            let thresholdValueString = request.queryParams.first(where: { $0.0 == "thresholdValue" }
-            )?.1
-            let thresholdValue = thresholdValueString.flatMap { Double($0) }
+        let results = runAppLaunchTest(
+            waitForElement: elementID,
+            timeout: timeout,
+            thresholdType: thresholdType,
+            thresholdValue: thresholdValue
+        )
 
-            var results: [TestStepResult] = []
-            var launchFailed = false
-            var failureReason: String? = nil
+        print("✅ Result JSON:")
+        print(TestResultLogger.toJSON(from: results))
 
-            DispatchQueue.main.sync {
-                results = self.runAppLaunchTest(
-                    waitForElement: elementID,
-                    timeout: timeout,
-                    thresholdType: thresholdType,
-                    thresholdValue: thresholdValue
-                )
-
-                // Check for any failed step
-                if let failed = results.first(where: { !$0.success }) {
-                    launchFailed = true
-                    failureReason = failed.error
-                }
-            }
-
-            let responseText = TestResultLogger.toJSON(from: results)
-
-            // Send HTTP response **before** failing
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                if launchFailed {
-                    XCTFail(failureReason ?? "Unknown failure")
-                }
-                self.endExpectation?.fulfill()
-            }
-
-            return HttpResponse.ok(.text(responseText))
-
-        }
-
-        server?["/hierarchy"] = { _ in
-            HttpResponse.ok(.text(self.app.debugDescription))
-        }
-
-        server?["/finish"] = { _ in
-            DispatchQueue.main.sync {
-                self.endExpectation?.fulfill()
-            }
-            return HttpResponse.ok(.text("Test manually completed"))
-        }
-
-        do {
-            try server?.start(4000)
-            print("🚀 Server started on port 4000")
-        } catch {
-            XCTFail("❌ Failed to start server: \(error.localizedDescription)")
+        if let failed = results.first(where: { !$0.success }) {
+            XCTFail(failed.error ?? "Test failed")
         }
     }
-
-    // MARK: - App Test Logic
 
     private func runAppLaunchTest(
         waitForElement identifier: String,
@@ -137,7 +64,6 @@ final class DriverRunnerUITests: XCTestCase {
         var success = appeared
         var error: String? = appeared ? nil : "Element \(identifier) did not appear"
 
-        // Threshold evaluation (if both are present and element appeared)
         if appeared, let type = thresholdType, let value = thresholdValue {
             switch type.uppercased() {
             case "MAX":
@@ -156,7 +82,6 @@ final class DriverRunnerUITests: XCTestCase {
                     error = "Launch time \(duration)ms not equal to threshold \(value)ms"
                 }
             default:
-                // Unknown type, do not fail
                 break
             }
         }
@@ -173,6 +98,12 @@ final class DriverRunnerUITests: XCTestCase {
         )
 
         return TestResultLogger.shared.steps
+    }
+}
+
+extension String {
+    func toDouble() -> Double? {
+        return Double(self)
     }
 }
 
@@ -223,7 +154,7 @@ final class TestResultLogger {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         guard let data = try? encoder.encode(results),
-            let json = String(data: data, encoding: .utf8)
+              let json = String(data: data, encoding: .utf8)
         else {
             return "[]"
         }
