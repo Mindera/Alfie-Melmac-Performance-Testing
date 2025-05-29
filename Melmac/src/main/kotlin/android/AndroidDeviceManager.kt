@@ -40,7 +40,15 @@ object AndroidDeviceManager : DeviceManager {
                         "off"
                 )
 
-        val process = ProcessBuilder(args).start()
+        val process = ProcessBuilder(args)
+            .redirectErrorStream(true)
+            .start()
+        
+        Thread {
+            process.inputStream.bufferedReader().useLines { lines ->
+                lines.forEach { Logger.info("[emulator] $it") }
+            }
+        }.start()
 
         Logger.info("⏳ Waiting for Android emulator device...")
         waitForDeviceBoot(process)
