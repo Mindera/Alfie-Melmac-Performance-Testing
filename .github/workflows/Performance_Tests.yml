@@ -197,6 +197,21 @@ jobs:
               \"executionTypeParameters\": [],
               \"testSuiteVersionId\": ${TEST_SUITE_ID}
             }"
+          
+
+      - name: Pre-boot Android emulator in background
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: Medium_Phone_API_35
+          disable-animations: true
+          emulator-options: "-no-window -no-audio -no-snapshot-save -gpu swiftshader_indirect"
+          script: |
+            adb wait-for-device
+            # Keep emulator running in background for later steps
+            while true; do sleep 60; done &
 
       - name: Run full test suite
         working-directory: Melmac
