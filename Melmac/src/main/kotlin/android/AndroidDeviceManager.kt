@@ -25,45 +25,25 @@ object AndroidDeviceManager : DeviceManager {
         val emulatorPath = "$sdkHome/emulator/emulator"
 
         val args =
-            mutableListOf(
-                emulatorPath,
-                "-avd",
-                deviceName,
-                "-no-snapshot-load",
-                "-no-snapshot-save",
-                "-no-boot-anim",
-                "-no-window",
-                "-no-audio",
-                "-gpu", "swiftshader_indirect",
-                "-accel", "off"
-            )
+                mutableListOf(
+                        emulatorPath,
+                        "-avd",
+                        deviceName,
+                        "-no-snapshot-load",
+                        "-no-snapshot-save",
+                        "-no-boot-anim",
+                        "-no-window",
+                        "-no-audio",
+                        "-gpu",
+                        "swiftshader_indirect",
+                        "-accel",
+                        "off"
+                )
 
-        Logger.info("Emulator command: ${args.joinToString(" ")}")
-        Logger.info("ANDROID_HOME: $sdkHome")
+        val process = ProcessBuilder(args).start()
 
-        try {
-            val process = ProcessBuilder(args).start()
-            Thread.sleep(2000)
-            if (!process.isAlive) {
-                val error = process.errorStream.bufferedReader().readText()
-                Logger.error("❌ Emulator process exited early. Error output:\n$error")
-            }
-            Logger.info("⏳ Waiting for Android emulator device...")
-
-            val adbWait = ProcessBuilder("adb", "wait-for-device").start()
-            val adbWaitExit = adbWait.waitFor()
-            Logger.info("adb wait-for-device exited with code $adbWaitExit")
-            if (adbWaitExit != 0) {
-                val error = adbWait.errorStream.bufferedReader().readText()
-                Logger.error("adb wait-for-device error output:\n$error")
-            }
-
-            waitForDeviceBoot(process)
-        } catch (e: Exception) {
-            Logger.error("❌ Exception while starting emulator: ${e.message}")
-            e.printStackTrace()
-            throw e
-        }
+        Logger.info("⏳ Waiting for Android emulator device...")
+        waitForDeviceBoot(process)
     }
 
     /**
@@ -100,37 +80,31 @@ object AndroidDeviceManager : DeviceManager {
      * @throws RuntimeException if the emulator fails to boot within the timeout period.
      */
     private fun waitForDeviceBoot(process: Process) {
-        val bootTimeout = 120
+        val bootTimeout = 300
         var secondsWaited = 0
-    
-        val adbWaitProcess = ProcessBuilder("adb", "wait-for-device").start()
-        if (!adbWaitProcess.waitFor(bootTimeout.toLong(), java.util.concurrent.TimeUnit.SECONDS)) {
-            Logger.error("❌ Timeout! adb wait-for-device did not finish in $bootTimeout seconds.")
-            process.destroy()
-            adbWaitProcess.destroy()
-            throw RuntimeException("adb wait-for-device timed out.")
-        }
-    
+
+        ProcessBuilder("adb", "wait-for-device").start().waitFor()
+
         while (true) {
             val bootStatus =
-                ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
-                    .start()
-                    .inputStream
-                    .bufferedReader()
-                    .readText()
-                    .trim()
-    
+                    ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
+                            .start()
+                            .inputStream
+                            .bufferedReader()
+                            .readText()
+                            .trim()
+
             if (bootStatus == "1") {
                 Logger.info("✅ Android emulator boot completed!")
                 break
             }
-    
+
             if (secondsWaited >= bootTimeout) {
                 Logger.error("❌ Timeout! Android emulator didn't boot in $bootTimeout seconds.")
                 process.destroy()
                 throw RuntimeException("Android emulator failed to boot within the timeout period.")
             }
-    
+
             Logger.info("⏳ Still booting... waited ${secondsWaited}s")
             Thread.sleep(5000)
             secondsWaited += 5
