@@ -69,7 +69,6 @@ jobs:
           echo "Backend did not start in time" >&2
           exit 1
 
-      
       - name: Create test suite
         working-directory: Melmac
         run: |
@@ -120,11 +119,60 @@ jobs:
 
       - name: Run iOS test suite
         working-directory: Melmac
-        run: curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run"
+        run: |
+          mkdir -p results
+          response=$(curl -s -w "%{http_code}" -o results/suite_execution.json "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run")
+          if [ "$response" -ne 200 ]; then
+            echo "❌ Failed to run test suite. HTTP $response"
+            cat results/suite_execution.json || echo "No suite_execution.json"
+            exit 1
+          fi
 
-      - name: Upload backend log
+      - name: Generate summary
+        if: always()
+        run: |
+          if test -f results/suite_execution.json; then
+            suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
+            testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
+
+            echo "## Performance Test Suite Results (iOS)" > results/summary.md
+            echo "" >> results/summary.md
+            echo "**Suite Execution ID:** $suiteExecutionId  " >> results/summary.md
+            echo "**Test Suite Version ID:** $testSuiteVersionId" >> results/summary.md
+            echo "" >> results/summary.md
+
+            echo "### Test Execution Results" >> results/summary.md
+            echo "| Test Execution ID | Passed | Start Time | End Time | Test Plan Version ID |" >> results/summary.md
+            echo "|-------------------|--------|------------|----------|----------------------|" >> results/summary.md
+            jq -r '.executionResults[] | "| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) | \(.testPlanVersionTestPlanVersionId) |"' results/suite_execution.json >> results/summary.md
+
+            jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
+              testExecutionId=$(echo "$exec" | jq '.testExecutionId')
+              testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
+
+              echo "#### Thresholds for Test Execution ID $testExecutionId" >> results/summary.md
+              echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
+              echo "|--------------|----------------|------------------|" >> results/summary.md
+              curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" | jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' >> results/summary.md
+              echo "" >> results/summary.md
+
+              echo "#### Metric Output Results for Test Execution ID $testExecutionId" >> results/summary.md
+              echo "| Metric Output Name | Value |" >> results/summary.md
+              echo "|--------------------|-------|" >> results/summary.md
+              curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" | jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' >> results/summary.md
+              echo "" >> results/summary.md
+            done
+
+            echo "✅ Summary generated"
+          else
+            echo "❌ suite_execution.json not found"
+          fi
+
+      - name: Upload summary and backend log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-log
-          path: backend.log
+          name: iOS-Test-Results
+          path: |
+            results/summary.md
+            backend.log
