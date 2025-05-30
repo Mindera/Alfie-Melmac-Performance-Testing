@@ -142,7 +142,7 @@ jobs:
               \"notes\": \"Test plan for App Startup Time metric\",
               \"testName\": \"Startup Time Plan\",
               \"metricMetricId\": 1,
-              \"deviceName\": \"Medium_Phone_API_35\",
+              \"deviceName\": \"Medium_Phone_API_30\",
               \"appName\": \"Alfie.apk\",
               \"appVersion\": \"0.8.0\",
               \"appPackage\": \"au.com.alfie.ecomm.debug\",
