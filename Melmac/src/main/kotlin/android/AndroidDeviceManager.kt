@@ -35,7 +35,9 @@ object AndroidDeviceManager : DeviceManager {
                         "-no-window",
                         "-no-audio",
                         "-gpu",
-                        "swiftshader_indirect",
+                        "off",
+                        "-accel",
+                        "off"
                 )
 
         val process = ProcessBuilder(args)
