@@ -207,6 +207,7 @@ jobs:
             else
               echo "No suite_execution.json found." >> results/summary.md
             fi
+          fi
 
       - name: Upload summary and backend log
         if: always()
