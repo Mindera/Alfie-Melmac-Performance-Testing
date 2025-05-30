@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    runs-on: macos-15
+    runs-on: macos-latest
     env:
       APP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
       APP_ZIP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.zip"
@@ -32,12 +32,12 @@ jobs:
       - name: List installed Xcode versions
         run: ls -l /Applications | grep Xcode
 
-      - name: Install Android system image (arm64-v8a)
-        run: sdkmanager "system-images;android-35;google_apis;arm64-v8a"
+      - name: Install Android system image (x86_64)
+        run: sdkmanager "system-images;android-35;google_apis;x86_64"
       
-      - name: Create Android AVD (arm64-v8a)
-        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;arm64-v8a"
-        
+      - name: Create Android AVD (x86_64)
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+      
       - name: List Android devices
         run: |
           echo "=== Emulator List ==="
