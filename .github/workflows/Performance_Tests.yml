@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    runs-on: macos-14
+    runs-on: macos-13
     env:
       APP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
       APP_ZIP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.zip"
@@ -52,9 +52,6 @@ jobs:
           avdmanager list avd
           echo "=== Connected Devices ==="
           adb devices
-
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_16.2.0.app/Contents/Developer
 
       - name: Show Xcode version
         run: xcodebuild -version
