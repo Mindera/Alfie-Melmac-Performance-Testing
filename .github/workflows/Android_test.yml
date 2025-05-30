@@ -29,13 +29,13 @@ jobs:
         run: echo "$ANDROID_HOME/emulator" >> $GITHUB_PATH
 
       - name: Install Android system image (x86_64)
-        run: sdkmanager "system-images;android-35;google_apis;x86_64"
+        run: sdkmanager "system-images;android-30;google_apis;x86_64"
 
       - name: Create AVD with proper env
         run: |
           mkdir -p ~/.android/avd
           export ANDROID_SDK_HOME=$HOME
-          echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+          echo "no" | avdmanager create avd -n Medium_Phone_API_30 -k "system-images;android-30;google_apis;x86_64"
           
       - name: Confirm AVD .ini files exist
         run: |
@@ -104,8 +104,6 @@ jobs:
             TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
             echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
             echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
-            echo $TEST_SUITE_ID > results/suite_id.txt
-
 
       - name: Create Android test plan
         working-directory: Melmac
@@ -116,7 +114,7 @@ jobs:
               \"notes\": \"Test plan for App Startup Time metric\",
               \"testName\": \"Startup Time Plan\",
               \"metricMetricId\": 1,
-              \"deviceName\": \"Medium_Phone_API_35\",
+              \"deviceName\": \"Medium_Phone_API_30\",
               \"appName\": \"Alfie.apk\",
               \"appVersion\": \"0.8.0\",
               \"appPackage\": \"au.com.alfie.ecomm.debug\",
@@ -142,17 +140,27 @@ jobs:
       - name: Run Android test suite
         working-directory: Melmac
         run: |
-          TEST_SUITE_ID=$(cat results/suite_id.txt)
-          echo "Running suite with ID: $TEST_SUITE_ID"
-          mkdir -p results
-          : > results/suite_execution.json
-          http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-          echo "$http_code" > results/http_status.txt
-          if [ "$http_code" -ne 200 ]; then
+            mkdir -p results
+
+            echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
+            echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
+            
+            : > results/suite_execution.json
+
+            http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+            echo "$http_code" | tr -d '\n' > results/http_status.txt
+
+            echo "🔁 HTTP status code: $http_code"
+            echo "📄 Raw response body:"
+            cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+
+            if [ "$http_code" -ne 200 ]; then
             echo "❌ Failed to run test suite. HTTP $http_code"
-            cat results/suite_execution.json || echo "No suite_execution.json"
-            # Do not exit, let summary step run
-          fi
+            # Não termina o job para que o resumo corra
+            else
+            echo "✅ Suite execution request succeeded"
+            fi
+
 
 
       - name: Generate summary

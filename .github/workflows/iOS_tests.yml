@@ -83,8 +83,6 @@ jobs:
           TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
           echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
           echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
-          echo $TEST_SUITE_ID > results/suite_id.txt
-
 
       - name: Create iOS test plan
         working-directory: Melmac
@@ -124,17 +122,27 @@ jobs:
       - name: Run iOS test suite
         working-directory: Melmac
         run: |
-          TEST_SUITE_ID=$(cat results/suite_id.txt)
-          echo "Running suite with ID: $TEST_SUITE_ID"
           mkdir -p results
+
+          echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
+          echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
+          
           : > results/suite_execution.json
+
           http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-          echo "$http_code" > results/http_status.txt
+          echo "$http_code" | tr -d '\n' > results/http_status.txt
+
+          echo "🔁 HTTP status code: $http_code"
+          echo "📄 Raw response body:"
+          cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+
           if [ "$http_code" -ne 200 ]; then
             echo "❌ Failed to run test suite. HTTP $http_code"
-            cat results/suite_execution.json || echo "No suite_execution.json"
-            # Do not exit, let summary step run
+            # Não termina o job para que o resumo corra
+          else
+            echo "✅ Suite execution request succeeded"
           fi
+
 
       - name: Generate summary
         if: always()
