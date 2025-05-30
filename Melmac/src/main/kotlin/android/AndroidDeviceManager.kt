@@ -36,6 +36,7 @@ object AndroidDeviceManager : DeviceManager {
                         "-no-audio",
                         "-gpu",
                         "swiftshader_indirect",
+                        "-accel", "off"
                 )
 
         val process = ProcessBuilder(args).redirectErrorStream(true).start()
