@@ -14,6 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
       - name: List Xcode versions
         run: ls -l /Applications | grep Xcode
 
@@ -32,9 +38,24 @@ jobs:
           rm Alfie.zip
           ls -l
 
+      - name: Generate Gradle wrapper
+        working-directory: Melmac
+        run: gradle wrapper --gradle-version 8.13
+
+      - name: Make Gradle wrapper executable
+        working-directory: Melmac
+        run: chmod +x gradlew
+
+      - name: Build backend
+        working-directory: Melmac
+        run: ./gradlew build
+
       - name: Start backend
         working-directory: Melmac
         run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
+
+      - name: Tail backend log
+        run: tail -f $GITHUB_WORKSPACE/backend.log &
 
       - name: Wait for backend to be ready
         run: |
@@ -55,6 +76,7 @@ jobs:
           curl -s -X POST http://localhost:8080/test-suites \
             -H "Content-Type: application/json" \
             -d '{"testSuiteName": "iOS Test Suite", "testSuiteDescription": "iOS tests"}' | tee results/test_suite.json
+          
           export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
           echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
@@ -72,7 +94,7 @@ jobs:
               \"thresholds\": [
                 {
                   \"targetValue\": 10000,
-                  \"thresholdTypeThresholdTypeId\": 2,
+                  \"thresholdTypeThresholdTypeId\": 1,
                   \"metricOutputMetricOutputId\": 1
                 }
               ],
@@ -90,14 +112,24 @@ jobs:
               \"testSuiteVersionId\": ${TEST_SUITE_ID}
             }"
 
-      - name: Run iOS test suite
+      - name: Run full iOS test suite
         working-directory: Melmac
         run: |
           curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/suite_execution.json
 
-      - name: Upload results
+      - name: Upload backend log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-results
-          path: results/
+          name: backend-log
+          path: backend.log
+
+      - name: Add results to GitHub Actions summary
+        if: always()
+        run: |
+          if [ -f results/suite_execution.json ]; then
+            echo "## iOS Test Results" >> $GITHUB_STEP_SUMMARY
+            jq . results/suite_execution.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No execution result found." >> $GITHUB_STEP_SUMMARY
+          fi
