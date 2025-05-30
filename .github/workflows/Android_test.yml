@@ -148,9 +148,9 @@ jobs:
             : > results/suite_execution.json
 
             http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-            echo "$http_code" | tr -d '\n' > results/http_status.txt
-
             echo "🔁 HTTP status code: $http_code"
+            echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
+
             echo "📄 Raw response body:"
             cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
 
@@ -167,7 +167,7 @@ jobs:
         if: always()
         run: |
           mkdir -p results
-          http_status=$(cat results/http_status.txt 2>/dev/null || echo "unknown")
+          http_status=$HTTP_CODE
           if test -f results/suite_execution.json && [ "$http_status" = "200" ]; then
             suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
             testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)

@@ -19,14 +19,19 @@ object AndroidAppManager : AppManager {
      */
     override fun installApp(app: String) {
         val appPath = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps").resolve(app)
-        Logger.info(appPath.toString())
+        Logger.info("Resolved APK path: $appPath")
+        if (!appPath.toFile().exists()) {
+            throw RuntimeException("APK not found at $appPath")
+        }
         Logger.info("Installing Android app: $app")
         val process = ProcessBuilder("adb", "install", "-r", appPath.toString())
             .redirectErrorStream(true)
             .start()
+        val output = process.inputStream.bufferedReader().readText()
         process.waitFor()
+        Logger.info("adb install output:\n$output")
         if (process.exitValue() != 0) {
-            throw RuntimeException("Failed to install Android app.")
+            throw RuntimeException("Failed to install Android app. adb output:\n$output")
         }
         Logger.info("✅ Android app installed successfully.")
     }
