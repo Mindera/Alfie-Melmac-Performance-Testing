@@ -31,6 +31,15 @@ jobs:
       - name: Create Android AVD (arm64)
         run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
 
+      - name: List Android devices
+        run: |
+          echo "=== Emulator List ==="
+          emulator -list-avds
+          echo "=== AVD List ==="
+          avdmanager list avd
+          echo "=== Connected Devices ==="
+          adb devices
+
       - name: Generate Gradle Wrapper
         working-directory: Melmac
         run: gradle wrapper --gradle-version 8.13
