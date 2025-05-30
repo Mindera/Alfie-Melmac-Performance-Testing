@@ -121,7 +121,13 @@ jobs:
       - name: Run full iOS test suite
         working-directory: Melmac
         run: |
-          curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/suite_execution.json
+          mkdir -p results
+          curl -s -f -S -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/suite_execution.json
+          if [ ! -f results/suite_execution.json ]; then
+            echo "❌ suite_execution.json was not created!"
+            cat $GITHUB_WORKSPACE/backend.log || true
+            exit 1
+          fi
 
       - name: Generate Markdown summary from suite results
         run: |

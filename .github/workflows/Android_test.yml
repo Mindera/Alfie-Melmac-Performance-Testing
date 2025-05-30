@@ -32,8 +32,18 @@ jobs:
       - name: Install Android system image (x86_64)
         run: sdkmanager "system-images;android-35;google_apis;x86_64"
 
-      - name: Create Android AVD (arm64)
-        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+      - name: Create AVD with proper env
+        run: |
+            mkdir -p ~/.android/avd
+            export ANDROID_SDK_HOME=$HOME
+            echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64" --device "pixel"
+
+      - name: Confirm AVD .ini files exist
+        run: |
+            ls -l ~/.android/avd
+            cat ~/.android/avd/*.ini || echo "No .ini found"
+
+      
       - name: List Android devices
         run: |
           echo "=== Emulator List ==="
