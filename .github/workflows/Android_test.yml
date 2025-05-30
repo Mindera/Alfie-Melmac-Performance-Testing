@@ -93,15 +93,19 @@ jobs:
       - name: Create test suite
         working-directory: Melmac
         run: |
-          mkdir -p results
-          curl -s -X POST http://localhost:8080/test-suites \
+            mkdir -p results
+            curl -s -X POST http://localhost:8080/test-suites \
             -H "Content-Type: application/json" \
             -d '{
-              "testSuiteName": "My Test Suite",
-              "testSuiteDescription": "Description of my test suite"
+                "testSuiteName": "My Test Suite",
+                "testSuiteDescription": "Description of my test suite"
             }' | tee results/test_suite.json
-          export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
-          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
+
+            TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+            echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
+            echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
+            echo $TEST_SUITE_ID > results/suite_id.txt
+
 
       - name: Create Android test plan
         working-directory: Melmac
@@ -138,13 +142,16 @@ jobs:
       - name: Run Android test suite
         working-directory: Melmac
         run: |
-          mkdir -p results
-          response=$(curl -s -w "%{http_code}" -o results/suite_execution.json "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run")
-          if [ "$response" -ne 200 ]; then
+            TEST_SUITE_ID=$(cat results/suite_id.txt)
+            echo "Running suite with ID: $TEST_SUITE_ID"
+            mkdir -p results
+            response=$(curl -s -w "%{http_code}" -o results/suite_execution.json "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+            if [ "$response" -ne 200 ]; then
             echo "❌ Failed to run test suite. HTTP $response"
             cat results/suite_execution.json || echo "No suite_execution.json"
             exit 1
-          fi
+            fi
+
 
       - name: Generate summary
         if: always()

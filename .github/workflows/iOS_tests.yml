@@ -79,8 +79,12 @@ jobs:
               "testSuiteName": "My Test Suite",
               "testSuiteDescription": "Description of my test suite"
             }' | tee results/test_suite.json
-          export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+
+          TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+          echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
           echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
+          echo $TEST_SUITE_ID > results/suite_id.txt
+
 
       - name: Create iOS test plan
         working-directory: Melmac
@@ -120,13 +124,16 @@ jobs:
       - name: Run iOS test suite
         working-directory: Melmac
         run: |
+          TEST_SUITE_ID=$(cat results/suite_id.txt)
+          echo "Running suite with ID: $TEST_SUITE_ID"
           mkdir -p results
-          response=$(curl -s -w "%{http_code}" -o results/suite_execution.json "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run")
+          response=$(curl -s -w "%{http_code}" -o results/suite_execution.json "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
           if [ "$response" -ne 200 ]; then
             echo "❌ Failed to run test suite. HTTP $response"
             cat results/suite_execution.json || echo "No suite_execution.json"
             exit 1
           fi
+
 
       - name: Generate summary
         if: always()
