@@ -39,10 +39,10 @@ jobs:
         run: ls -l /Applications | grep Xcode
 
       - name: Install Android system image (x86_64)
-        run: sdkmanager "system-images;android-35;google_apis;x86_64"
+        run: sdkmanager "system-images;android-30;google_apis;x86_64"
 
       - name: Create Android AVD (arm64)
-        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_30 -k "system-images;android-30;google_apis;x86_64"
 
       - name: List Android devices
         run: |
