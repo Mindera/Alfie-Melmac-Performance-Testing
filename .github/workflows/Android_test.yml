@@ -25,31 +25,6 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install system image for AVD (x86_64)
-        run: sdkmanager "system-images;android-30;google_apis;x86_64"
-
-      - name: Create Android AVD
-        run: echo "no" | avdmanager create avd -n Medium_Phone_API_30 -k "system-images;android-30;google_apis;x86_64" --device "pixel"
-
-      - name: Start AVD
-        run: |
-          nohup emulator -avd Medium_Phone_API_30 -no-audio -no-window -no-boot-anim -gpu swiftshader_indirect > emulator.log 2>&1 &
-          adb wait-for-device
-          bootCompleted=""
-          max_wait=300
-          waited=0
-          until [[ "$bootCompleted" == "1" || $waited -ge $max_wait ]]; do
-            bootCompleted=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-            echo "⏳ Still booting... waited ${waited}s"
-            sleep 5
-            waited=$((waited + 5))
-          done
-          if [[ "$bootCompleted" != "1" ]]; then
-            echo "❌ Emulator did not boot in time"
-            exit 1
-          fi
-          echo "✅ Emulator booted"
-
       - name: Generate Gradle Wrapper
         working-directory: Melmac
         run: gradle wrapper --gradle-version 8.13
@@ -97,8 +72,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"testSuiteName": "Android Test Suite", "testSuiteDescription": "Android tests"}' | tee results/test_suite.json
 
-          export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
-          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
+          echo "TEST_SUITE_ID=$(jq -r '.testSuiteId' results/test_suite.json)" >> $GITHUB_ENV
 
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
@@ -133,6 +107,41 @@ jobs:
         working-directory: Melmac
         run: curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/suite_execution.json
 
+      - name: Generate Markdown summary from suite results
+        run: |
+          mkdir -p results
+          suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
+          testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
+
+          echo "## Performance Test Suite Results (Android)" > results/summary.md
+          echo "" >> results/summary.md
+          echo "**Suite Execution ID:** $suiteExecutionId  " >> results/summary.md
+          echo "**Test Suite Version ID:** $testSuiteVersionId" >> results/summary.md
+          echo "" >> results/summary.md
+
+          echo "### Test Execution Results" >> results/summary.md
+          echo "| Test Execution ID | Passed | Start Time | End Time | Test Plan Version ID |" >> results/summary.md
+          echo "|-------------------|--------|------------|----------|----------------------|" >> results/summary.md
+          jq -r '.executionResults[] | "| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) | \(.testPlanVersionTestPlanVersionId) |"' results/suite_execution.json >> results/summary.md
+          echo "" >> results/summary.md
+
+          jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
+            testExecutionId=$(echo "$exec" | jq '.testExecutionId')
+            testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
+
+            echo "#### Thresholds for Test Execution ID $testExecutionId" >> results/summary.md
+            echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
+            echo "|--------------|----------------|------------------|" >> results/summary.md
+            curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" | jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' >> results/summary.md
+            echo "" >> results/summary.md
+
+            echo "#### Metric Output Results for Test Execution ID $testExecutionId" >> results/summary.md
+            echo "| Metric Output Name | Value |" >> results/summary.md
+            echo "|--------------------|-------|" >> results/summary.md
+            curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" | jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' >> results/summary.md
+            echo "" >> results/summary.md
+          done
+
       - name: Upload backend log
         if: always()
         uses: actions/upload-artifact@v4
@@ -140,12 +149,17 @@ jobs:
           name: backend-log
           path: backend.log
 
+      - name: Upload test results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-performance-test-results
+          path: results/summary.md
+
       - name: Add results to GitHub Actions summary
         if: always()
         run: |
-          if [ -f results/suite_execution.json ]; then
-            echo "## Android Test Results" >> $GITHUB_STEP_SUMMARY
-            jq . results/suite_execution.json >> $GITHUB_STEP_SUMMARY
+          if [ -f results/summary.md ]; then
+            cat results/summary.md >> $GITHUB_STEP_SUMMARY
           else
-            echo "No execution result found." >> $GITHUB_STEP_SUMMARY
-          fi
+            echo "No summary file found." >> $GITHUB_STEP_SUMMARY
