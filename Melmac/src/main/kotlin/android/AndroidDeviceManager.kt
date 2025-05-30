@@ -35,20 +35,17 @@ object AndroidDeviceManager : DeviceManager {
                         "-no-window",
                         "-no-audio",
                         "-gpu",
-                        "off",
-                        "-accel",
-                        "off"
+                        "swiftshader_indirect",
                 )
 
-        val process = ProcessBuilder(args)
-            .redirectErrorStream(true)
-            .start()
-        
+        val process = ProcessBuilder(args).redirectErrorStream(true).start()
+
         Thread {
-            process.inputStream.bufferedReader().useLines { lines ->
-                lines.forEach { Logger.info("[emulator] $it") }
-            }
-        }.start()
+                    process.inputStream.bufferedReader().useLines { lines ->
+                        lines.forEach { Logger.info("[emulator] $it") }
+                    }
+                }
+                .start()
 
         Logger.info("⏳ Waiting for Android emulator device...")
         waitForDeviceBoot(process)
