@@ -29,13 +29,13 @@ jobs:
         run: echo "$ANDROID_HOME/emulator" >> $GITHUB_PATH
 
       - name: Install Android system image (x86_64)
-        run: sdkmanager "system-images;android-30;google_apis;x86_64"
+        run: sdkmanager "system-images;android-31;google_apis;x86_64"
 
       - name: Create AVD with proper env
         run: |
           mkdir -p ~/.android/avd
           export ANDROID_SDK_HOME=$HOME
-          echo "no" | avdmanager create avd -n Medium_Phone_API_30 -k "system-images;android-30;google_apis;x86_64"
+          echo "no" | avdmanager create avd -n Medium_Phone_API_31 -k "system-images;android-31;google_apis;x86_64"
           
       - name: Confirm AVD .ini files exist
         run: |
@@ -80,7 +80,7 @@ jobs:
 
       - name: Wait for backend to be ready
         run: |
-          for i in {1..30}; do
+          for i in {1..31}; do
             if curl -s http://localhost:8080/; then
               echo "Backend is up!"
               exit 0
@@ -114,7 +114,7 @@ jobs:
               \"notes\": \"Test plan for App Startup Time metric\",
               \"testName\": \"Startup Time Plan\",
               \"metricMetricId\": 1,
-              \"deviceName\": \"Medium_Phone_API_30\",
+              \"deviceName\": \"Medium_Phone_API_31\",
               \"appName\": \"Alfie.apk\",
               \"appVersion\": \"0.8.0\",
               \"appPackage\": \"au.com.alfie.ecomm.debug\",

@@ -85,13 +85,13 @@ object AndroidDeviceManager : DeviceManager {
      *
      * @param process The process of the emulator being started.
      * @throws RuntimeException if the emulator fails to boot within the timeout period.
-     */    
+     */
     private fun waitForDeviceBoot(process: Process) {
         val bootTimeout = 300
         var secondsWaited = 0
-    
+
         ProcessBuilder("adb", "wait-for-device").start().waitFor()
-    
+
         while (true) {
             val bootStatus =
                     ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
@@ -100,37 +100,40 @@ object AndroidDeviceManager : DeviceManager {
                             .bufferedReader()
                             .readText()
                             .trim()
-    
+
             if (bootStatus == "1") {
                 Logger.info("✅ Android emulator boot completed!")
                 break
             }
-    
+
             if (secondsWaited >= bootTimeout) {
                 Logger.error("❌ Timeout! Android emulator didn't boot in $bootTimeout seconds.")
                 process.destroy()
                 throw RuntimeException("Android emulator failed to boot within the timeout period.")
             }
-    
+
             Logger.info("⏳ Still booting... waited ${secondsWaited}s")
             Thread.sleep(5000)
             secondsWaited += 5
         }
-    
-        Logger.info("⏳ Waiting for Android package manager to be ready...")
+        Logger.info("⏳ Waiting for Android package manager to be fully functional...")
         var pmReady = false
         var pmTries = 0
         while (!pmReady && pmTries < 60) {
-            val pmOutput = ProcessBuilder("adb", "shell", "pm", "list", "packages")
-                .redirectErrorStream(true)
-                .start()
-                .inputStream
-                .bufferedReader()
-                .readText()
-            if (pmOutput.isNotBlank()) {
+            val pmOutput =
+                    ProcessBuilder("adb", "shell", "pm", "path", "android")
+                            .redirectErrorStream(true)
+                            .start()
+                            .inputStream
+                            .bufferedReader()
+                            .readText()
+                            .trim()
+
+            if (pmOutput.startsWith("package:")) {
                 pmReady = true
-                Logger.info("✅ Android package manager is ready.")
+                Logger.info("✅ Android package manager is fully functional.")
             } else {
+                Logger.info("⏳ Still waiting for package manager... attempt ${pmTries + 1}")
                 Thread.sleep(2000)
                 pmTries++
             }
