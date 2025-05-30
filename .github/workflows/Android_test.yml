@@ -164,6 +164,7 @@ jobs:
 
 
       - name: Generate summary
+        working-directory: Melmac
         if: always()
         run: |
           mkdir -p results

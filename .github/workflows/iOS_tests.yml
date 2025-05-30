@@ -132,7 +132,7 @@ jobs:
           http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
           echo "🔁 HTTP status code: $http_code"
           echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
-          
+
           echo "📄 Raw response body:"
           cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
 
@@ -145,6 +145,7 @@ jobs:
 
 
       - name: Generate summary
+        working-directory: Melmac
         if: always()
         run: |
           mkdir -p results
