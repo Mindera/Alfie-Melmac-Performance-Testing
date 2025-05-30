@@ -87,7 +87,7 @@ object AndroidDeviceManager : DeviceManager {
      * @throws RuntimeException if the emulator fails to boot within the timeout period.
      */
     private fun waitForDeviceBoot(process: Process) {
-        val bootTimeout = 300
+        val bootTimeout = 900
         var secondsWaited = 0
 
         ProcessBuilder("adb", "wait-for-device").start().waitFor()
