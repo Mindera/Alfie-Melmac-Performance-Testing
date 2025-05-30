@@ -127,9 +127,8 @@ jobs:
           TEST_SUITE_ID=$(cat results/suite_id.txt)
           echo "Running suite with ID: $TEST_SUITE_ID"
           mkdir -p results
-          tmpfile=$(mktemp)
-          http_code=$(curl -s -w "%{http_code}" -o "$tmpfile" -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-          mv "$tmpfile" results/suite_execution.json
+          : > results/suite_execution.json
+          http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
           echo "$http_code" > results/http_status.txt
           if [ "$http_code" -ne 200 ]; then
             echo "❌ Failed to run test suite. HTTP $http_code"

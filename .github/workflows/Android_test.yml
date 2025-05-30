@@ -28,15 +28,15 @@ jobs:
       - name: Add emulator to PATH
         run: echo "$ANDROID_HOME/emulator" >> $GITHUB_PATH
 
-      - name: Install Android system image (arm64-v8a)
-        run: sdkmanager "system-images;android-35;google_apis;arm64-v8a"
+      - name: Install Android system image (x86_64)
+        run: sdkmanager "system-images;android-35;google_apis;x86_64"
 
       - name: Create AVD with proper env
         run: |
           mkdir -p ~/.android/avd
           export ANDROID_SDK_HOME=$HOME
-          echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;arm64-v8a"
-
+          echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+          
       - name: Confirm AVD .ini files exist
         run: |
           ls -l ~/.android/avd
@@ -145,15 +145,15 @@ jobs:
           TEST_SUITE_ID=$(cat results/suite_id.txt)
           echo "Running suite with ID: $TEST_SUITE_ID"
           mkdir -p results
-          tmpfile=$(mktemp)
-          http_code=$(curl -s -w "%{http_code}" -o "$tmpfile" -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-          mv "$tmpfile" results/suite_execution.json
+          : > results/suite_execution.json
+          http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
           echo "$http_code" > results/http_status.txt
           if [ "$http_code" -ne 200 ]; then
             echo "❌ Failed to run test suite. HTTP $http_code"
             cat results/suite_execution.json || echo "No suite_execution.json"
             # Do not exit, let summary step run
           fi
+
 
       - name: Generate summary
         if: always()
