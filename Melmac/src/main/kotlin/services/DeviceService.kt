@@ -49,6 +49,9 @@ class DeviceService : IDeviceService {
     }
 
     private fun fetchIOSDevices(): List<AvailableDeviceDTO> {
+        if (!Tools.isMac()) {
+            return emptyList()
+        }
         val output = Tools.run("xcrun simctl list devices -j")
         val mapper = jacksonObjectMapper()
         val root = mapper.readTree(output)

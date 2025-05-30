@@ -69,21 +69,28 @@ jobs:
           echo "Backend did not start in time" >&2
           exit 1
 
-      - name: Create test suite and iOS test plan
+      
+      - name: Create test suite
         working-directory: Melmac
         run: |
           mkdir -p results
           curl -s -X POST http://localhost:8080/test-suites \
             -H "Content-Type: application/json" \
-            -d '{"testSuiteName": "iOS Test Suite", "testSuiteDescription": "iOS tests"}' | tee results/test_suite.json
-          
-          echo "TEST_SUITE_ID=$(jq -r '.testSuiteId' results/test_suite.json)" >> $GITHUB_ENV
+            -d '{
+              "testSuiteName": "My Test Suite",
+              "testSuiteDescription": "Description of my test suite"
+            }' | tee results/test_suite.json
+          export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
+      - name: Create iOS test plan
+        working-directory: Melmac
+        run: |
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
             -d "{
-              \"notes\": \"Startup Time iOS\",
-              \"testName\": \"iOS Startup Time Plan\",
+              \"notes\": \"Test plan for App Startup Time metric\",
+              \"testName\": \"Startup Time Plan\",
               \"metricMetricId\": 1,
               \"deviceName\": \"iPhone 16 Pro\",
               \"appName\": \"Alfie.app\",

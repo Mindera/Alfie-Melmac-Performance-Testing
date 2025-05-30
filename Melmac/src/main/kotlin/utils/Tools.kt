@@ -2,11 +2,9 @@ package utils
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.Locale
 
-/**
- * Utility object for tools 
- * Provides methods to perform various utility functions.
- */
+/** Utility object for tools Provides methods to perform various utility functions. */
 object Tools {
 
     /**
@@ -21,10 +19,11 @@ object Tools {
         process.waitFor()
         val output = process.inputStream.bufferedReader().readText()
         return Regex(".*$simulatorName \\(([-A-F0-9]+)\\) \\(.*\\)")
-            .find(output)?.groupValues?.get(1)
-            ?: throw Exception("Simulator not found: $simulatorName")
+                .find(output)
+                ?.groupValues
+                ?.get(1)
+                ?: throw Exception("Simulator not found: $simulatorName")
     }
-
 
     /**
      * Retrieves the serial number of the specified Android emulator.
@@ -43,9 +42,16 @@ object Tools {
             for (line in devices) {
                 if (line.startsWith("emulator-")) {
                     val serial = line.split("\\s+".toRegex())[0] // Extract the serial number
-                    val avdNameProcess = ProcessBuilder(
-                        "adb", "-s", serial, "shell", "getprop", "ro.boot.qemu.avd_name"
-                    ).start()
+                    val avdNameProcess =
+                            ProcessBuilder(
+                                            "adb",
+                                            "-s",
+                                            serial,
+                                            "shell",
+                                            "getprop",
+                                            "ro.boot.qemu.avd_name"
+                                    )
+                                    .start()
                     val avdName = avdNameProcess.inputStream.bufferedReader().readText().trim()
                     if (avdName == deviceName) {
                         Logger.info("Match found! Serial: $serial for AVD name: $avdName")
@@ -62,9 +68,10 @@ object Tools {
 
     fun run(command: String): String {
         return try {
-            val process = ProcessBuilder(*command.split(" ").toTypedArray())
-                .redirectErrorStream(true)
-                .start()
+            val process =
+                    ProcessBuilder(*command.split(" ").toTypedArray())
+                            .redirectErrorStream(true)
+                            .start()
 
             val output = BufferedReader(InputStreamReader(process.inputStream)).readText()
             process.waitFor()
@@ -75,19 +82,19 @@ object Tools {
     }
 
     /**
-     * Resolves a path to an absolute path, supporting both absolute and relative input.
-     * If the input is already absolute, returns it as-is.
-     * If relative, resolves it from the current working directory.
+     * Resolves a path to an absolute path, supporting both absolute and relative input. If the
+     * input is already absolute, returns it as-is. If relative, resolves it from the current
+     * working directory.
      */
     fun resolvePath(path: String): String {
-        val expanded = if (path.startsWith("~")) {
-            System.getProperty("user.home") + path.drop(1)
-        } else path
+        val expanded =
+                if (path.startsWith("~")) {
+                    System.getProperty("user.home") + path.drop(1)
+                } else path
         val file = java.io.File(expanded)
         return if (file.isAbsolute) file.absolutePath
         else java.io.File(System.getProperty("user.dir"), expanded).absolutePath
     }
-
 
     /**
      * Retrieves the version of an APK file.
@@ -120,5 +127,13 @@ object Tools {
                         )
                         .start()
         return process.inputStream.bufferedReader().readText().trim().ifEmpty { null }
+    }
+
+    /**
+     * Checks if the current operating system is macOS.
+     * @return true if the OS is macOS, false otherwise.
+     */
+    fun isMac(): Boolean {
+        return System.getProperty("os.name").lowercase(Locale.getDefault()).contains("mac")
     }
 }

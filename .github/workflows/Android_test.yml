@@ -25,6 +25,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android system image (x86_64)
+        run: sdkmanager "system-images;android-35;google_apis;x86_64"
+
+      - name: Create Android AVD (arm64)
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+
       - name: Generate Gradle Wrapper
         working-directory: Melmac
         run: gradle wrapper --gradle-version 8.13
@@ -64,23 +70,29 @@ jobs:
           echo "Backend did not start in time" >&2
           exit 1
 
-      - name: Create test suite and Android test plan
+      - name: Create test suite
         working-directory: Melmac
         run: |
           mkdir -p results
           curl -s -X POST http://localhost:8080/test-suites \
             -H "Content-Type: application/json" \
-            -d '{"testSuiteName": "Android Test Suite", "testSuiteDescription": "Android tests"}' | tee results/test_suite.json
+            -d '{
+              "testSuiteName": "My Test Suite",
+              "testSuiteDescription": "Description of my test suite"
+            }' | tee results/test_suite.json
+          export TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
-          echo "TEST_SUITE_ID=$(jq -r '.testSuiteId' results/test_suite.json)" >> $GITHUB_ENV
-
+      - name: Create Android test plan
+        working-directory: Melmac
+        run: |
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
             -d "{
-              \"notes\": \"Startup Time Android\",
-              \"testName\": \"Android Startup Time Plan\",
+              \"notes\": \"Test plan for App Startup Time metric\",
+              \"testName\": \"Startup Time Plan\",
               \"metricMetricId\": 1,
-              \"deviceName\": \"Medium_Phone_API_30\",
+              \"deviceName\": \"Medium_Phone_API_35\",
               \"appName\": \"Alfie.apk\",
               \"appVersion\": \"0.8.0\",
               \"appPackage\": \"au.com.alfie.ecomm.debug\",
@@ -88,7 +100,7 @@ jobs:
               \"executionTypeExecutionTypeId\": 1,
               \"thresholds\": [
                 {
-                  \"targetValue\": 100,
+                  \"targetValue\": 1000,
                   \"thresholdTypeThresholdTypeId\": 2,
                   \"metricOutputMetricOutputId\": 1
                 }
