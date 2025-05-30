@@ -127,18 +127,22 @@ jobs:
           TEST_SUITE_ID=$(cat results/suite_id.txt)
           echo "Running suite with ID: $TEST_SUITE_ID"
           mkdir -p results
-          response=$(curl -s -w "%{http_code}" -o results/suite_execution.json "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-          if [ "$response" -ne 200 ]; then
-            echo "❌ Failed to run test suite. HTTP $response"
+          tmpfile=$(mktemp)
+          http_code=$(curl -s -w "%{http_code}" -o "$tmpfile" -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+          mv "$tmpfile" results/suite_execution.json
+          echo "$http_code" > results/http_status.txt
+          if [ "$http_code" -ne 200 ]; then
+            echo "❌ Failed to run test suite. HTTP $http_code"
             cat results/suite_execution.json || echo "No suite_execution.json"
-            exit 1
+            # Do not exit, let summary step run
           fi
-
 
       - name: Generate summary
         if: always()
         run: |
-          if test -f results/suite_execution.json; then
+          mkdir -p results
+          http_status=$(cat results/http_status.txt 2>/dev/null || echo "unknown")
+          if test -f results/suite_execution.json && [ "$http_status" = "200" ]; then
             suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
             testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
 
@@ -172,8 +176,19 @@ jobs:
 
             echo "✅ Summary generated"
           else
-            echo "❌ suite_execution.json not found"
-          fi
+            echo "## Performance Test Suite Results (iOS)" > results/summary.md
+            echo "" >> results/summary.md
+            echo "❌ Test suite execution failed." >> results/summary.md
+            echo "" >> results/summary.md
+            echo "**HTTP Status:** $http_status" >> results/summary.md
+            echo "" >> results/summary.md
+            if test -f results/suite_execution.json; then
+              echo '```json' >> results/summary.md
+              cat results/suite_execution.json >> results/summary.md
+              echo '```' >> results/summary.md
+            else
+              echo "No suite_execution.json found." >> results/summary.md
+            fi
 
       - name: Upload summary and backend log
         if: always()
