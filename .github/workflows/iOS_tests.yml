@@ -118,51 +118,9 @@ jobs:
               \"testSuiteVersionId\": ${TEST_SUITE_ID}
             }"
 
-      - name: Run full iOS test suite
+      - name: Run iOS test suite
         working-directory: Melmac
-        run: |
-          mkdir -p results
-          curl -s -f -S -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run" > results/suite_execution.json
-          if [ ! -f results/suite_execution.json ]; then
-            echo "❌ suite_execution.json was not created!"
-            cat $GITHUB_WORKSPACE/backend.log || true
-            exit 1
-          fi
-
-      - name: Generate Markdown summary from suite results
-        run: |
-          mkdir -p results
-          suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
-          testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
-
-          echo "## Performance Test Suite Results (iOS)" > results/summary.md
-          echo "" >> results/summary.md
-          echo "**Suite Execution ID:** $suiteExecutionId  " >> results/summary.md
-          echo "**Test Suite Version ID:** $testSuiteVersionId" >> results/summary.md
-          echo "" >> results/summary.md
-
-          echo "### Test Execution Results" >> results/summary.md
-          echo "| Test Execution ID | Passed | Start Time | End Time | Test Plan Version ID |" >> results/summary.md
-          echo "|-------------------|--------|------------|----------|----------------------|" >> results/summary.md
-          jq -r '.executionResults[] | "| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) | \(.testPlanVersionTestPlanVersionId) |"' results/suite_execution.json >> results/summary.md
-          echo "" >> results/summary.md
-
-          jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
-            testExecutionId=$(echo "$exec" | jq '.testExecutionId')
-            testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
-
-            echo "#### Thresholds for Test Execution ID $testExecutionId" >> results/summary.md
-            echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
-            echo "|--------------|----------------|------------------|" >> results/summary.md
-            curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" | jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' >> results/summary.md
-            echo "" >> results/summary.md
-
-            echo "#### Metric Output Results for Test Execution ID $testExecutionId" >> results/summary.md
-            echo "| Metric Output Name | Value |" >> results/summary.md
-            echo "|--------------------|-------|" >> results/summary.md
-            curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" | jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' >> results/summary.md
-            echo "" >> results/summary.md
-          done
+        run: curl -X POST "http://localhost:8080/test-suites/${TEST_SUITE_ID}/run"
 
       - name: Upload backend log
         if: always()
@@ -170,19 +128,3 @@ jobs:
         with:
           name: backend-log
           path: backend.log
-
-      - name: Upload test results artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-performance-test-results
-          path: results/summary.md
-
-      - name: Add results to GitHub Actions summary
-        if: always()
-        run: |
-          if [ -f results/summary.md ]; then
-            cat results/summary.md >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No summary file found." >> $GITHUB_STEP_SUMMARY
-          fi
