@@ -100,7 +100,7 @@ jobs:
       - name: Prepare and run emulator for TestPlan + Execution
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 31
           arch: x86_64
           target: google_apis
           profile: Nexus 6
