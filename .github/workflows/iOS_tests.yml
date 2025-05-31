@@ -145,7 +145,7 @@ jobs:
           fi
 
       - name: Install Bash 4
-        run: brew install bash+
+        run: brew install bash
 
       - name: Generate summary
         working-directory: Melmac
