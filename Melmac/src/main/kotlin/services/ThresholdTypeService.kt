@@ -16,4 +16,24 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
             )
         }
     }
+
+    override fun getById(id: Int): ThresholdTypeResponseDTO? {
+        return thresholdTypeRepository.findById(id)?.let {
+            ThresholdTypeResponseDTO(
+                    thresholdTypeId = it.thresholdTypeId ?: 0,
+                    thresholdTypeName = it.thresholdTypeName,
+                    thresholdTypeDescription = it.thresholdTypeDescription
+            )
+        }
+    }
+
+    override fun getByName(name: String): ThresholdTypeResponseDTO? {
+        return thresholdTypeRepository.findByName(name)?.let {
+            ThresholdTypeResponseDTO(
+                    thresholdTypeId = it.thresholdTypeId ?: 0,
+                    thresholdTypeName = it.thresholdTypeName,
+                    thresholdTypeDescription = it.thresholdTypeDescription
+            )
+        }
+    }
 }
