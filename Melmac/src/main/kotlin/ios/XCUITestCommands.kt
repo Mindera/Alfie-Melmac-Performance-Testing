@@ -103,25 +103,16 @@ object XCUITestCommands {
             return Triple("Not Found", "False", "False")
         }
 
-        val output = outputBuffer.toString()
-        val jsonSection = output.substringAfter("✅ Result JSON:", "")
-            .trim()
-        if (jsonSection.isEmpty()) {
+        // Extract JSON from output
+        val jsonText = outputBuffer.toString().substringAfter("✅ Result JSON:", "").trim()
+        if (jsonText.isEmpty()) {
             Logger.error("❌ JSON output not found in xcodebuild output")
-            Logger.error("Full output:\n$output")
+            Logger.error("Full output:\n$outputBuffer")
             return Triple("Not Found", "False", "False")
         }
-        
-        // Try to extract the JSON array (up to the next closing bracket)
-        val jsonStart = jsonSection.indexOf("[")
-        val jsonEnd = jsonSection.indexOf("]") + 1
-        if (jsonStart == -1 || jsonEnd == -1) {
-            Logger.error("❌ JSON array not found in output")
-            Logger.error("JSON section was: $jsonSection")
-            return Triple("Not Found", "False", "False")
-        }
-        val jsonText = jsonSection.substring(jsonStart, jsonEnd)
-        
+
+        Logger.info("✅ JSON output received: $jsonText")
+
         return try {
             val jsonArray = JSONArray(jsonText)
             val result = jsonArray.getJSONObject(0)
