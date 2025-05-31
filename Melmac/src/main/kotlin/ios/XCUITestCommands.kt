@@ -88,7 +88,7 @@ object XCUITestCommands {
 
         // Wait for process to complete with timeout
         val completed = startedProcess.waitFor(timeoutInSeconds.toLong(), TimeUnit.SECONDS)
-        outputThread.join(5000) // Give output thread 5 seconds to finish
+        outputThread.join(5000)
 
         if (!completed) {
             Logger.error("❌ xcodebuild process timed out after $timeoutInSeconds seconds")
@@ -115,7 +115,7 @@ object XCUITestCommands {
             val jsonArray = JSONArray(jsonText)
             val result = jsonArray.getJSONObject(0)
             val value = result.optString("value", "Not Found")
-            val elementFound = result.optString("success", "False")
+            val elementFound = result.optString("elementFound", "False")
             val success = result.optString("success", "False")
             Triple(value, elementFound, success)
         } catch (e: Exception) {

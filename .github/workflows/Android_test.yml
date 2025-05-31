@@ -147,7 +147,7 @@ jobs:
               \"executionTypeExecutionTypeId\": 1,
               \"thresholds\": [
                 {
-                  \"targetValue\": 1000,
+                  \"targetValue\": 20000,
                   \"thresholdTypeThresholdTypeId\": 2,
                   \"metricOutputMetricOutputId\": 1
                 }

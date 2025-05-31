@@ -91,7 +91,8 @@ final class DriverRunnerUITests: XCTestCase {
                 action: "measureStartup",
                 target: identifier,
                 value: "\(duration)",
-                metric: "launchDuration"
+                metric: "launchDuration",
+                elementFound: appeared
             ),
             success: success,
             error: error
@@ -114,6 +115,7 @@ struct TestStep: Decodable {
     let target: String?
     let value: String?
     let metric: String?
+    let elementFound: Bool
 }
 
 struct TestStepResult: Codable {
@@ -121,6 +123,7 @@ struct TestStepResult: Codable {
     let target: String?
     let value: String?
     let metric: String?
+    let elementFound: Bool
     let success: Bool
     let error: String?
     let timestamp: String
@@ -139,6 +142,7 @@ final class TestResultLogger {
                 action: step.action,
                 target: step.target,
                 value: step.value,
+                elementFound: step.elementFound,
                 metric: step.metric,
                 success: success,
                 error: error,
