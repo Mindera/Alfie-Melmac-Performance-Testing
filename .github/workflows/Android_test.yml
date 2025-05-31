@@ -69,40 +69,6 @@ jobs:
           curl -L "$APP_URL" -o src/main/resources/apps/Alfie.apk
           ls -l src/main/resources/apps
 
-      - name: Start backend
-        working-directory: Melmac
-        run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
-
-      - name: Tail backend log
-        run: tail -f $GITHUB_WORKSPACE/backend.log &
-
-      - name: Wait for backend to be ready
-        run: |
-          for i in {1..31}; do
-            if curl -s http://localhost:8080/; then
-              echo "Backend is up!"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend did not start in time" >&2
-          exit 1
-
-      - name: Create test suite
-        working-directory: Melmac
-        run: |
-            mkdir -p results
-            curl -s -X POST http://localhost:8080/test-suites \
-            -H "Content-Type: application/json" \
-            -d '{
-                "testSuiteName": "My Test Suite",
-                "testSuiteDescription": "Description of my test suite"
-            }' | tee results/test_suite.json
-
-            TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
-            echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
-            echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
-
       - name: Prepare and run emulator for TestPlan + Execution
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -111,12 +77,40 @@ jobs:
           target: google_apis
           profile: Nexus 6
           script: |
+            echo "▶️ Starting backend..."
+            ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
+            echo "▶️ Tailing backend log..."
+            tail -f $GITHUB_WORKSPACE/backend.log &
+            echo "⏳ Waiting for backend to be ready..."
+            for i in {1..31}; do
+              if curl -s http://localhost:8080/; then
+                echo "Backend is up!"
+                break
+              fi
+              sleep 2
+            done
+            if ! curl -s http://localhost:8080/; then
+              echo "Backend did not start in time" >&2
+              exit 1
+            fi
+
+            echo "🧪 Creating test suite..."
+            mkdir -p Melmac/results
+            curl -s -X POST http://localhost:8080/test-suites \
+              -H "Content-Type: application/json" \
+              -d '{
+                  "testSuiteName": "My Test Suite",
+                  "testSuiteDescription": "Description of my test suite"
+              }' | tee Melmac/results/test_suite.json
+
+            TEST_SUITE_ID=$(jq '.testSuiteId' Melmac/results/test_suite.json)
+            echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
+            export TEST_SUITE_ID
+
             echo "📱 Emulator booted. Installing APK..."
             adb install Melmac/src/main/resources/apps/Alfie.apk
 
             echo "🚀 Creating Android test plan..."
-            TEST_SUITE_ID=$TEST_SUITE_ID
-
             curl -s -X POST http://localhost:8080/test-plans \
               -H "Content-Type: application/json" \
               -d "{
@@ -162,7 +156,6 @@ jobs:
             else
               echo "✅ Suite execution request succeeded"
             fi
-
 
       - name: Generate summary
         working-directory: Melmac
