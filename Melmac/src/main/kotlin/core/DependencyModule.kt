@@ -95,7 +95,7 @@ val appModule = module {
 
     // --- Services ---
     single<IAppService> { AppService(get(), get()) }
-    single<IDeviceService> { DeviceService() }
+    single<IDeviceService> { DeviceService(get(), get(), get()) }
     single<IMetricService> { MetricService(get(), get(), get(), get(), get()) }
     single<ILoaderService> {
         LoaderService(

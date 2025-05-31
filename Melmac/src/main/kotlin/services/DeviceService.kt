@@ -5,8 +5,31 @@ import dtos.AvailableDeviceDTO
 import java.io.File
 import services.IServices.IDeviceService
 import utils.Tools
+import repos.IRepos.IDeviceRepository
+import repos.IRepos.IOperSysVersionRepository
+import repos.IRepos.IOperSysRepository
 
-class DeviceService : IDeviceService {
+class DeviceService (
+        private val deviceRepository: IDeviceRepository,
+        private val osVersionRepository: IOperSysVersionRepository,
+        private val osRepository: IOperSysRepository
+) : IDeviceService {
+
+    override fun getDeviceById(deviceId: Int): AvailableDeviceDTO? {
+        val device = deviceRepository.findById(deviceId) ?: return null
+        val osVersion = osVersionRepository.findById(device.osVersionOsVersionId)
+                ?: return null
+        val os = osRepository.findById(osVersion.operativeSystemOperSysId)
+                ?: return null
+
+        return AvailableDeviceDTO(
+                id = device.deviceId,
+                deviceName = device.deviceName,
+                deviceSerialNumber = device.deviceSerialNumber,
+                osName = os.operSysName,
+                osVersion = osVersion.version
+        )
+    }
 
     override fun getAllAvailableDevices(): List<AvailableDeviceDTO> {
         return fetchAllDevices()

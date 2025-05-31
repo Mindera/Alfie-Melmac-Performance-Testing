@@ -22,6 +22,21 @@ class DeviceController(private val deviceService: IDeviceService) : IDeviceContr
                 call.respond(devices)
             }
 
+            // Endpoint to get device by ID
+            get("/{deviceId}") {
+                val deviceId = call.parameters["deviceId"]?.toIntOrNull()
+                if (deviceId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid Device ID")
+                    return@get
+                }
+                val device = deviceService.getDeviceById(deviceId)
+                if (device != null) {
+                    call.respond(device)
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Device not found")
+                }
+            }
+
             // Endpoint to get devices by minimum OS version
             get("/os-minimum/{minOsVersionId}") {
                 val minVersion = call.parameters["minOsVersionId"]

@@ -192,11 +192,6 @@ jobs:
         run: |
           mkdir -p results
           http_status=$HTTP_CODE
-          log_summary() {
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] --- Current summary.md ---" >> results/summary.log
-            cat results/summary.md >> results/summary.log 2>/dev/null || echo "No summary.md yet" >> results/summary.log
-            echo "" >> results/summary.log
-          }
           if test -f results/suite_execution.json && [ "$http_status" = "200" ]; then
             suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
             testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
@@ -208,7 +203,6 @@ jobs:
             echo "" >> results/summary.md
 
             echo "### Test Execution Results" >> results/summary.md
-            log_summary
 
             # Build a map of testPlanVersionId to plan config (for multiple test plans)
             declare -A PLAN_CONFIGS
@@ -237,7 +231,6 @@ jobs:
 
               if ! echo "$planVersion" | jq empty > /dev/null 2>&1; then
                 echo "❌ Invalid JSON for planVersion: $planVersion" >> results/summary.md
-                log_summary
                 continue
               fi
               
@@ -257,9 +250,8 @@ jobs:
               # Get metric name
               metricName=$(curl -s "http://localhost:8080/metrics/$metricId" | jq -r '.metricName // "N/A"')
               
-              # Get device name
-              deviceResp=$(curl -s "http://localhost:8080/devices")
-              deviceName=$(echo "$deviceResp" | jq -r '.deviceName // "N/A"')
+              # Get device name (using new endpoint)
+              deviceName=$(curl -s "http://localhost:8080/devices/$deviceId" | jq -r '.deviceName // "N/A"')
               
               # Get app version and app name from DB
               appVersionResp=$(curl -s "http://localhost:8080/apps/db/version/$appVersionId")
@@ -288,8 +280,8 @@ jobs:
               echo "" >> results/summary.md
 
               # Table with execution-only values
-              echo "| Passed | Start Time | End Time |" >> results/summary.md
-              echo "|--------|------------|----------|" >> results/summary.md
+              echo "| Test Result | Start Time | End Time |" >> results/summary.md
+              echo "|-------------|------------|----------|" >> results/summary.md
               echo "| $passed | $initialTimestamp | $endTimestamp |" >> results/summary.md
               echo "" >> results/summary.md
 
@@ -297,7 +289,6 @@ jobs:
               metricOutputsJson=$(curl -s "http://localhost:8080/metrics/$metricId/outputs")
               if ! echo "$metricOutputsJson" | jq empty > /dev/null 2>&1; then
                 echo "❌ Invalid JSON for metric outputs: $metricOutputsJson" >> results/summary.md
-                log_summary
                 continue
               fi
 
@@ -335,7 +326,6 @@ jobs:
               outputsResp=$(curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$(echo "$exec" | jq '.testExecutionId')")
               if ! echo "$outputsResp" | jq empty > /dev/null 2>&1; then
                 echo "❌ Invalid JSON for test execution outputs: $outputsResp" >> results/summary.md
-                log_summary
                 continue
               fi
               echo "$outputsResp" | jq -c '.[]' | while read -r output; do
@@ -350,11 +340,9 @@ jobs:
               done
               echo "" >> results/summary.md
 
-              log_summary
             done
 
             echo "✅ Summary generated"
-            log_summary
           else
             echo "## Performance Test Suite Results (Android)" > results/summary.md
             echo "" >> results/summary.md
@@ -369,17 +357,14 @@ jobs:
             else
               echo "No suite_execution.json found." >> results/summary.md
             fi
-            log_summary
           fi
-      
+
       - name: Upload test results artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-performance-test-results
-          path: |
-            Melmac/results/summary.md
-            Melmac/results/summary.log
+          name: Android-performance-test-results
+          path: Melmac/results/summary.md
 
       - name: Add results to GitHub Actions summary
         if: always()
