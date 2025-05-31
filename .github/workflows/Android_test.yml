@@ -8,7 +8,7 @@ on:
 
 jobs:
   android-tests:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       APP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
 
@@ -25,31 +25,20 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Add emulator to PATH
-        run: echo "$ANDROID_HOME/emulator" >> $GITHUB_PATH
-
       - name: Install Android system image (x86_64)
         run: sdkmanager "system-images;android-35;google_apis;x86_64"
-
-      - name: Create AVD with proper env
-        run: |
-          mkdir -p ~/.android/avd
-          export ANDROID_SDK_HOME=$HOME
-          echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
-          
-      - name: Confirm AVD .ini files exist
-        run: |
-          ls -l ~/.android/avd
-          cat ~/.android/avd/*.ini || echo "No .ini found"
-
+      
+      - name: Create Android AVD (x86_64)
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+      
       - name: List Android devices
         run: |
           echo "=== Emulator List ==="
-          emulator -list-avds || true
+          emulator -list-avds
           echo "=== AVD List ==="
-          avdmanager list avd || true
+          avdmanager list avd
           echo "=== Connected Devices ==="
-          adb devices || true
+          adb devices
 
       - name: Generate Gradle Wrapper
         working-directory: Melmac

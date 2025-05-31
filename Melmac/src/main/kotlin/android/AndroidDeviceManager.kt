@@ -29,15 +29,8 @@ object AndroidDeviceManager : DeviceManager {
                         emulatorPath,
                         "-avd",
                         deviceName,
-                        "-no-snapshot-load",
-                        "-no-snapshot-save",
-                        "-no-boot-anim",
                         "-no-window",
                         "-no-audio",
-                        "-gpu",
-                        "swiftshader_indirect",
-                        "-accel",
-                        "off"
                 )
 
         val process = ProcessBuilder(args).redirectErrorStream(true).start()
