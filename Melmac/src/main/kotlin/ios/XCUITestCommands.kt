@@ -92,6 +92,7 @@ object XCUITestCommands {
 
         if (!completed) {
             Logger.error("❌ xcodebuild process timed out after $timeoutInSeconds seconds")
+            Logger.error("Full output before timeout:\n$outputBuffer") 
             startedProcess.destroyForcibly()
             return Triple("Not Found", "False", "False")
         }
@@ -100,7 +101,6 @@ object XCUITestCommands {
         if (exitCode != 0) {
             Logger.error("❌ xcodebuild process failed with exit code: $exitCode")
             Logger.error("Full output:\n$outputBuffer")
-            return Triple("Not Found", "False", "False")
         }
 
         // Extract JSON from output
@@ -110,8 +110,6 @@ object XCUITestCommands {
             Logger.error("Full output:\n$outputBuffer")
             return Triple("Not Found", "False", "False")
         }
-
-        Logger.info("✅ JSON output received: $jsonText")
 
         return try {
             val jsonArray = JSONArray(jsonText)
