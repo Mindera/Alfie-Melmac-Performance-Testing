@@ -132,6 +132,8 @@ jobs:
       - name: Create Android test plan
         working-directory: Melmac
         run: |
+          # If you have multiple test plans, increment this index or use a unique name
+          PLAN_INDEX=1
           curl -s -X POST http://localhost:8080/test-plans \
             -H "Content-Type: application/json" \
             -d "{
@@ -159,7 +161,7 @@ jobs:
               ],
               \"executionTypeParameters\": [],
               \"testSuiteVersionId\": ${TEST_SUITE_ID}
-            }"
+            }" | tee results/test_plan_${PLAN_INDEX}.json
 
       - name: Run Android test suite
         working-directory: Melmac
@@ -209,14 +211,31 @@ jobs:
             echo "### Test Execution Results" >> results/summary.md
             log_summary
 
+            # Build a map of testPlanVersionId to plan config (for multiple test plans)
+            declare -A PLAN_CONFIGS
+            for plan_file in results/test_plan_*.json; do
+              if [ -f "$plan_file" ]; then
+                planVersionId=$(jq '.testPlanVersionId // .testPlanVersionID // .testPlanVersionTestPlanVersionId // empty' "$plan_file")
+                if [ -n "$planVersionId" ]; then
+                  PLAN_CONFIGS[$planVersionId]="$plan_file"
+                fi
+              fi
+            done
+
             jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
               testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
               passed=$(echo "$exec" | jq -r '.passed')
               initialTimestamp=$(echo "$exec" | jq -r '.initialTimestamp')
               endTimestamp=$(echo "$exec" | jq -r '.endTimestamp')
 
-              # Fetch test plan version details (full config)
-              planVersion=$(curl -s "http://localhost:8080/test-plan-versions/$testPlanVersionId")
+              # Use stored plan config if available, else fallback to API
+              plan_file="${PLAN_CONFIGS[$testPlanVersionId]}"
+              if [ -n "$plan_file" ] && [ -f "$plan_file" ]; then
+                planVersion=$(cat "$plan_file")
+              else
+                planVersion=$(curl -s "http://localhost:8080/test-plan-versions/$testPlanVersionId")
+              fi
+
               if ! echo "$planVersion" | jq empty > /dev/null 2>&1; then
                 echo "❌ Invalid JSON for planVersion: $planVersion" >> results/summary.md
                 log_summary
@@ -224,7 +243,7 @@ jobs:
               fi
 
               # Get test plan name
-              testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId')
+              testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId // .testPlanId // empty')
               testName=$(curl -s "http://localhost:8080/test-plans/$testPlanId")
               if ! echo "$testName" | jq empty > /dev/null 2>&1; then
                 echo "❌ Invalid JSON for testName: $testName" >> results/summary.md
@@ -396,7 +415,7 @@ jobs:
             fi
             log_summary
           fi
-          
+
       - name: Upload test results artifact
         if: always()
         uses: actions/upload-artifact@v4
