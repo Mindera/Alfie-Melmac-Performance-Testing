@@ -142,8 +142,8 @@ final class TestResultLogger {
                 action: step.action,
                 target: step.target,
                 value: step.value,
-                elementFound: step.elementFound,
                 metric: step.metric,
+                elementFound: step.elementFound,
                 success: success,
                 error: error,
                 timestamp: formatter.string(from: Date())

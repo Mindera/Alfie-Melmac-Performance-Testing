@@ -112,7 +112,7 @@ jobs:
                   \"metricParameterMetricParameterId\": 1
                 },
                 {
-                  \"parameterValue\": \"50000\",
+                  \"parameterValue\": \"200000\",
                   \"metricParameterMetricParameterId\": 2
                 }
               ],
