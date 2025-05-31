@@ -38,7 +38,7 @@ jobs:
           
           # Accept licenses and install required packages
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;31.0.0"
           
           # Verify installation
           adb --version
@@ -48,6 +48,21 @@ jobs:
             echo "❌ Failed to setup Android SDK"
             exit 1
           fi
+
+      - name: Install Android system image (x86_64)
+        run: sdkmanager "system-images;android-35;google_apis;x86_64"
+      
+      - name: Create Android AVD (x86_64)
+        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+      
+      - name: List Android devices
+        run: |
+          echo "=== Emulator List ==="
+          emulator -list-avds
+          echo "=== AVD List ==="
+          avdmanager list avd
+          echo "=== Connected Devices ==="
+          adb devices
 
       - name: Generate Gradle Wrapper
         working-directory: Melmac
@@ -69,92 +84,94 @@ jobs:
           curl -L "$APP_URL" -o src/main/resources/apps/Alfie.apk
           ls -l src/main/resources/apps
 
-      - name: Prepare and run emulator for TestPlan + Execution
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          arch: x86_64
-          target: google_apis
-          profile: Nexus 6
-          script: |
-            echo "▶️ Starting backend..."
-            ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
-            echo "▶️ Tailing backend log..."
-            tail -f $GITHUB_WORKSPACE/backend.log &
-            echo "⏳ Waiting for backend to be ready..."
-            for i in {1..31}; do
-              if curl -s http://localhost:8080/; then
-                echo "Backend is up!"
-                break
-              fi
-              sleep 2
-            done
-            if ! curl -s http://localhost:8080/; then
-              echo "Backend did not start in time" >&2
-              exit 1
+      - name: Start backend
+        working-directory: Melmac
+        run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
+
+      - name: Tail backend log
+        run: tail -f $GITHUB_WORKSPACE/backend.log &
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..31}; do
+            if curl -s http://localhost:8080/; then
+              echo "Backend is up!"
+              exit 0
             fi
+            sleep 2
+          done
+          echo "Backend did not start in time" >&2
+          exit 1
 
-            echo "🧪 Creating test suite..."
-            mkdir -p Melmac/results
+      - name: Create test suite
+        working-directory: Melmac
+        run: |
+            mkdir -p results
             curl -s -X POST http://localhost:8080/test-suites \
-              -H "Content-Type: application/json" \
-              -d '{
-                  "testSuiteName": "My Test Suite",
-                  "testSuiteDescription": "Description of my test suite"
-              }' | tee Melmac/results/test_suite.json
+            -H "Content-Type: application/json" \
+            -d '{
+                "testSuiteName": "My Test Suite",
+                "testSuiteDescription": "Description of my test suite"
+            }' | tee results/test_suite.json
 
-            TEST_SUITE_ID=$(jq '.testSuiteId' Melmac/results/test_suite.json)
+            TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
             echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
-            export TEST_SUITE_ID
+            echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
-            echo "📱 Emulator booted. Installing APK..."
-            adb install Melmac/src/main/resources/apps/Alfie.apk
+      - name: Create Android test plan
+        working-directory: Melmac
+        run: |
+          curl -s -X POST http://localhost:8080/test-plans \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"notes\": \"Test plan for App Startup Time metric\",
+              \"testName\": \"Startup Time Plan\",
+              \"metricMetricId\": 1,
+              \"deviceName\": \"Medium_Phone_API_35\",
+              \"appName\": \"Alfie.apk\",
+              \"appVersion\": \"0.8.0\",
+              \"appPackage\": \"au.com.alfie.ecomm.debug\",
+              \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
+              \"executionTypeExecutionTypeId\": 1,
+              \"thresholds\": [
+                {
+                  \"targetValue\": 1000,
+                  \"thresholdTypeThresholdTypeId\": 2,
+                  \"metricOutputMetricOutputId\": 1
+                }
+              ],
+              \"metricParameters\": [
+                {
+                  \"parameterValue\": \"home-tab\",
+                  \"metricParameterMetricParameterId\": 1
+                }
+              ],
+              \"executionTypeParameters\": [],
+              \"testSuiteVersionId\": ${TEST_SUITE_ID}
+            }"
 
-            echo "🚀 Creating Android test plan..."
-            curl -s -X POST http://localhost:8080/test-plans \
-              -H "Content-Type: application/json" \
-              -d "{
-                \"notes\": \"Test plan for App Startup Time metric\",
-                \"testName\": \"Startup Time Plan\",
-                \"metricMetricId\": 1,
-                \"deviceName\": \"Nexus 6\",
-                \"appName\": \"Alfie.apk\",
-                \"appVersion\": \"0.8.0\",
-                \"appPackage\": \"au.com.alfie.ecomm.debug\",
-                \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
-                \"executionTypeExecutionTypeId\": 1,
-                \"thresholds\": [
-                  {
-                    \"targetValue\": 1000,
-                    \"thresholdTypeThresholdTypeId\": 2,
-                    \"metricOutputMetricOutputId\": 1
-                  }
-                ],
-                \"metricParameters\": [
-                  {
-                    \"parameterValue\": \"home-tab\",
-                    \"metricParameterMetricParameterId\": 1
-                  }
-                ],
-                \"executionTypeParameters\": [],
-                \"testSuiteVersionId\": ${TEST_SUITE_ID}
-              }"
+      - name: Run Android test suite
+        working-directory: Melmac
+        run: |
+            mkdir -p results
 
-            echo "🏁 Running test suite with ID: $TEST_SUITE_ID"
-            mkdir -p Melmac/results
-            : > Melmac/results/suite_execution.json
+            echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
+            echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
+            
+            : > results/suite_execution.json
 
-            http_code=$(curl -s -w "%{http_code}" -o Melmac/results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+            http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
             echo "🔁 HTTP status code: $http_code"
             echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
 
             echo "📄 Raw response body:"
-            cat Melmac/results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+            cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
 
             if [ "$http_code" -ne 200 ]; then
-              echo "❌ Failed to run test suite. HTTP $http_code"
+            echo "❌ Failed to run test suite. HTTP $http_code"
+            # Não termina o job para que o resumo corra
             else
-              echo "✅ Suite execution request succeeded"
+            echo "✅ Suite execution request succeeded"
             fi
 
       - name: Generate summary
