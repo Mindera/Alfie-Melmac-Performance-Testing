@@ -156,6 +156,9 @@ val appModule = module {
     single<ITestSuiteService> {
         TestSuiteService(get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
+    single<ITestPlanVersionService> {
+        TestPlanVersionService(get(), get(), get(), get(), get())
+    }
 
     // --- Controllers ---
     single<IAppController> { AppController(get()) }
@@ -166,6 +169,7 @@ val appModule = module {
     single<IThresholdTypeController> { ThresholdTypeController(get()) }
     single<ITestSuiteController> { TestSuiteController(get(), get()) }
     single<ITestPlanController> { TestPlanController(get()) }
+    single<ITestPlanVersionController> { TestPlanVersionController(get()) }
 
     single<ITestRunner> { TestRunner(get(), get()) }
 

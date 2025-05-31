@@ -73,5 +73,8 @@ fun Application.module() {
 
         val thresholdTypeController by inject<IThresholdTypeController>()
         with(thresholdTypeController) { routes() }
+
+        val testPlanVersionController by inject<ITestPlanVersionController>()
+        with(testPlanVersionController) { routes() }
     }
 }

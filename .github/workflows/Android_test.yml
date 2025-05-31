@@ -30,16 +30,16 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        
+
       - name: Configure Android SDK
         run: |
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-          
+
           # Accept licenses and install required packages
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;31.0.0"
-          
+
           # Verify installation
           adb --version
           if [ $? -eq 0 ]; then
@@ -60,7 +60,7 @@ jobs:
           mkdir -p ~/.android/avd
           export ANDROID_SDK_HOME=$HOME
           echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
-          
+
       - name: Confirm AVD .ini files exist
         run: |
           ls -l ~/.android/avd
@@ -117,17 +117,17 @@ jobs:
       - name: Create test suite
         working-directory: Melmac
         run: |
-            mkdir -p results
-            curl -s -X POST http://localhost:8080/test-suites \
-            -H "Content-Type: application/json" \
-            -d '{
-                "testSuiteName": "My Test Suite",
-                "testSuiteDescription": "Description of my test suite"
-            }' | tee results/test_suite.json
+          mkdir -p results
+          curl -s -X POST http://localhost:8080/test-suites \
+          -H "Content-Type: application/json" \
+          -d '{
+              "testSuiteName": "My Test Suite",
+              "testSuiteDescription": "Description of my test suite"
+          }' | tee results/test_suite.json
 
-            TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
-            echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
-            echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
+          TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+          echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
+          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
       - name: Create Android test plan
         working-directory: Melmac
@@ -164,26 +164,26 @@ jobs:
       - name: Run Android test suite
         working-directory: Melmac
         run: |
-            mkdir -p results
+          mkdir -p results
 
-            echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
-            echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
-            
-            : > results/suite_execution.json
+          echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
+          echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
 
-            http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
-            echo "🔁 HTTP status code: $http_code"
-            echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
+          : > results/suite_execution.json
 
-            echo "📄 Raw response body:"
-            cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+          http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+          echo "🔁 HTTP status code: $http_code"
+          echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
 
-            if [ "$http_code" -ne 200 ]; then
-            echo "❌ Failed to run test suite. HTTP $http_code"
-            # Não termina o job para que o resumo corra
-            else
-            echo "✅ Suite execution request succeeded"
-            fi
+          echo "📄 Raw response body:"
+          cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+
+          if [ "$http_code" -ne 200 ]; then
+          echo "❌ Failed to run test suite. HTTP $http_code"
+          # Não termina o job para que o resumo corra
+          else
+          echo "✅ Suite execution request succeeded"
+          fi
 
       - name: Generate summary
         working-directory: Melmac
@@ -195,37 +195,134 @@ jobs:
             suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
             testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
 
-            echo "## Performance Test Suite Results (iOS)" > results/summary.md
+            echo "## Performance Test Suite Results (Android)" > results/summary.md
             echo "" >> results/summary.md
-            echo "**Suite Execution ID:** $suiteExecutionId  " >> results/summary.md
-            echo "**Test Suite Version ID:** $testSuiteVersionId" >> results/summary.md
+            echo "**Suite Execution:** $suiteExecutionId" >> results/summary.md
+            echo "**Test Suite Version:** $testSuiteVersionId" >> results/summary.md
             echo "" >> results/summary.md
 
             echo "### Test Execution Results" >> results/summary.md
-            echo "| Test Execution ID | Passed | Start Time | End Time | Test Plan Version ID |" >> results/summary.md
-            echo "|-------------------|--------|------------|----------|----------------------|" >> results/summary.md
-            jq -r '.executionResults[] | "| \(.testExecutionId) | \(.passed) | \(.initialTimestamp) | \(.endTimestamp) | \(.testPlanVersionTestPlanVersionId) |"' results/suite_execution.json >> results/summary.md
 
             jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
-              testExecutionId=$(echo "$exec" | jq '.testExecutionId')
               testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
+              passed=$(echo "$exec" | jq -r '.passed')
+              initialTimestamp=$(echo "$exec" | jq -r '.initialTimestamp')
+              endTimestamp=$(echo "$exec" | jq -r '.endTimestamp')
 
-              echo "#### Thresholds for Test Execution ID $testExecutionId" >> results/summary.md
-              echo "| Target Value | Threshold Type | Metric Output ID |" >> results/summary.md
-              echo "|--------------|----------------|------------------|" >> results/summary.md
-              curl -s "http://localhost:8080/thresholds?testPlanVersionId=$testPlanVersionId" | jq -r '.[] | "| \(.targetValue) | \(.thresholdTypeThresholdTypeId) | \(.metricOutputMetricOutputId) |"' >> results/summary.md
+              # Fetch test plan version details (full config)
+              planVersion=$(curl -s "http://localhost:8080/test-plan-versions/$testPlanVersionId")
+
+              # Get test plan name
+              testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId')
+              testName=$(curl -s "http://localhost:8080/test-plans/$testPlanId" | jq -r '.testName // "N/A"')
+
+              # Get metric name (always via /metrics)
+              metricId=$(echo "$planVersion" | jq '.metricMetricId // empty')
+              metricName="N/A"
+              if [ -n "$metricId" ] && [ "$metricId" != "null" ]; then
+                metricName=$(curl -s "http://localhost:8080/metrics/$metricId" | jq -r '.metricName // "N/A"')
+              fi
+
+              # Get device name
+              deviceId=$(echo "$planVersion" | jq '.deviceDeviceId // empty')
+              deviceName="N/A"
+              if [ -n "$deviceId" ] && [ "$deviceId" != "null" ]; then
+                deviceName=$(curl -s "http://localhost:8080/devices/$deviceId" | jq -r '.deviceName // "N/A"')
+              fi
+
+              # Get app version and app name
+              appVersionId=$(echo "$planVersion" | jq '.appVersionAppVersionId // empty')              
+              appName="N/A"
+              appVersion="N/A"
+              if [ -n "$appVersionId" ] && [ "$appVersionId" != "null" ]; then
+                # Find the appName for this appVersionId
+                appName=$(echo "$planVersion" | jq -r '.appName // empty')
+                if [ -n "$appName" ] && [ "$appName" != "null" ]; then
+                  # Get all versions for this app from folder and find the version string
+                  appVersion=$(curl -s "http://localhost:8080/apps/folder/$appName/versions" | jq -r --arg vid "$appVersionId" '.[] | select(.appVersionId == ($vid|tonumber)) | .appVersion' | head -n1)
+                  if [ -z "$appVersion" ]; then appVersion="N/A"; fi
+                fi
+              fi
+              
+              echo "- **App Name:** $appName" >> results/summary.md
+              echo "- **App Version:** $appVersion" >> results/summary.md
+
+              appPackage=$(echo "$planVersion" | jq -r '.appPackage // "N/A"')
+              mainActivity=$(echo "$planVersion" | jq -r '.mainActivity // "N/A"')
+
+              executionTypeName="N/A"
+              if [ -n "$metricId" ] && [ "$metricId" != "null" ] && [ -n "$executionTypeId" ] && [ "$executionTypeId" != "null" ]; then
+                executionTypesJson=$(curl -s "http://localhost:8080/metrics/$metricId/execution-types")
+                executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName')
+                if [ -z "$executionTypeName" ]; then executionTypeName="N/A"; fi
+              fi
+
+              echo "- **Execution Type:** $executionTypeName" >> results/summary.md
+
+              echo "#### Test Execution: $testName" >> results/summary.md
+              echo "- **Metric:** $metricName" >> results/summary.md
+              echo "- **Device:** $deviceName" >> results/summary.md
+              echo "- **App Name:** $appName" >> results/summary.md
+              echo "- **App Version:** $appVersion" >> results/summary.md
+              echo "- **App Package:** $appPackage" >> results/summary.md
+              echo "- **Main Activity:** $mainActivity" >> results/summary.md
+              echo "- **Execution Type:** $executionTypeName" >> results/summary.md
               echo "" >> results/summary.md
 
-              echo "#### Metric Output Results for Test Execution ID $testExecutionId" >> results/summary.md
-              echo "| Metric Output Name | Value |" >> results/summary.md
-              echo "|--------------------|-------|" >> results/summary.md
-              curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$testExecutionId" | jq -r '.[] | "| \(.metricOutputName // "N/A") | \(.value // "N/A") |"' >> results/summary.md
+              # Table with execution-only values
+              echo "| Passed | Start Time | End Time |" >> results/summary.md
+              echo "|--------|------------|----------|" >> results/summary.md
+              echo "| $passed | $initialTimestamp | $endTimestamp |" >> results/summary.md
               echo "" >> results/summary.md
+
+              # Always get metric outputs for this metric via /metrics/{id}/outputs
+              metricOutputsJson=$(curl -s "http://localhost:8080/metrics/$metricId/outputs")
+
+              # Thresholds (names only, using metricOutputsJson for output names)
+              echo "##### Thresholds" >> results/summary.md
+              echo "| Target Value | Threshold Type | Metric Output |" >> results/summary.md
+              echo "|--------------|---------------|--------------|" >> results/summary.md
+              for row in $(echo "$planVersion" | jq -c '.thresholds[]'); do
+                targetValue=$(echo "$row" | jq -r '.targetValue // "N/A"')
+                thresholdTypeId=$(echo "$row" | jq -r '.thresholdTypeThresholdTypeId // empty')
+                metricOutputId=$(echo "$row" | jq -r '.metricOutputMetricOutputId // empty')
+
+                thresholdTypeName="N/A"
+                if [ -n "$thresholdTypeId" ] && [ "$thresholdTypeId" != "null" ]; then
+                  thresholdTypeName=$(curl -s "http://localhost:8080/threshold-types/$thresholdTypeId" | jq -r '.thresholdTypeName // "N/A"')
+                fi
+
+                metricOutputName="N/A"
+                if [ -n "$metricOutputId" ] && [ "$metricOutputId" != "null" ]; then
+                  metricOutputName=$(echo "$metricOutputsJson" | jq -r --arg id "$metricOutputId" '.[] | select(.metricOutputId == ($id|tonumber)) | .outputName')
+                  if [ -z "$metricOutputName" ]; then metricOutputName="N/A"; fi
+                fi
+
+                echo "| $targetValue | $thresholdTypeName | $metricOutputName |" >> results/summary.md
+              done
+              echo "" >> results/summary.md
+
+              # Metric Output Results (names only, using metricOutputsJson for output names)
+              echo "##### Metric Output Results" >> results/summary.md
+              echo "| Metric Output | Value |" >> results/summary.md
+              echo "|--------------|-------|" >> results/summary.md
+              curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$(echo "$exec" | jq '.testExecutionId')" | jq -c '.[]' | while read -r output; do
+                metricOutputId=$(echo "$output" | jq -r '.metricOutputMetricOutputId // empty')
+                value=$(echo "$output" | jq -r '.value // "N/A"')
+                metricOutputName="N/A"
+                if [ -n "$metricOutputId" ] && [ "$metricOutputId" != "null" ]; then
+                  metricOutputName=$(echo "$metricOutputsJson" | jq -r --arg id "$metricOutputId" '.[] | select(.metricOutputId == ($id|tonumber)) | .outputName')
+                  if [ -z "$metricOutputName" ]; then metricOutputName="N/A"; fi
+                fi
+                echo "| $metricOutputName | $value |" >> results/summary.md
+              done
+              echo "" >> results/summary.md
+
             done
 
             echo "✅ Summary generated"
           else
-            echo "## Performance Test Suite Results (iOS)" > results/summary.md
+            echo "## Performance Test Suite Results (Android)" > results/summary.md
             echo "" >> results/summary.md
             echo "❌ Test suite execution failed." >> results/summary.md
             echo "" >> results/summary.md
@@ -244,17 +341,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-            name: android-performance-test-results
-            path: Melmac/results/summary.md
+          name: android-performance-test-results
+          path: Melmac/results/summary.md
 
       - name: Add results to GitHub Actions summary
         if: always()
         run: |
-            if [ -f Melmac/results/summary.md ]; then
-            cat Melmac/results/summary.md >> $GITHUB_STEP_SUMMARY
-            else
-            echo "No summary file found." >> $GITHUB_STEP_SUMMARY
-            fi
+          if [ -f Melmac/results/summary.md ]; then
+          cat Melmac/results/summary.md >> $GITHUB_STEP_SUMMARY
+          else
+          echo "No summary file found." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Comment results on PR
         if: github.event_name == 'pull_request'
@@ -277,5 +374,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-            name: android-backend-log
-            path: backend.log
+          name: android-backend-log
+          path: backend.log

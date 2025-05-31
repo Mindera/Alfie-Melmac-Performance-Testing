@@ -47,6 +47,30 @@ class TestSuiteVersionPlanRepository(
         return list
     }
 
+    override fun findByTestPlanVersionId(versionId: Int): List<TestSuiteVersionPlan> {
+        val query = """
+            SELECT TestSuiteVersionTestSuiteVersionID, TestPlanVersionTestPlanVersionID, "Order"
+            FROM TestSuiteVersionPlan
+            WHERE TestPlanVersionTestPlanVersionID = ?
+            ORDER BY TestSuiteVersionTestSuiteVersionID DESC
+        """
+        val statement = connection.prepareStatement(query)
+        statement.setInt(1, versionId)
+        val resultSet = statement.executeQuery()
+
+        val list = mutableListOf<TestSuiteVersionPlan>()
+        while (resultSet.next()) {
+            list.add(
+                TestSuiteVersionPlan(
+                    testSuiteVersionTestSuiteVersionId = resultSet.getInt("TestSuiteVersionTestSuiteVersionID"),
+                    testPlanVersionTestPlanVersionId = resultSet.getInt("TestPlanVersionTestPlanVersionID"),
+                    order = resultSet.getInt("Order")
+                )
+            )
+        }
+        return list
+    }
+
     override fun save(testSuiteVersionPlan: TestSuiteVersionPlan): Int {
         val query = """
             INSERT INTO TestSuiteVersionPlan (TestSuiteVersionTestSuiteVersionID, TestPlanVersionTestPlanVersionID, "Order")

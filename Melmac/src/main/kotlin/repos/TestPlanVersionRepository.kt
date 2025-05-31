@@ -58,9 +58,9 @@ class TestPlanVersionRepository(private val connection: Connection) : ITestPlanV
         } else -1
     }
 
-        override fun findLatestVersionByTestPlanId(testPlanId: Int): TestPlanVersion? {
+    override fun findLatestVersionByTestPlanId(testPlanId: Int): TestPlanVersion? {
         val query =
-            """
+                """
             SELECT TOP 1 TestPlanVersionID, Version, CreationTimestamp, Notes, AppPackage, AppMainActivity, TestPlanTestPlanID, DeviceDeviceID, AppVersionAppVersionID, ExecutionTypeExecutionTypeID
             FROM TestPlanVersion
             WHERE TestPlanTestPlanID = ?
@@ -69,20 +69,55 @@ class TestPlanVersionRepository(private val connection: Connection) : ITestPlanV
         val statement = connection.prepareStatement(query)
         statement.setInt(1, testPlanId)
         val resultSet = statement.executeQuery()
-    
+
         return if (resultSet.next()) {
             TestPlanVersion(
-                testPlanVersionId = resultSet.getInt("TestPlanVersionID"),
-                version = resultSet.getString("Version"),
-                creationTimestamp = resultSet.getTimestamp("CreationTimestamp").toLocalDateTime(),
-                notes = resultSet.getString("Notes"),
-                appPackage = resultSet.getString("AppPackage"),
-                mainActivity = resultSet.getString("AppMainActivity"),
-                testPlanTestPlanId = resultSet.getInt("TestPlanTestPlanID"),
-                deviceDeviceId = resultSet.getInt("DeviceDeviceID"),
-                appVersionAppVersionId = resultSet.getInt("AppVersionAppVersionID"),
-                executionTypeExecutionTypeId = resultSet.getInt("ExecutionTypeExecutionTypeID"),
+                    testPlanVersionId = resultSet.getInt("TestPlanVersionID"),
+                    version = resultSet.getString("Version"),
+                    creationTimestamp =
+                            resultSet.getTimestamp("CreationTimestamp").toLocalDateTime(),
+                    notes = resultSet.getString("Notes"),
+                    appPackage = resultSet.getString("AppPackage"),
+                    mainActivity = resultSet.getString("AppMainActivity"),
+                    testPlanTestPlanId = resultSet.getInt("TestPlanTestPlanID"),
+                    deviceDeviceId = resultSet.getInt("DeviceDeviceID"),
+                    appVersionAppVersionId = resultSet.getInt("AppVersionAppVersionID"),
+                    executionTypeExecutionTypeId = resultSet.getInt("ExecutionTypeExecutionTypeID"),
             )
         } else null
+    }
+
+    override fun findByTestPlanId(testPlanId: Int): List<TestPlanVersion> {
+        val query =
+                """
+            SELECT TestPlanVersionID, Version, CreationTimestamp, Notes, AppPackage, AppMainActivity, TestPlanTestPlanID, DeviceDeviceID, AppVersionAppVersionID, ExecutionTypeExecutionTypeID
+            FROM TestPlanVersion
+            WHERE TestPlanTestPlanID = ?
+            ORDER BY CreationTimestamp DESC
+            """
+        val statement = connection.prepareStatement(query)
+        statement.setInt(1, testPlanId)
+        val resultSet = statement.executeQuery()
+
+        val versions = mutableListOf<TestPlanVersion>()
+        while (resultSet.next()) {
+            versions.add(
+                    TestPlanVersion(
+                            testPlanVersionId = resultSet.getInt("TestPlanVersionID"),
+                            version = resultSet.getString("Version"),
+                            creationTimestamp =
+                                    resultSet.getTimestamp("CreationTimestamp").toLocalDateTime(),
+                            notes = resultSet.getString("Notes"),
+                            appPackage = resultSet.getString("AppPackage"),
+                            mainActivity = resultSet.getString("AppMainActivity"),
+                            testPlanTestPlanId = resultSet.getInt("TestPlanTestPlanID"),
+                            deviceDeviceId = resultSet.getInt("DeviceDeviceID"),
+                            appVersionAppVersionId = resultSet.getInt("AppVersionAppVersionID"),
+                            executionTypeExecutionTypeId =
+                                    resultSet.getInt("ExecutionTypeExecutionTypeID"),
+                    )
+            )
+        }
+        return versions
     }
 }
