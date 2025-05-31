@@ -191,6 +191,11 @@ jobs:
         run: |
           mkdir -p results
           http_status=$HTTP_CODE
+          log_summary() {
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] --- Current summary.md ---" >> results/summary.log
+            cat results/summary.md >> results/summary.log 2>/dev/null || echo "No summary.md yet" >> results/summary.log
+            echo "" >> results/summary.log
+          }
           if test -f results/suite_execution.json && [ "$http_status" = "200" ]; then
             suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
             testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
@@ -202,6 +207,7 @@ jobs:
             echo "" >> results/summary.md
 
             echo "### Test Execution Results" >> results/summary.md
+            log_summary
 
             jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
               testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
@@ -211,50 +217,84 @@ jobs:
 
               # Fetch test plan version details (full config)
               planVersion=$(curl -s "http://localhost:8080/test-plan-versions/$testPlanVersionId")
+              if ! echo "$planVersion" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for planVersion: $planVersion" >> results/summary.md
+                log_summary
+                continue
+              fi
 
               # Get test plan name
               testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId')
-              testName=$(curl -s "http://localhost:8080/test-plans/$testPlanId" | jq -r '.testName // "N/A"')
+              testName=$(curl -s "http://localhost:8080/test-plans/$testPlanId")
+              if ! echo "$testName" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for testName: $testName" >> results/summary.md
+                log_summary
+                continue
+              fi
+              testName=$(echo "$testName" | jq -r '.testName // "N/A"')
 
               # Get metric name (always via /metrics)
               metricId=$(echo "$planVersion" | jq '.metricMetricId // empty')
               metricName="N/A"
               if [ -n "$metricId" ] && [ "$metricId" != "null" ]; then
-                metricName=$(curl -s "http://localhost:8080/metrics/$metricId" | jq -r '.metricName // "N/A"')
+                metricResp=$(curl -s "http://localhost:8080/metrics/$metricId")
+                if echo "$metricResp" | jq empty > /dev/null 2>&1; then
+                  metricName=$(echo "$metricResp" | jq -r '.metricName // "N/A"')
+                else
+                  echo "❌ Invalid JSON for metric: $metricResp" >> results/summary.md
+                  log_summary
+                fi
               fi
 
               # Get device name
               deviceId=$(echo "$planVersion" | jq '.deviceDeviceId // empty')
               deviceName="N/A"
               if [ -n "$deviceId" ] && [ "$deviceId" != "null" ]; then
-                deviceName=$(curl -s "http://localhost:8080/devices/$deviceId" | jq -r '.deviceName // "N/A"')
+                deviceResp=$(curl -s "http://localhost:8080/devices/$deviceId")
+                if echo "$deviceResp" | jq empty > /dev/null 2>&1; then
+                  deviceName=$(echo "$deviceResp" | jq -r '.deviceName // "N/A"')
+                else
+                  echo "❌ Invalid JSON for device: $deviceResp" >> results/summary.md
+                  log_summary
+                fi
               fi
 
               # Get app version and app name
-              appVersionId=$(echo "$planVersion" | jq '.appVersionAppVersionId // empty')              
+              appVersionId=$(echo "$planVersion" | jq '.appVersionAppVersionId // empty')
               appName="N/A"
               appVersion="N/A"
               if [ -n "$appVersionId" ] && [ "$appVersionId" != "null" ]; then
-                # Find the appName for this appVersionId
                 appName=$(echo "$planVersion" | jq -r '.appName // empty')
                 if [ -n "$appName" ] && [ "$appName" != "null" ]; then
-                  # Get all versions for this app from folder and find the version string
-                  appVersion=$(curl -s "http://localhost:8080/apps/folder/$appName/versions" | jq -r --arg vid "$appVersionId" '.[] | select(.appVersionId == ($vid|tonumber)) | .appVersion' | head -n1)
-                  if [ -z "$appVersion" ]; then appVersion="N/A"; fi
+                  versionsResp=$(curl -s "http://localhost:8080/apps/folder/$appName/versions")
+                  if echo "$versionsResp" | jq empty > /dev/null 2>&1; then
+                    appVersion=$(echo "$versionsResp" | jq -r --arg vid "$appVersionId" '.[] | select(.appVersionId == ($vid|tonumber)) | .appVersion' | head -n1)
+                    if [ -z "$appVersion" ]; then appVersion="N/A"; fi
+                  else
+                    echo "❌ Invalid JSON for app versions: $versionsResp" >> results/summary.md
+                    log_summary
+                  fi
                 fi
               fi
-              
+
               echo "- **App Name:** $appName" >> results/summary.md
               echo "- **App Version:** $appVersion" >> results/summary.md
 
               appPackage=$(echo "$planVersion" | jq -r '.appPackage // "N/A"')
               mainActivity=$(echo "$planVersion" | jq -r '.mainActivity // "N/A"')
 
+              # Get execution type name
+              executionTypeId=$(echo "$planVersion" | jq '.executionTypeExecutionTypeId // empty')
               executionTypeName="N/A"
               if [ -n "$metricId" ] && [ "$metricId" != "null" ] && [ -n "$executionTypeId" ] && [ "$executionTypeId" != "null" ]; then
                 executionTypesJson=$(curl -s "http://localhost:8080/metrics/$metricId/execution-types")
-                executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName')
-                if [ -z "$executionTypeName" ]; then executionTypeName="N/A"; fi
+                if echo "$executionTypesJson" | jq empty > /dev/null 2>&1; then
+                  executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName')
+                  if [ -z "$executionTypeName" ]; then executionTypeName="N/A"; fi
+                else
+                  echo "❌ Invalid JSON for execution types: $executionTypesJson" >> results/summary.md
+                  log_summary
+                fi
               fi
 
               echo "- **Execution Type:** $executionTypeName" >> results/summary.md
@@ -277,6 +317,11 @@ jobs:
 
               # Always get metric outputs for this metric via /metrics/{id}/outputs
               metricOutputsJson=$(curl -s "http://localhost:8080/metrics/$metricId/outputs")
+              if ! echo "$metricOutputsJson" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for metric outputs: $metricOutputsJson" >> results/summary.md
+                log_summary
+                continue
+              fi
 
               # Thresholds (names only, using metricOutputsJson for output names)
               echo "##### Thresholds" >> results/summary.md
@@ -289,7 +334,13 @@ jobs:
 
                 thresholdTypeName="N/A"
                 if [ -n "$thresholdTypeId" ] && [ "$thresholdTypeId" != "null" ]; then
-                  thresholdTypeName=$(curl -s "http://localhost:8080/threshold-types/$thresholdTypeId" | jq -r '.thresholdTypeName // "N/A"')
+                  thresholdTypeResp=$(curl -s "http://localhost:8080/threshold-types/$thresholdTypeId")
+                  if echo "$thresholdTypeResp" | jq empty > /dev/null 2>&1; then
+                    thresholdTypeName=$(echo "$thresholdTypeResp" | jq -r '.thresholdTypeName // "N/A"')
+                  else
+                    echo "❌ Invalid JSON for threshold type: $thresholdTypeResp" >> results/summary.md
+                    log_summary
+                  fi
                 fi
 
                 metricOutputName="N/A"
@@ -306,7 +357,13 @@ jobs:
               echo "##### Metric Output Results" >> results/summary.md
               echo "| Metric Output | Value |" >> results/summary.md
               echo "|--------------|-------|" >> results/summary.md
-              curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$(echo "$exec" | jq '.testExecutionId')" | jq -c '.[]' | while read -r output; do
+              outputsResp=$(curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$(echo "$exec" | jq '.testExecutionId')")
+              if ! echo "$outputsResp" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for test execution outputs: $outputsResp" >> results/summary.md
+                log_summary
+                continue
+              fi
+              echo "$outputsResp" | jq -c '.[]' | while read -r output; do
                 metricOutputId=$(echo "$output" | jq -r '.metricOutputMetricOutputId // empty')
                 value=$(echo "$output" | jq -r '.value // "N/A"')
                 metricOutputName="N/A"
@@ -318,9 +375,11 @@ jobs:
               done
               echo "" >> results/summary.md
 
+              log_summary
             done
 
             echo "✅ Summary generated"
+            log_summary
           else
             echo "## Performance Test Suite Results (Android)" > results/summary.md
             echo "" >> results/summary.md
@@ -335,14 +394,17 @@ jobs:
             else
               echo "No suite_execution.json found." >> results/summary.md
             fi
+            log_summary
           fi
-
+          
       - name: Upload test results artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-performance-test-results
-          path: Melmac/results/summary.md
+          path: |
+            Melmac/results/summary.md
+            Melmac/results/summary.log
 
       - name: Add results to GitHub Actions summary
         if: always()
