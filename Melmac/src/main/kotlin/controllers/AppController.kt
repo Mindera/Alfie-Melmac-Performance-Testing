@@ -51,6 +51,21 @@ class AppController(private val appService: IAppService) : IAppController {
                 }
             }
 
+            get("/db/appByVersionId/{appVersionId}") {
+                val appVersionId = call.parameters["appVersionId"]?.toIntOrNull()
+                if (appVersionId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid App Version ID")
+                    return@get
+                }
+
+                try {
+                    val app = appService.getAppByVersionIdFromDatabase(appVersionId)
+                    call.respond(app)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.NotFound, e.message ?: "App not found")
+                }
+            }
+
             get("/db/version/{appVersionId}") {
                 val appVersionId = call.parameters["appVersionId"]?.toIntOrNull()
                 if (appVersionId == null) {

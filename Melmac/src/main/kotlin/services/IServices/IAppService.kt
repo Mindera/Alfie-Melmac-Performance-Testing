@@ -13,4 +13,4 @@ interface IAppService {
     fun getAppVersionByNameFromFolder(appName: String, appVersion: String): AppVersionResponseDTO
     fun getAppByIdFromDatabase(appId: Int): AppResponseDTO
     fun getAppVersionByIdFromDatabase(appVersionId: Int): AppVersionResponseDTO
-}
+    fun getAppByVersionIdFromDatabase(appVersionId: Int): AppResponseDTO

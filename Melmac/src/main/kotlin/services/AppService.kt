@@ -71,6 +71,21 @@ class AppService(
         )
     }
 
+    override fun getAppByVersionIdFromDatabase(appVersionId: Int): AppResponseDTO {
+        val appVersion =
+                appVersionRepository.findById(appVersionId)
+                        ?: throw IllegalArgumentException("App Version with id '$appVersionId' not found")
+
+        val app =
+                appRepository.findById(appVersion.appId)
+                        ?: throw IllegalArgumentException("App with id '${appVersion.appId}' not found")
+
+        return AppResponseDTO(
+                appId = app.appId ?: throw IllegalStateException("App ID cannot be null"),
+                appName = app.appName
+        )
+    }
+
     // --- Folder Methods ---
     override fun getAllAppsFromFolder(): List<AppResponseDTO> {
         val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")

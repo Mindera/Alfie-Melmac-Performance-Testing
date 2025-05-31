@@ -214,7 +214,7 @@ jobs:
             declare -A PLAN_CONFIGS
             for plan_file in results/test_plan_*.json; do
               if [ -f "$plan_file" ]; then
-                planVersionId=$(jq '.testPlanVersionId // .testPlanVersionID // .testPlanVersionTestPlanVersionId // empty' "$plan_file")
+                planVersionId=$(jq '.testPlanVersionId // empty' "$plan_file")
                 if [ -n "$planVersionId" ]; then
                   PLAN_CONFIGS[$planVersionId]="$plan_file"
                 fi
@@ -240,59 +240,36 @@ jobs:
                 log_summary
                 continue
               fi
-
+              
               appPackage=$(echo "$planVersion" | jq -r '.appPackage // "N/A"')
               mainActivity=$(echo "$planVersion" | jq -r '.mainActivity // "N/A"')
-              executionTypeId=$(echo "$planVersion" | jq '.executionTypeExecutionTypeId // empty')
-              appVersionId=$(echo "$planVersion" | jq '.appVersionAppVersionId // empty')
-              deviceId=$(echo "$planVersion" | jq '.deviceDeviceId // empty')
-              testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId // .testPlanId // empty')
+              executionTypeId=$(echo "$planVersion" | jq '.executionTypeExecutionTypeId')
+              appVersionId=$(echo "$planVersion" | jq '.appVersionAppVersionId')
+              deviceId=$(echo "$planVersion" | jq '.deviceDeviceId')
+              testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId // .testPlanId')
               appName=$(echo "$planVersion" | jq -r '.appName // "N/A"')
-
+              
               # Get testName and metricId from /test-plans/{id}
               planInfo=$(curl -s "http://localhost:8080/test-plans/$testPlanId")
               testName=$(echo "$planInfo" | jq -r '.testName // "N/A"')
-              metricId=$(echo "$planInfo" | jq -r '.metricMetricId // empty')
-
+              metricId=$(echo "$planInfo" | jq -r '.metricMetricId')
+              
               # Get metric name
-              metricName="N/A"
-              if [ -n "$metricId" ] && [ "$metricId" != "null" ]; then
-                metricName=$(curl -s "http://localhost:8080/metrics/$metricId" | jq -r '.metricName // "N/A"')
-              fi
-
+              metricName=$(curl -s "http://localhost:8080/metrics/$metricId" | jq -r '.metricName // "N/A"')
+              
               # Get device name
-              deviceName="N/A"
-              if [ -n "$deviceId" ] && [ "$deviceId" != "null" ]; then
-                deviceResp=$(curl -s "http://localhost:8080/devices")
-                if echo "$deviceResp" | jq empty > /dev/null 2>&1; then
-                  deviceName=$(echo "$deviceResp" | jq -r --arg id "$deviceId" '.[] | select(.deviceId == ($id|tonumber)) | .deviceName')
-                  if [ -z "$deviceName" ]; then deviceName="N/A"; fi
-                fi
-              fi
-
-              # Get app version
-              appVersion="N/A"
-              if [ -n "$appVersionId" ] && [ "$appVersionId" != "null" ]; then
-                appVersionResp=$(curl -s "http://localhost:8080/apps/db/version/$appVersionId")
-                if echo "$appVersionResp" | jq empty > /dev/null 2>&1; then
-                  appVersion=$(echo "$appVersionResp" | jq -r '.appVersion // "N/A"')
-                fi
-              fi
-
-              # Get app name
-              if [ -z "$appName" ] || [ "$appName" == "N/A" ]; then
-                appName=$(curl -s "http://localhost:8080/apps/db/version/$appVersionId" | jq -r '.appName // "N/A"')
-              fi
-
+              deviceResp=$(curl -s "http://localhost:8080/devices")
+              deviceName=$(echo "$deviceResp" | jq -r '.deviceName // "N/A"')
+              
+              # Get app version and app name from DB
+              appVersionResp=$(curl -s "http://localhost:8080/apps/db/version/$appVersionId")
+              appVersion=$(echo "$appVersionResp" | jq -r '.appVersion // "N/A"')
+              appNameResp=$(curl -s "http://localhost:8080/apps/db/appByVersionId/$appVersionId")
+              appName=$(echo "$appNameResp" | jq -r '.appName // "N/A"')
+              
               # Get execution type name
-              executionTypeName="N/A"
-              if [ -n "$metricId" ] && [ "$metricId" != "null" ] && [ -n "$executionTypeId" ] && [ "$executionTypeId" != "null" ]; then
-                executionTypesJson=$(curl -s "http://localhost:8080/metrics/$metricId/execution-types")
-                if echo "$executionTypesJson" | jq empty > /dev/null 2>&1; then
-                  executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName')
-                  if [ -z "$executionTypeName" ]; then executionTypeName="N/A"; fi
-                fi
-              fi
+              executionTypesJson=$(curl -s "http://localhost:8080/metrics/$metricId/execution-types")
+              executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName // "N/A"')
 
               echo "- **App Name:** $appName" >> results/summary.md
               echo "- **App Version:** $appVersion" >> results/summary.md
