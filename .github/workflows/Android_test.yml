@@ -8,7 +8,7 @@ on:
 
 jobs:
   android-tests:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       APP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
 
