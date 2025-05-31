@@ -126,31 +126,33 @@ jobs:
               \"testSuiteVersionId\": ${TEST_SUITE_ID}
             }"
 
-      - name: Run Android test suite
-        working-directory: Melmac
-        run: |
-            mkdir -p results
+      - name: Run test suite with emulator runner
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: Medium_Phone_API_35
+          script: |
+            echo "📱 Emulator booted. Installing APK..."
+            adb install Melmac/src/main/resources/apps/Alfie.apk
 
             echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
-            echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
-            
-            : > results/suite_execution.json
+            mkdir -p Melmac/results
+            : > Melmac/results/suite_execution.json
 
-            http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+            http_code=$(curl -s -w "%{http_code}" -o Melmac/results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
             echo "🔁 HTTP status code: $http_code"
             echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
 
             echo "📄 Raw response body:"
-            cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+            cat Melmac/results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
 
             if [ "$http_code" -ne 200 ]; then
-            echo "❌ Failed to run test suite. HTTP $http_code"
-            # Não termina o job para que o resumo corra
+              echo "❌ Failed to run test suite. HTTP $http_code"
             else
-            echo "✅ Suite execution request succeeded"
+              echo "✅ Suite execution request succeeded"
             fi
-
-
 
       - name: Generate summary
         working-directory: Melmac
