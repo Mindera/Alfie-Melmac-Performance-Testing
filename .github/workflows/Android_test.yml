@@ -24,21 +24,24 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Install Android system image (x86_64)
-        run: sdkmanager "system-images;android-35;google_apis;x86_64"
-      
-      - name: Create Android AVD (x86_64)
-        run: echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
-      
-      - name: List Android devices
+        
+      - name: Configure Android SDK
         run: |
-          echo "=== Emulator List ==="
-          emulator -list-avds
-          echo "=== AVD List ==="
-          avdmanager list avd
-          echo "=== Connected Devices ==="
-          adb devices
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          
+          # Accept licenses and install required packages
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          
+          # Verify installation
+          adb --version
+          if [ $? -eq 0 ]; then
+            echo "✅ Android SDK setup complete"
+          else
+            echo "❌ Failed to setup Android SDK"
+            exit 1
+          fi
 
       - name: Generate Gradle Wrapper
         working-directory: Melmac
@@ -94,50 +97,50 @@ jobs:
             echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
             echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
 
-      - name: Create Android test plan
-        working-directory: Melmac
-        run: |
-          curl -s -X POST http://localhost:8080/test-plans \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"notes\": \"Test plan for App Startup Time metric\",
-              \"testName\": \"Startup Time Plan\",
-              \"metricMetricId\": 1,
-              \"deviceName\": \"Medium_Phone_API_35\",
-              \"appName\": \"Alfie.apk\",
-              \"appVersion\": \"0.8.0\",
-              \"appPackage\": \"au.com.alfie.ecomm.debug\",
-              \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
-              \"executionTypeExecutionTypeId\": 1,
-              \"thresholds\": [
-                {
-                  \"targetValue\": 1000,
-                  \"thresholdTypeThresholdTypeId\": 2,
-                  \"metricOutputMetricOutputId\": 1
-                }
-              ],
-              \"metricParameters\": [
-                {
-                  \"parameterValue\": \"home-tab\",
-                  \"metricParameterMetricParameterId\": 1
-                }
-              ],
-              \"executionTypeParameters\": [],
-              \"testSuiteVersionId\": ${TEST_SUITE_ID}
-            }"
-
-      - name: Run test suite with emulator runner
+      - name: Prepare and run emulator for TestPlan + Execution
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
           arch: x86_64
           target: google_apis
-          profile: Medium_Phone_API_35
+          profile: Nexus 6
           script: |
             echo "📱 Emulator booted. Installing APK..."
             adb install Melmac/src/main/resources/apps/Alfie.apk
 
-            echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
+            echo "🚀 Creating Android test plan..."
+            TEST_SUITE_ID=$TEST_SUITE_ID
+
+            curl -s -X POST http://localhost:8080/test-plans \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"notes\": \"Test plan for App Startup Time metric\",
+                \"testName\": \"Startup Time Plan\",
+                \"metricMetricId\": 1,
+                \"deviceName\": \"Nexus 6\",
+                \"appName\": \"Alfie.apk\",
+                \"appVersion\": \"0.8.0\",
+                \"appPackage\": \"au.com.alfie.ecomm.debug\",
+                \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
+                \"executionTypeExecutionTypeId\": 1,
+                \"thresholds\": [
+                  {
+                    \"targetValue\": 1000,
+                    \"thresholdTypeThresholdTypeId\": 2,
+                    \"metricOutputMetricOutputId\": 1
+                  }
+                ],
+                \"metricParameters\": [
+                  {
+                    \"parameterValue\": \"home-tab\",
+                    \"metricParameterMetricParameterId\": 1
+                  }
+                ],
+                \"executionTypeParameters\": [],
+                \"testSuiteVersionId\": ${TEST_SUITE_ID}
+              }"
+
+            echo "🏁 Running test suite with ID: $TEST_SUITE_ID"
             mkdir -p Melmac/results
             : > Melmac/results/suite_execution.json
 
@@ -153,6 +156,7 @@ jobs:
             else
               echo "✅ Suite execution request succeeded"
             fi
+
 
       - name: Generate summary
         working-directory: Melmac
