@@ -7,6 +7,22 @@ import services.IServices.ITestSuiteService
 import services.IServices.ITestExecutionService
 import java.time.LocalDateTime
 
+/**
+ * Service implementation for managing Test Suites.
+ *
+ * Provides methods to retrieve, create, and execute test suites, as well as
+ * retrieve associated test plan versions.
+ *
+ * @property testSuiteRepository Repository for TestSuite entities.
+ * @property testSuiteVersionRepository Repository for TestSuiteVersion entities.
+ * @property testSuiteVersionPlanRepository Repository for TestSuiteVersionPlan entities.
+ * @property testPlanVersionRepository Repository for TestPlanVersion entities.
+ * @property testSuiteExecutionRepository Repository for SuiteExecution entities.
+ * @property testExecutionService Service for executing test plans.
+ * @property testThresholdRepository Repository for TestThreshold entities.
+ * @property testMetricParameterRepository Repository for TestPlanMetricParameterValue entities.
+ * @property testExecutionTypeParameterRepository Repository for TestPlanExecutionTypeParameterValue entities.
+ */
 class TestSuiteService(
     private val testSuiteRepository: ITestSuiteRepository,
     private val testSuiteVersionRepository: ITestSuiteVersionRepository,
@@ -19,6 +35,11 @@ class TestSuiteService(
     private val testExecutionTypeParameterRepository: ITestPlanExecutionTypeParameterValueRepository,
 ) : ITestSuiteService {
 
+    /**
+     * Retrieves all test suites.
+     *
+     * @return List of [TestSuiteResponseDTO] representing all test suites.
+     */
     override fun getAllTestSuites(): List<TestSuiteResponseDTO> {
         return testSuiteRepository.findAll().map {it ->
             TestSuiteResponseDTO(
@@ -31,6 +52,12 @@ class TestSuiteService(
         }
     }
 
+    /**
+     * Retrieves a test suite by its ID.
+     *
+     * @param id The ID of the test suite.
+     * @return [TestSuiteResponseDTO] for the specified test suite, or null if not found.
+     */
     override fun getTestSuiteById(id: Int): TestSuiteResponseDTO? {
         val testSuite = testSuiteRepository.findById(id) ?: return null
         return TestSuiteResponseDTO(
@@ -42,6 +69,12 @@ class TestSuiteService(
         )
     }
 
+    /**
+     * Creates a new test suite and its initial version.
+     *
+     * @param request The [TestSuiteRequestDTO] containing test suite details.
+     * @return [TestSuiteResponseDTO] representing the created test suite.
+     */
     override fun createTestSuite(request: TestSuiteRequestDTO): TestSuiteResponseDTO {
         val newSuite = TestSuite(
             testSuiteId = null,
@@ -70,6 +103,13 @@ class TestSuiteService(
         )
     }
 
+    /**
+     * Retrieves all test plan versions associated with the latest version of a test suite.
+     *
+     * @param suiteId The ID of the test suite.
+     * @return List of [TestPlanVersionResponseDTO] for each associated test plan version.
+     * @throws IllegalArgumentException if the test suite has no versions.
+     */
     override fun getTestPlanVersionsBySuiteId(suiteId: Int): List<TestPlanVersionResponseDTO> {
         val latestVersion = testSuiteVersionRepository.findLatestVersionByTestSuiteId(suiteId)
         if (latestVersion == null) {
@@ -130,6 +170,14 @@ class TestSuiteService(
         }
     }
 
+    /**
+     * Executes all test plans associated with the latest version of a test suite.
+     *
+     * @param suiteId The ID of the test suite.
+     * @return [SuiteExecutionResponseDTO] containing the results of the suite execution.
+     * @throws IllegalArgumentException if the test suite has no versions.
+     * @throws IllegalStateException if the test suite version has no test plans.
+     */
     override fun runTestSuiteExecution(suiteId: Int): SuiteExecutionResponseDTO {
         val latestVersion = testSuiteVersionRepository.findLatestVersionByTestSuiteId(suiteId)
         if (latestVersion == null) {
@@ -174,4 +222,3 @@ class TestSuiteService(
         )
     }
 }
-

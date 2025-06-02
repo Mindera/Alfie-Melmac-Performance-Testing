@@ -4,7 +4,11 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.Locale
 
-/** Utility object for tools Provides methods to perform various utility functions. */
+/**
+ * Utility object for tools.
+ * Provides methods to perform various utility functions such as device ID retrieval,
+ * command execution, path resolution, and version extraction for APK and iOS app bundles.
+ */
 object Tools {
 
     /**
@@ -66,6 +70,12 @@ object Tools {
         return null
     }
 
+    /**
+     * Runs a shell command and returns its output as a string.
+     *
+     * @param command The command to execute.
+     * @return The output of the command, or an error message if execution fails.
+     */
     fun run(command: String): String {
         return try {
             val process =
@@ -82,9 +92,12 @@ object Tools {
     }
 
     /**
-     * Resolves a path to an absolute path, supporting both absolute and relative input. If the
-     * input is already absolute, returns it as-is. If relative, resolves it from the current
+     * Resolves a path to an absolute path, supporting both absolute and relative input.
+     * If the input is already absolute, returns it as-is. If relative, resolves it from the current
      * working directory.
+     *
+     * @param path The path to resolve.
+     * @return The absolute path as a string.
      */
     fun resolvePath(path: String): String {
         val expanded =
@@ -131,6 +144,7 @@ object Tools {
 
     /**
      * Checks if the current operating system is macOS.
+     *
      * @return true if the OS is macOS, false otherwise.
      */
     fun isMac(): Boolean {

@@ -3,6 +3,11 @@ package services.IServices
 import dtos.AppResponseDTO
 import dtos.AppVersionResponseDTO
 
+/**
+ * Service interface for managing applications and their versions.
+ * Provides methods to retrieve application data from both the database and the file system.
+ * This interface abstracts the data access layer, allowing for flexible implementations.
+ */
 interface IAppService {
 
     fun getAllAppsFromDatabase(): List<AppResponseDTO>

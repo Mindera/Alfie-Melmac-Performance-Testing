@@ -19,8 +19,8 @@ import java.io.File
  *  "database": {
  *    "url": "jdbc:mysql://localhost:3306/melmac",
  *    "username": "root",
- *   "password": "password"
- *  },
+ *    "password": "password"
+ *  }
  * }
  * ```
  */

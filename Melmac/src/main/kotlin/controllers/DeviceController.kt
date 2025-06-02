@@ -8,13 +8,27 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import services.IServices.IDeviceService
 
+/**
+ * Controller for handling device-related endpoints.
+ * Provides routes for retrieving available devices and device details.
+ *
+ * @property deviceService The service used to interact with device data sources.
+ */
 class DeviceController(private val deviceService: IDeviceService) : IDeviceController {
 
+    /**
+     * Defines the routes for device-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
 
         route("/devices") {
 
-            // Endpoint to get all available devices
+            /**
+             * GET /devices
+             * Retrieves all available devices, optionally filtered by platform.
+             */
             get {
                 val platform = call.request.queryParameters["platform"]?.lowercase()
                 val devices: List<AvailableDeviceDTO> = deviceService.getAllAvailableDevices()
@@ -22,7 +36,10 @@ class DeviceController(private val deviceService: IDeviceService) : IDeviceContr
                 call.respond(devices)
             }
 
-            // Endpoint to get device by ID
+            /**
+             * GET /devices/{deviceId}
+             * Retrieves a device by its ID.
+             */
             get("/{deviceId}") {
                 val deviceId = call.parameters["deviceId"]?.toIntOrNull()
                 if (deviceId == null) {
@@ -37,7 +54,10 @@ class DeviceController(private val deviceService: IDeviceService) : IDeviceContr
                 }
             }
 
-            // Endpoint to get devices by minimum OS version
+            /**
+             * GET /devices/os-minimum/{minOsVersionId}
+             * Retrieves devices with a minimum OS version, optionally filtered by platform.
+             */
             get("/os-minimum/{minOsVersionId}") {
                 val minVersion = call.parameters["minOsVersionId"]
                 val platform = call.request.queryParameters["platform"]?.lowercase()

@@ -9,6 +9,30 @@ import java.time.ZoneId
 import repos.IRepos.*
 import services.IServices.ITestExecutionService
 
+/**
+ * Service implementation for managing test executions.
+ * Handles retrieval, execution, and result storage for test executions.
+ *
+ * @property testExecutionRepository Repository for TestExecution entities.
+ * @property testPlanVersionRepository Repository for TestPlanVersion entities.
+ * @property metricRepository Repository for Metric entities.
+ * @property metricOutputRepository Repository for MetricOutput entities.
+ * @property executionTypeRepository Repository for ExecutionType entities.
+ * @property deviceRepository Repository for Device entities.
+ * @property osVersionRepository Repository for OS version entities.
+ * @property osRepository Repository for OS entities.
+ * @property appVersionRepository Repository for AppVersion entities.
+ * @property appRepository Repository for App entities.
+ * @property testPlanExecutionTypeParamValueRepo Repository for ExecutionTypeParameter values.
+ * @property testPlanMetricParamValueRepo Repository for MetricParameter values.
+ * @property testPlanRepository Repository for TestPlan entities.
+ * @property metricParameterRepository Repository for MetricParameter entities.
+ * @property executionTypeParameterRepository Repository for ExecutionTypeParameter entities.
+ * @property testThresholdRepository Repository for Threshold entities.
+ * @property thresholdTypeRepository Repository for ThresholdType entities.
+ * @property testMetricOutputResultRepository Repository for TestMetricOutputResult entities.
+ * @property testRunner Test runner interface for executing tests.
+ */
 class TestExecutionService(
         private val testExecutionRepository: ITestExecutionRepository,
         private val testPlanVersionRepository: ITestPlanVersionRepository,
@@ -32,6 +56,11 @@ class TestExecutionService(
         private val testRunner: ITestRunner
 ) : ITestExecutionService {
 
+        /**
+         * Retrieves all test executions.
+         *
+         * @return List of [TestExecutionResponseDTO] representing all test executions.
+         */
         override fun getAllTestExecutions(): List<TestExecutionResponseDTO> {
                 return testExecutionRepository.findAll().map {
                         TestExecutionResponseDTO(
@@ -45,6 +74,12 @@ class TestExecutionService(
                 }
         }
 
+        /**
+         * Retrieves a test execution by its ID.
+         *
+         * @param id The ID of the test execution.
+         * @return [TestExecutionResponseDTO] for the test execution, or null if not found.
+         */
         override fun getTestExecutionById(id: Int): TestExecutionResponseDTO? {
                 val execution = testExecutionRepository.findById(id) ?: return null
                 return TestExecutionResponseDTO(
@@ -57,6 +92,13 @@ class TestExecutionService(
                 )
         }
 
+        /**
+         * Executes a test plan version and stores the results.
+         *
+         * @param testPlanVersionId The ID of the test plan version to execute.
+         * @return [TestExecutionResponseDTO] containing the execution result.
+         * @throws IllegalStateException if any required entity is not found.
+         */
         override fun runTestExecution(testPlanVersionId: Int): TestExecutionResponseDTO {
                 val testPlanVersion =
                         testPlanVersionRepository.findById(testPlanVersionId)

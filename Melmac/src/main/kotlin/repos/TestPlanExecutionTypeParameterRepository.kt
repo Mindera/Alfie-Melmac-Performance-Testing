@@ -4,10 +4,22 @@ import domain.TestExecutionTypeParameter
 import repos.IRepos.ITestPlanExecutionTypeParameterValueRepository
 import java.sql.Connection
 
+/**
+ * Repository implementation for accessing and managing TestExecutionTypeParameter entities
+ * related to TestPlanVersion in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class TestPlanExecutionTypeParameterValueRepository(
     private val connection: Connection
 ) : ITestPlanExecutionTypeParameterValueRepository {
 
+    /**
+     * Retrieves all TestExecutionTypeParameter records for a given TestPlanVersion ID.
+     *
+     * @param testPlanVersionId The ID of the TestPlanVersion whose parameters are to be retrieved.
+     * @return A list of [TestExecutionTypeParameter] entities associated with the given TestPlanVersion ID.
+     */
     override fun findByTestPlanVersionId(testPlanVersionId: Int): List<TestExecutionTypeParameter> {
         val query = """
             SELECT TestExecutionTypeParameterID, ParameterValue, ExecutionTypeParameterExecutionTypeParameterID, TestPlanVersionTestPlanVersionID
@@ -32,6 +44,13 @@ class TestPlanExecutionTypeParameterValueRepository(
         return params
     }
 
+    /**
+     * Saves a new TestExecutionTypeParameter to the database.
+     *
+     * @param testExecutionTypeParameter The [TestExecutionTypeParameter] entity to save.
+     * @return The generated ID of the inserted TestExecutionTypeParameter.
+     * @throws Exception if the insert fails or no key is generated.
+     */
     override fun save(testExecutionTypeParameter: TestExecutionTypeParameter): Int {
         val query = """
             INSERT INTO TestExecutionTypeParameter (ParameterValue, ExecutionTypeParameterExecutionTypeParameterID, TestPlanVersionTestPlanVersionID)

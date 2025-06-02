@@ -9,15 +9,16 @@ import org.koin.core.qualifier.named
 import dtos.TestExecutionConfigDTO
 
 /**
- * Class responsible for running Android tests. It manages the lifecycle of the emulator, app
- * installation, test execution, and cleanup.
+ * Class responsible for running Android tests.
+ * Manages the lifecycle of the emulator, app installation, test execution, and cleanup.
  */
 class AndroidTestRunner (
     private val deviceManager: DeviceManager,
     private val appManager: AppManager
-) {
+) {S
     /**
      * Runs the specified test based on the provided configuration.
+     *
      * @param config The configuration for the test execution.
      * @return A map containing the results of the test execution.
      */

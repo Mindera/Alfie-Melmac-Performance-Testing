@@ -5,10 +5,21 @@ import repos.IRepos.ITestSuiteVersionRepository
 import java.sql.Connection
 import java.sql.Timestamp
 
+/**
+ * Repository implementation for accessing and managing TestSuiteVersion entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class TestSuiteVersionRepository(
     private val connection: Connection
 ) : ITestSuiteVersionRepository {
 
+    /**
+     * Finds the latest TestSuiteVersion for a given TestSuite ID, ordered by version descending.
+     *
+     * @param suiteId The ID of the TestSuite.
+     * @return The latest [TestSuiteVersion] if found, or null otherwise.
+     */
     override fun findLatestVersionByTestSuiteId(suiteId: Int): TestSuiteVersion? {
         val query = """
             SELECT TOP 1 * FROM TestSuiteVersion
@@ -30,6 +41,13 @@ class TestSuiteVersionRepository(
         } else null
     }
 
+    /**
+     * Saves a new TestSuiteVersion to the database.
+     *
+     * @param version The [TestSuiteVersion] entity to save.
+     * @return The generated ID of the inserted TestSuiteVersion.
+     * @throws IllegalStateException if the insert fails.
+     */
     override fun save(version: TestSuiteVersion): Int {
         val query = "INSERT INTO TestSuiteVersion (Version, CreationTimestamp, Notes, TestSuiteTestSuiteID) VALUES (?, ?, ?, ?)"
         val statement = connection.prepareStatement(query, java.sql.Statement.RETURN_GENERATED_KEYS)

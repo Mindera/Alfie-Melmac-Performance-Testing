@@ -8,19 +8,38 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import services.IServices.IAppService
 
+/**
+ * Controller for handling app-related endpoints.
+ * Provides routes for retrieving app and app version information from both the database and the folder.
+ *
+ * @property appService The service used to interact with app data sources.
+ */
 class AppController(private val appService: IAppService) : IAppController {
 
+    /**
+     * Defines the routes for app-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
 
         route("/apps") {
             
             // --- Database endpoints ---
 
+            /**
+             * GET /apps/db
+             * Retrieves all apps from the database.
+             */
             get("/db") {
                 val apps: List<AppResponseDTO> = appService.getAllAppsFromDatabase()
                 call.respond(apps)
             }
 
+            /**
+             * GET /apps/db/{appId}
+             * Retrieves a specific app by its ID from the database.
+             */
             get("/db/{appId}") {
                 val appId = call.parameters["appId"]?.toIntOrNull()
                 if (appId == null) {
@@ -36,6 +55,10 @@ class AppController(private val appService: IAppService) : IAppController {
                 }
             }
 
+            /**
+             * GET /apps/db/{appId}/versions
+             * Retrieves all versions for a specific app from the database.
+             */
             get("/db/{appId}/versions") {
                 val appId = call.parameters["appId"]?.toIntOrNull()
                 if (appId == null) {
@@ -51,6 +74,10 @@ class AppController(private val appService: IAppService) : IAppController {
                 }
             }
 
+            /**
+             * GET /apps/db/appByVersionId/{appVersionId}
+             * Retrieves an app by its version ID from the database.
+             */
             get("/db/appByVersionId/{appVersionId}") {
                 val appVersionId = call.parameters["appVersionId"]?.toIntOrNull()
                 if (appVersionId == null) {
@@ -66,6 +93,10 @@ class AppController(private val appService: IAppService) : IAppController {
                 }
             }
 
+            /**
+             * GET /apps/db/version/{appVersionId}
+             * Retrieves a specific app version by its ID from the database.
+             */
             get("/db/version/{appVersionId}") {
                 val appVersionId = call.parameters["appVersionId"]?.toIntOrNull()
                 if (appVersionId == null) {
@@ -83,6 +114,10 @@ class AppController(private val appService: IAppService) : IAppController {
 
             // --- Folder endpoints ---
 
+            /**
+             * GET /apps/folder
+             * Retrieves all apps from the folder.
+             */
             get("/folder") {
                 try {
                     val apps: List<AppResponseDTO> = appService.getAllAppsFromFolder()
@@ -96,6 +131,10 @@ class AppController(private val appService: IAppService) : IAppController {
                 }
             }
 
+            /**
+             * GET /apps/folder/{appName}/versions
+             * Retrieves all versions for a specific app from the folder.
+             */
             get("/folder/{appName}/versions") {
                 val appName = call.parameters["appName"]
 

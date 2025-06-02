@@ -7,20 +7,37 @@ import io.ktor.server.routing.*
 import io.ktor.http.*
 import services.IServices.IMetricService
 
+/**
+ * Controller for handling metric-related endpoints.
+ * Provides routes for retrieving metrics, metric parameters, outputs, and execution types.
+ *
+ * @property metricService The service used to interact with metric data sources.
+ */
 class MetricController(
     private val metricService: IMetricService
 ) : IMetricController {
 
+    /**
+     * Defines the routes for metric-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
 
         route("/metrics") {
 
-            // Listar todas as métricas
+            /**
+             * GET /metrics
+             * Retrieves all metrics.
+             */
             get {
                 call.respond(HttpStatusCode.OK, metricService.getAllMetrics())
             }
 
-            // Obter uma métrica específica
+            /**
+             * GET /metrics/{id}
+             * Retrieves a specific metric by its ID.
+             */
             get("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -36,7 +53,10 @@ class MetricController(
                 }
             }
 
-            // Obter parâmetros da métrica (MetricParameter)
+            /**
+             * GET /metrics/{id}/parameters
+             * Retrieves the parameters for a specific metric.
+             */
             get("/{id}/parameters") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -48,7 +68,10 @@ class MetricController(
                 call.respond(HttpStatusCode.OK, parameters)
             }
 
-            // Obter outputs
+            /**
+             * GET /metrics/{id}/outputs
+             * Retrieves the outputs for a specific metric.
+             */
             get("/{id}/outputs") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -60,7 +83,10 @@ class MetricController(
                 call.respond(HttpStatusCode.OK, outputs)
             }
 
-            // Obter os tipos de execução associados à métrica
+            /**
+             * GET /metrics/{id}/execution-types
+             * Retrieves the execution types associated with a specific metric.
+             */
             get("/{id}/execution-types") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -73,7 +99,10 @@ class MetricController(
             }
         }
 
-        // Obter parâmetros associados a um tipo de execução
+        /**
+         * GET /metrics/execution-types/{id}/parameters
+         * Retrieves the parameters associated with a specific execution type.
+         */
         get("/execution-types/{id}/parameters") {
             val id = call.parameters["id"]?.toIntOrNull()
             if (id == null) {

@@ -2,6 +2,9 @@ package repos.IRepos
 
 import domain.ThresholdType
 
+/**
+ * Repository interface for managing ThresholdType entities.
+ */
 interface IThresholdTypeRepository {
     fun findAll(): List<ThresholdType>
     fun findByName(name: String): ThresholdType?

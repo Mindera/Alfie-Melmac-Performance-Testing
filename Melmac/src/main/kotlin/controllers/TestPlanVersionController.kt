@@ -10,14 +10,28 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import services.IServices.ITestPlanVersionService
 
+/**
+ * Controller for handling test plan version-related endpoints.
+ * Provides routes for retrieving test plan versions and their details.
+ *
+ * @property testPlanVersionService The service used to interact with test plan version data sources.
+ */
 class TestPlanVersionController(
     private val testPlanVersionService: ITestPlanVersionService
 ) : ITestPlanVersionController {
 
+    /**
+     * Defines the routes for test plan version-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
         route("/test-plan-versions") {
 
-            // Get a specific test plan version by ID
+            /**
+             * GET /test-plan-versions/{id}
+             * Retrieves a specific test plan version by ID.
+             */
             get("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -32,6 +46,10 @@ class TestPlanVersionController(
                 call.respond(version)
             }
 
+            /**
+             * GET /test-plan-versions/by-test-plan/{testPlanId}
+             * Retrieves all versions for a specific test plan.
+             */
             get("/by-test-plan/{testPlanId}") {
                 val testPlanId = call.parameters["testPlanId"]?.toIntOrNull()
                 if (testPlanId == null) {
@@ -46,6 +64,10 @@ class TestPlanVersionController(
                 call.respond(versions)
             }
 
+            /**
+             * GET /test-plan-versions/latest-by-test-plan/{testPlanId}
+             * Retrieves the latest version for a specific test plan.
+             */
             get("/latest-by-test-plan/{testPlanId}") {
                 val testPlanId = call.parameters["testPlanId"]?.toIntOrNull()
                 if (testPlanId == null) {

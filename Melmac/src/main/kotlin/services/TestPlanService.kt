@@ -8,6 +8,25 @@ import services.IServices.IAppService
 import services.IServices.IDeviceService
 import services.IServices.ITestPlanService
 
+/**
+ * Service implementation for managing test plans and their versions.
+ * Handles creation, retrieval, and association of test plans, devices, apps, parameters, and thresholds.
+ *
+ * @property testPlanRepository Repository for TestPlan entities.
+ * @property testPlanVersionRepository Repository for TestPlanVersion entities.
+ * @property testSuiteRepository Repository for TestSuite entities.
+ * @property testThresholdRepository Repository for Threshold entities.
+ * @property testPlanMetricParameterRepository Repository for TestPlanMetricParameterValue entities.
+ * @property testPlanExecutionTypeParameterRepository Repository for TestPlanExecutionTypeParameterValue entities.
+ * @property testSuiteVersionPlanRepository Repository for TestSuiteVersionPlan entities.
+ * @property deviceRepository Repository for Device entities.
+ * @property appRepository Repository for App entities.
+ * @property appVersionRepository Repository for AppVersion entities.
+ * @property osRepository Repository for OperativeSystem entities.
+ * @property osVersionRepository Repository for OSVersion entities.
+ * @property deviceService Service for device-related operations.
+ * @property appService Service for app-related operations.
+ */
 class TestPlanService(
         private val testPlanRepository: ITestPlanRepository,
         private val testPlanVersionRepository: ITestPlanVersionRepository,
@@ -26,6 +45,12 @@ class TestPlanService(
         private val appService: IAppService,
 ) : ITestPlanService {
 
+        /**
+         * Retrieves a test plan by its ID.
+         *
+         * @param id The ID of the test plan.
+         * @return [TestPlanResponseDTO] for the test plan, or null if not found.
+         */
         override fun getTestPlanById(id: Int): TestPlanResponseDTO? {
                 val testPlan = testPlanRepository.findById(id)
                 if (testPlan == null || testPlan.testPlanId == null) {
@@ -38,6 +63,15 @@ class TestPlanService(
                 )
         }
 
+        /**
+         * Creates a new test plan and its version, including all related entities such as device, app, app version,
+         * thresholds, metric parameters, execution type parameters, and suite associations.
+         *
+         * @param request The [TestPlanVersionRequestDTO] containing all required information.
+         * @return [TestPlanVersionResponseDTO] representing the created test plan version and its associations.
+         * @throws IllegalArgumentException if required entities are not found or invalid.
+         * @throws IllegalStateException if required IDs are missing after creation.
+         */
         override fun createTestPlanWithVersion(
                 request: TestPlanVersionRequestDTO
         ): TestPlanVersionResponseDTO {

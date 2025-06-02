@@ -5,10 +5,20 @@ import repos.IRepos.ITestExecutionRepository
 import java.sql.Connection
 import java.sql.Timestamp
 
+/**
+ * Repository implementation for accessing and managing TestExecution entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class TestExecutionRepository(
     private val connection: Connection
 ) : ITestExecutionRepository {
 
+    /**
+     * Retrieves all TestExecution records from the database.
+     *
+     * @return A list of all [TestExecution] entities.
+     */
     override fun findAll(): List<TestExecution> {
         val query = """
             SELECT TestExecutionID, InitialTimestamp, EndTimestamp, Passed, TestPlanVersionTestPlanVersionID
@@ -32,6 +42,12 @@ class TestExecutionRepository(
         return executions
     }
 
+    /**
+     * Finds a TestExecution by its unique identifier.
+     *
+     * @param id The ID of the TestExecution to retrieve.
+     * @return The [TestExecution] if found, or null otherwise.
+     */
     override fun findById(id: Int): TestExecution? {
         val query = """
             SELECT TestExecutionID, InitialTimestamp, EndTimestamp, Passed, TestPlanVersionTestPlanVersionID
@@ -52,6 +68,13 @@ class TestExecutionRepository(
         } else null
     }
 
+    /**
+     * Saves a new TestExecution to the database.
+     *
+     * @param testExecution The [TestExecution] entity to save.
+     * @return The generated ID of the inserted TestExecution.
+     * @throws IllegalStateException if the insert fails.
+     */
     override fun save(testExecution: TestExecution): Int {
         val query = """
             INSERT INTO TestExecution (InitialTimestamp, EndTimestamp, Passed, TestPlanVersionTestPlanVersionID)

@@ -10,6 +10,14 @@ import repos.IRepos.IAppVersionRepository
 import services.IServices.IAppService
 import utils.Tools
 
+/**
+ * Service implementation for managing applications and their versions.
+ * Provides methods to interact with both the database and the file system
+ * to retrieve app and version information.
+ *
+ * @property appRepository Repository for app entities.
+ * @property appVersionRepository Repository for app version entities.
+ */
 class AppService(
         private val appRepository: IAppRepository,
         private val appVersionRepository: IAppVersionRepository
@@ -17,6 +25,11 @@ class AppService(
 
     // --- DB Methods ---
 
+    /**
+     * Retrieves all apps from the database.
+     *
+     * @return List of [AppResponseDTO] representing all apps.
+     */
     override fun getAllAppsFromDatabase(): List<AppResponseDTO> {
         val apps = appRepository.findAll()
         return apps.map { app ->
@@ -27,6 +40,13 @@ class AppService(
         }
     }
 
+    /**
+     * Retrieves all versions for a given app ID from the database.
+     *
+     * @param appId The ID of the app.
+     * @return List of [AppVersionResponseDTO] for the app.
+     * @throws IllegalArgumentException if the app is not found.
+     */
     override fun getAppVersionsByAppIdFromDatabase(appId: Int): List<AppVersionResponseDTO> {
         val app =
                 appRepository.findById(appId)
@@ -47,6 +67,13 @@ class AppService(
         }
     }
 
+    /**
+     * Retrieves an app by its ID from the database.
+     *
+     * @param appId The ID of the app.
+     * @return [AppResponseDTO] for the app.
+     * @throws IllegalArgumentException if the app is not found.
+     */
     override fun getAppByIdFromDatabase(appId: Int): AppResponseDTO {
         val app =
                 appRepository.findById(appId)
@@ -58,6 +85,13 @@ class AppService(
         )
     }
 
+    /**
+     * Retrieves an app version by its ID from the database.
+     *
+     * @param appVersionId The ID of the app version.
+     * @return [AppVersionResponseDTO] for the app version.
+     * @throws IllegalArgumentException if the app version is not found.
+     */
     override fun getAppVersionByIdFromDatabase(appVersionId: Int): AppVersionResponseDTO {
         val appVersion =
                 appVersionRepository.findById(appVersionId)
@@ -71,6 +105,13 @@ class AppService(
         )
     }
 
+    /**
+     * Retrieves the app associated with a given app version ID from the database.
+     *
+     * @param appVersionId The ID of the app version.
+     * @return [AppResponseDTO] for the app.
+     * @throws IllegalArgumentException if the app or app version is not found.
+     */
     override fun getAppByVersionIdFromDatabase(appVersionId: Int): AppResponseDTO {
         val appVersion =
                 appVersionRepository.findById(appVersionId)
@@ -87,6 +128,13 @@ class AppService(
     }
 
     // --- Folder Methods ---
+
+    /**
+     * Retrieves all apps from the apps folder in the file system.
+     *
+     * @return List of [AppResponseDTO] representing all apps found in the folder.
+     * @throws IllegalArgumentException if the folder path is invalid.
+     */
     override fun getAllAppsFromFolder(): List<AppResponseDTO> {
         val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")
         val folder = File(appFolder.toString())
@@ -108,6 +156,13 @@ class AppService(
         }
     }
 
+    /**
+     * Retrieves an app by its name from the apps folder.
+     *
+     * @param appName The name of the app.
+     * @return [AppResponseDTO] for the app.
+     * @throws IllegalArgumentException if the app is not found or folder path is invalid.
+     */
     override fun getAppByNameFromFolder(appName: String): AppResponseDTO {
         val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")
         val folder = File(appFolder.toString())
@@ -134,6 +189,13 @@ class AppService(
         return AppResponseDTO(appId = 1, appName = appName)
     }
 
+    /**
+     * Retrieves all versions for a given app name from the apps folder.
+     *
+     * @param appName The name of the app.
+     * @return List of [AppVersionResponseDTO] for the app.
+     * @throws IllegalArgumentException if no versions are found or folder path is invalid.
+     */
     override fun getAppVersionsFromFolder(appName: String): List<AppVersionResponseDTO> {
         val appFolder = Paths.get(System.getProperty("user.dir"), "src/main/resources/apps")
         val folder = File(appFolder.toString())
@@ -172,6 +234,14 @@ class AppService(
         }
     }
 
+    /**
+     * Retrieves a specific app version by app name and version from the apps folder.
+     *
+     * @param appName The name of the app.
+     * @param appVersion The version of the app.
+     * @return [AppVersionResponseDTO] for the app version.
+     * @throws IllegalArgumentException if the app is not found or folder path is invalid.
+     */
     override fun getAppVersionByNameFromFolder(
             appName: String,
             appVersion: String

@@ -4,8 +4,19 @@ import domain.ExecutionType
 import java.sql.Connection
 import repos.IRepos.IExecutionTypeRepository
 
+/**
+ * Repository implementation for accessing and managing ExecutionType entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class ExecutionTypeRepository(private val connection: Connection) : IExecutionTypeRepository {
 
+    /**
+     * Finds an ExecutionType by its unique identifier.
+     *
+     * @param executionTypeId The ID of the ExecutionType to retrieve.
+     * @return The [ExecutionType] if found, or null otherwise.
+     */
     override fun findById(executionTypeId: Int): ExecutionType? {
         val query = "SELECT ExecutionTypeID, ExecutionTypeName, ExecutionTypeDescription FROM ExecutionType WHERE ExecutionTypeID = ?"
         val statement = connection.prepareStatement(query)
@@ -22,6 +33,12 @@ class ExecutionTypeRepository(private val connection: Connection) : IExecutionTy
         } else null
     }
 
+    /**
+     * Retrieves all ExecutionType records associated with a given Metric ID.
+     *
+     * @param metricId The ID of the Metric whose ExecutionTypes are to be retrieved.
+     * @return A list of [ExecutionType] entities associated with the given Metric ID.
+     */
     override fun findByMetricId(metricId: Int): List<ExecutionType> {
         val query =
                 """
@@ -49,6 +66,13 @@ class ExecutionTypeRepository(private val connection: Connection) : IExecutionTy
         return executionTypes
     }
 
+    /**
+     * Finds an ExecutionType by Metric ID and ExecutionType name.
+     *
+     * @param metricId The ID of the Metric.
+     * @param executionTypeName The name of the ExecutionType to retrieve.
+     * @return The [ExecutionType] if found, or null otherwise.
+     */
     override fun findByMetricIdAndName(metricId: Int, executionTypeName: String): ExecutionType? {
         val query =
                 """
@@ -72,6 +96,12 @@ class ExecutionTypeRepository(private val connection: Connection) : IExecutionTy
         } else null
     }
 
+    /**
+     * Finds an ExecutionType by its name.
+     *
+     * @param executionTypeName The name of the ExecutionType to retrieve.
+     * @return The [ExecutionType] if found, or null otherwise.
+     */
     override fun findByName(executionTypeName: String): ExecutionType? {
         val query = "SELECT ExecutionTypeID, ExecutionTypeName, ExecutionTypeDescription FROM ExecutionType WHERE ExecutionTypeName = ?"
         val statement = connection.prepareStatement(query)
@@ -88,6 +118,13 @@ class ExecutionTypeRepository(private val connection: Connection) : IExecutionTy
         } else null
     }
 
+    /**
+     * Saves a new ExecutionType to the database.
+     *
+     * @param executionType The [ExecutionType] entity to save.
+     * @return The generated ID of the inserted ExecutionType.
+     * @throws IllegalStateException if the insert fails.
+     */
     override fun save(executionType: ExecutionType): Int {
         val query =
                 "INSERT INTO ExecutionType (ExecutionTypeName, ExecutionTypeDescription) VALUES (?, ?)"
@@ -103,6 +140,11 @@ class ExecutionTypeRepository(private val connection: Connection) : IExecutionTy
         throw IllegalStateException("Failed to insert ExecutionType")
     }
 
+    /**
+     * Updates the description of an existing ExecutionType.
+     *
+     * @param executionType The [ExecutionType] entity with updated information.
+     */
     override fun update(executionType: ExecutionType) {
         val query =
                 "UPDATE ExecutionType SET ExecutionTypeDescription = ? WHERE ExecutionTypeID = ?"

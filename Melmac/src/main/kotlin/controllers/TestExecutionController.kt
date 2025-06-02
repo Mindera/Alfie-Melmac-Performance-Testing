@@ -11,22 +11,40 @@ import io.ktor.server.routing.*
 import services.IServices.ITestExecutionService
 import services.IServices.ITestMetricOutputResultService
 
+/**
+ * Controller for handling test execution-related endpoints.
+ * Provides routes for retrieving and running test executions and fetching output results.
+ *
+ * @property testExecutionService The service used to manage test executions.
+ * @property testMetricOutputResultService The service used to manage test metric output results.
+ */
 class TestExecutionController(
     private val testExecutionService: ITestExecutionService,
     private val testMetricOutputResultService: ITestMetricOutputResultService
 ) : ITestExecutionController {
 
+    /**
+     * Defines the routes for test execution-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
 
         route("/test-executions") {
 
-            // Endpoint para obter todas as execuções de teste
+            /**
+             * GET /test-executions
+             * Retrieves all test executions.
+             */
             get {
                 val testExecutions: List<TestExecutionResponseDTO> = testExecutionService.getAllTestExecutions()
                 call.respond(testExecutions)
             }
 
-            // Endpoint para obter uma execução de teste específica
+            /**
+             * GET /test-executions/{id}
+             * Retrieves a specific test execution by its ID.
+             */
             get("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -43,7 +61,10 @@ class TestExecutionController(
                 call.respond(testExecution)
             }
 
-            // Endpoint para iniciar a execução de um teste
+            /**
+             * POST /test-executions/run
+             * Starts the execution of a test plan version.
+             */
             post("/run") {
                 val testPlanVersionId = call.request.queryParameters["testPlanVersionId"]?.toIntOrNull()
                     ?: return@post call.respond(HttpStatusCode.BadRequest, "Missing or invalid testPlanVersionId")
@@ -52,6 +73,10 @@ class TestExecutionController(
                 call.respond(HttpStatusCode.OK, executionResult)
             }
 
+            /**
+             * GET /test-executions/outputs
+             * Retrieves the output results for a specific test execution.
+             */
             get("/outputs") {
                 val testExecutionId = call.request.queryParameters["testExecutionId"]?.toIntOrNull()
                     ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing or invalid testExecutionId")

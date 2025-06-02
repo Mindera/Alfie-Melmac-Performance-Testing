@@ -7,8 +7,18 @@ import org.json.JSONArray
 import utils.Logger
 import utils.Tools
 
+/**
+ * Utility object for running XCUITest commands on iOS simulators.
+ * Provides methods to execute app startup tests and parse their results.
+ */
 object XCUITestCommands {
 
+    /**
+     * Runs the app startup test using XCUITest for the given configuration.
+     *
+     * @param config The test execution configuration.
+     * @return A map containing the launch time, whether the element was found, and success status.
+     */
     fun runAppStartupTest(config: TestExecutionConfigDTO): Map<String, String> {
         val deviceName = config.deviceName
         val targetElementId =
@@ -38,6 +48,18 @@ object XCUITestCommands {
         }
     }
 
+    /**
+     * Measures the app startup time by running the XCUITest and parsing its output.
+     *
+     * @param deviceName The name of the iOS simulator.
+     * @param elementId The accessibility identifier of the UI element to wait for.
+     * @param timeoutInSeconds The timeout for the test in seconds.
+     * @param thresholdType The type of threshold to check (optional).
+     * @param thresholdValue The value of the threshold to check (optional).
+     * @param testName The name of the test to run.
+     * @param bundleId The bundle identifier of the app under test.
+     * @return Triple of (launchTime, elementFound, success).
+     */
     fun measureAppStartupTime(
         deviceName: String,
         elementId: String,
@@ -72,10 +94,8 @@ object XCUITestCommands {
         processBuilder.redirectErrorStream(true)
         val startedProcess = processBuilder.start()
 
-        // Create a buffer for output
         val outputBuffer = StringBuilder()
         
-        // Read output in real-time
         val outputThread = Thread {
             startedProcess.inputStream.bufferedReader().useLines { lines ->
                 lines.forEach { line ->
@@ -86,7 +106,6 @@ object XCUITestCommands {
         }
         outputThread.start()
 
-        // Wait for process to complete with timeout
         val completed = startedProcess.waitFor(timeoutInSeconds.toLong(), TimeUnit.SECONDS)
         outputThread.join(5000)
 
@@ -103,7 +122,6 @@ object XCUITestCommands {
             Logger.error("Full output:\n$outputBuffer")
         }
 
-        // Extract JSON from output
         val jsonText = outputBuffer.toString().substringAfter("✅ Result JSON:", "").trim()
         if (jsonText.isEmpty()) {
             Logger.error("❌ JSON output not found in xcodebuild output")
@@ -125,6 +143,15 @@ object XCUITestCommands {
         }
     }
 
+    /**
+     * Builds the xcodebuild command for running the XCUITest.
+     *
+     * @param projectDir The directory containing the Xcode project.
+     * @param simulatorId The UUID of the simulator to run the test on.
+     * @param testName The name of the test to run.
+     * @param envVars Environment variables to pass to the test.
+     * @return The command as a list of strings.
+     */
     private fun buildXcodeCommand(
         projectDir: File,
         simulatorId: String,
@@ -157,6 +184,12 @@ object XCUITestCommands {
         return command
     }
 
+    /**
+     * Finds the DriverRunner directory by traversing up from the current directory.
+     *
+     * @return The DriverRunner directory as a File.
+     * @throws IllegalStateException if the directory is not found.
+     */
     fun findDriverRunnerDir(): File {
         var current = File(".").canonicalFile
         while (current.parentFile != null) {

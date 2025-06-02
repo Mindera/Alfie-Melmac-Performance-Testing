@@ -2,6 +2,9 @@ package repos.IRepos
 
 import domain.TestSuiteVersionPlan
 
+/**
+ * Repository interface for managing TestSuiteVersionPlan entities.
+ */
 interface ITestSuiteVersionPlanRepository {
     fun findById(id: Int): TestSuiteVersionPlan?
     fun findByTestSuiteVersionId(versionId: Int): List<TestSuiteVersionPlan>

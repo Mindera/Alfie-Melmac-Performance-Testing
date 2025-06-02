@@ -5,8 +5,8 @@ import utils.Logger
 import utils.Tools
 
 /**
- * Object responsible for managing Android devices (emulators). Provides functionality to start and
- * shut down Android emulators.
+ * Object responsible for managing Android devices (emulators).
+ * Provides functionality to start and shut down Android emulators.
  */
 object AndroidDeviceManager : DeviceManager {
 
@@ -19,31 +19,30 @@ object AndroidDeviceManager : DeviceManager {
     override fun startDevice(deviceName: String) {
         Logger.info("📱 Starting Android emulator: $deviceName")
         val sdkHome =
-                System.getenv("ANDROID_HOME")
-                        ?: System.getenv("ANDROID_SDK_ROOT")
-                                ?: "${System.getProperty("user.home")}/Library/Android/sdk"
+            System.getenv("ANDROID_HOME")
+                ?: System.getenv("ANDROID_SDK_ROOT")
+                ?: "${System.getProperty("user.home")}/Library/Android/sdk"
         val emulatorPath = "$sdkHome/emulator/emulator"
 
         val args =
-                mutableListOf(
-                        emulatorPath,
-                        "-avd",
-                        deviceName,
-                        "-no-snapshot-load",
-                        "-no-snapshot-save",
-                        "-no-boot-anim",
-                        "-no-window",
-                        "-no-audio",
-                )
+            mutableListOf(
+                emulatorPath,
+                "-avd",
+                deviceName,
+                "-no-snapshot-load",
+                "-no-snapshot-save",
+                "-no-boot-anim",
+                "-no-window",
+                "-no-audio",
+            )
 
         val process = ProcessBuilder(args).redirectErrorStream(true).start()
 
         Thread {
-                    process.inputStream.bufferedReader().useLines { lines ->
-                        lines.forEach { Logger.info("[emulator] $it") }
-                    }
-                }
-                .start()
+            process.inputStream.bufferedReader().useLines { lines ->
+                lines.forEach { Logger.info("[emulator] $it") }
+            }
+        }.start()
 
         Logger.info("⏳ Waiting for Android emulator device...")
         waitForDeviceBoot(process)
@@ -80,7 +79,7 @@ object AndroidDeviceManager : DeviceManager {
      * Waits for the Android emulator to complete the boot process.
      *
      * @param process The process of the emulator being started.
-     * @throws RuntimeException if the emulator fails to boot within the timeout period.
+     * @throws RuntimeException if the emulator fails to boot within the timeout period or if the package manager is not ready.
      */
     private fun waitForDeviceBoot(process: Process) {
         val bootTimeout = 900
@@ -90,12 +89,12 @@ object AndroidDeviceManager : DeviceManager {
 
         while (true) {
             val bootStatus =
-                    ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
-                            .start()
-                            .inputStream
-                            .bufferedReader()
-                            .readText()
-                            .trim()
+                ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
+                    .start()
+                    .inputStream
+                    .bufferedReader()
+                    .readText()
+                    .trim()
 
             if (bootStatus == "1") {
                 Logger.info("✅ Android emulator boot completed!")
@@ -117,13 +116,13 @@ object AndroidDeviceManager : DeviceManager {
         var pmTries = 0
         while (!pmReady && pmTries < 60) {
             val pmOutput =
-                    ProcessBuilder("adb", "shell", "pm", "path", "android")
-                            .redirectErrorStream(true)
-                            .start()
-                            .inputStream
-                            .bufferedReader()
-                            .readText()
-                            .trim()
+                ProcessBuilder("adb", "shell", "pm", "path", "android")
+                    .redirectErrorStream(true)
+                    .start()
+                    .inputStream
+                    .bufferedReader()
+                    .readText()
+                    .trim()
 
             if (pmOutput.startsWith("package:")) {
                 pmReady = true

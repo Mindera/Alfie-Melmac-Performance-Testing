@@ -10,13 +10,27 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import services.IServices.ITestPlanService
 
+/**
+ * Controller for handling test plan-related endpoints.
+ * Provides routes for retrieving, creating, and managing test plans.
+ *
+ * @property testPlanService The service used to interact with test plan data sources.
+ */
 class TestPlanController(private val testPlanService: ITestPlanService) : ITestPlanController {
 
+    /**
+     * Defines the routes for test plan-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
 
         route("/test-plans") {
 
-            // Endpoint para obter um plano de teste específico
+            /**
+             * GET /test-plans/{id}
+             * Retrieves a specific test plan by its ID.
+             */
             get("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -33,7 +47,10 @@ class TestPlanController(private val testPlanService: ITestPlanService) : ITestP
                 call.respond(testPlan)
             }
 
-            // Endpoint para criar um novo plano de teste e sua versão associada
+            /**
+             * POST /test-plans
+             * Creates a new test plan and its associated version.
+             */
             post {
                 println("Creating a new test plan")
                 val testPlanRequest =
@@ -64,7 +81,9 @@ class TestPlanController(private val testPlanService: ITestPlanService) : ITestP
                 call.respond(HttpStatusCode.Created, createdPlan)
             }
 
-            /* // Endpoint para criar uma nova versão de um plano de teste
+            /* 
+            // POST /test-plans/{id}/version
+            // Creates a new version of a test plan.
             post("/{id}/version") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -76,7 +95,8 @@ class TestPlanController(private val testPlanService: ITestPlanService) : ITestP
                 call.respond(HttpStatusCode.Created, updatedPlanVersion)
             }
 
-            // Endpoint para excluir um plano de teste
+            // DELETE /test-plans/{id}
+            // Deletes a test plan.
             delete("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -86,7 +106,8 @@ class TestPlanController(private val testPlanService: ITestPlanService) : ITestP
 
                 testPlanService.deleteTestPlan(id)
                 call.respond(HttpStatusCode.NoContent)
-            } */
+            } 
+            */
         }
     }
 }

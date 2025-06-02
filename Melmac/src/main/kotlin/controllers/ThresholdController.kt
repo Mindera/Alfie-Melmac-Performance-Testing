@@ -10,14 +10,29 @@ import io.ktor.server.routing.*
 import io.ktor.server.request.*
 import services.IServices.IThresholdService
 
+/**
+ * Controller for handling threshold-related endpoints.
+ * Provides routes for retrieving and creating test thresholds.
+ *
+ * @property thresholdService The service used to interact with threshold data sources.
+ */
 class ThresholdController(
     private val thresholdService: IThresholdService
 ) : IThresholdController {
 
+    /**
+     * Defines the routes for threshold-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
 
         route("/thresholds") {
 
+            /**
+             * GET /thresholds
+             * Retrieves all thresholds for a given test plan version.
+             */
             get {
                 val testPlanVersionId = call.request.queryParameters["testPlanVersionId"]?.toIntOrNull()
                 if (testPlanVersionId == null) {
@@ -28,7 +43,10 @@ class ThresholdController(
                 call.respond(thresholds)
             }
 
-            // Endpoint para obter um threshold específico
+            /**
+             * GET /thresholds/{id}
+             * Retrieves a specific threshold by its ID.
+             */
             get("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -45,7 +63,10 @@ class ThresholdController(
                 call.respond(threshold)
             }
 
-            // Endpoint para criar um novo threshold
+            /**
+             * POST /thresholds
+             * Creates a new threshold.
+             */
             post {
                 val thresholdRequest = call.receive<TestThresholdRequestDTO>()
                 val createdThreshold = thresholdService.createTestThreshold(thresholdRequest)

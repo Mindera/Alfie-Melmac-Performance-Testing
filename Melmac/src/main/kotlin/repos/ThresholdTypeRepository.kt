@@ -4,8 +4,19 @@ import domain.ThresholdType
 import java.sql.Connection
 import repos.IRepos.IThresholdTypeRepository
 
+/**
+ * Repository implementation for accessing and managing ThresholdType entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class ThresholdTypeRepository(private val connection: Connection) : IThresholdTypeRepository {
 
+    /**
+     * Finds a ThresholdType by its unique identifier.
+     *
+     * @param thresholdTypeId The ID of the ThresholdType to retrieve.
+     * @return The [ThresholdType] if found, or null otherwise.
+     */
     override fun findById(thresholdTypeId: Int): ThresholdType? {
         val query =
                 "SELECT ThresholdTypeID, ThresholdTypeName, ThresholdTypeDescription FROM ThresholdType WHERE ThresholdTypeID = ?"
@@ -22,6 +33,11 @@ class ThresholdTypeRepository(private val connection: Connection) : IThresholdTy
         } else null
     }
 
+    /**
+     * Retrieves all ThresholdType records from the database.
+     *
+     * @return A list of all [ThresholdType] entities.
+     */
     override fun findAll(): List<ThresholdType> {
         val query =
                 "SELECT ThresholdTypeID, ThresholdTypeName, ThresholdTypeDescription FROM ThresholdType"
@@ -42,6 +58,12 @@ class ThresholdTypeRepository(private val connection: Connection) : IThresholdTy
         return list
     }
 
+    /**
+     * Finds a ThresholdType by its name.
+     *
+     * @param name The name of the ThresholdType to retrieve.
+     * @return The [ThresholdType] if found, or null otherwise.
+     */
     override fun findByName(name: String): ThresholdType? {
         val query =
                 "SELECT ThresholdTypeID, ThresholdTypeName, ThresholdTypeDescription FROM ThresholdType WHERE ThresholdTypeName = ?"
@@ -58,6 +80,13 @@ class ThresholdTypeRepository(private val connection: Connection) : IThresholdTy
         } else null
     }
 
+    /**
+     * Saves a new ThresholdType to the database.
+     *
+     * @param thresholdType The [ThresholdType] entity to save.
+     * @return The generated ID of the inserted ThresholdType.
+     * @throws IllegalStateException if the insert fails.
+     */
     override fun save(thresholdType: ThresholdType): Int {
         val query =
                 "INSERT INTO ThresholdType (ThresholdTypeName, ThresholdTypeDescription) VALUES (?, ?)"
@@ -71,6 +100,12 @@ class ThresholdTypeRepository(private val connection: Connection) : IThresholdTy
         throw IllegalStateException("Failed to insert ThresholdType")
     }
 
+    /**
+     * Updates an existing ThresholdType in the database.
+     *
+     * @param thresholdType The [ThresholdType] entity with updated information.
+     * @return The number of rows affected by the update.
+     */
     override fun update(thresholdType: ThresholdType): Int {
         val query =
                 "UPDATE ThresholdType SET ThresholdTypeName = ?, ThresholdTypeDescription = ? WHERE ThresholdTypeID = ?"

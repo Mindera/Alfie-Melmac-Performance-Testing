@@ -15,6 +15,11 @@ import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
 import services.IServices.*
 
+/**
+ * Main Ktor application module.
+ *
+ * Configures content negotiation, dependency injection, error handling, and registers all API routes.
+ */
 fun Application.module() {
     install(ContentNegotiation) {
         jackson {

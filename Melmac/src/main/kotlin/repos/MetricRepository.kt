@@ -4,8 +4,18 @@ import domain.Metric
 import java.sql.Connection
 import repos.IRepos.IMetricRepository
 
+/**
+ * Repository implementation for accessing and managing Metric entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class MetricRepository(private val connection: Connection) : IMetricRepository {
 
+    /**
+     * Retrieves all Metric records from the database.
+     *
+     * @return A list of all [Metric] entities.
+     */
     override fun findAll(): List<Metric> {
         val query = "SELECT MetricID, MetricName FROM Metric"
         val statement = connection.prepareStatement(query)
@@ -23,6 +33,12 @@ class MetricRepository(private val connection: Connection) : IMetricRepository {
         return metrics
     }
 
+    /**
+     * Finds a Metric by its unique identifier.
+     *
+     * @param metricId The ID of the Metric to retrieve.
+     * @return The [Metric] if found, or null otherwise.
+     */
     override fun findById(metricId: Int): Metric? {
         val query = "SELECT MetricID, MetricName FROM Metric WHERE MetricID = ?"
         val statement = connection.prepareStatement(query)
@@ -37,6 +53,12 @@ class MetricRepository(private val connection: Connection) : IMetricRepository {
         } else null
     }
 
+    /**
+     * Finds a Metric by its name.
+     *
+     * @param name The name of the Metric to retrieve.
+     * @return The [Metric] if found, or null otherwise.
+     */
     override fun findByName(name: String): Metric? {
         val query = "SELECT MetricID, MetricName FROM Metric WHERE MetricName = ?"
         val statement = connection.prepareStatement(query)
@@ -51,6 +73,13 @@ class MetricRepository(private val connection: Connection) : IMetricRepository {
         } else null
     }
 
+    /**
+     * Saves a new Metric to the database.
+     *
+     * @param metric The [Metric] entity to save.
+     * @return The generated ID of the inserted Metric.
+     * @throws IllegalStateException if the insert fails.
+     */
     override fun save(metric: Metric): Int {
         val query = "INSERT INTO Metric (MetricName) VALUES (?)"
         val statement = connection.prepareStatement(query, java.sql.Statement.RETURN_GENERATED_KEYS)

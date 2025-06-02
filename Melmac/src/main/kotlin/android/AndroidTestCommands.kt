@@ -7,8 +7,17 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Provides commands for running Android app tests, including app startup measurement and UI element search.
+ */
 object AndroidTestCommands {
 
+    /**
+     * Runs the app startup test using the provided configuration.
+     *
+     * @param config The test execution configuration.
+     * @return A map containing launch time, element found status, and success status.
+     */
     fun runAppStartupTest(config: TestExecutionConfigDTO): Map<String, String> {
         val packageName = config.appPackage
         val mainActivity = config.mainActivity ?: throw IllegalArgumentException("Missing 'mainActivity' in config")
@@ -34,6 +43,15 @@ object AndroidTestCommands {
         }
     }
 
+    /**
+     * Measures the app startup time by launching the app and searching for a UI element.
+     *
+     * @param packageName The package name of the app.
+     * @param mainActivity The main activity to launch.
+     * @param resourceId The resource ID of the UI element to wait for.
+     * @param timeoutInSeconds The timeout in seconds to wait for the element.
+     * @return A pair containing the launch time and whether the element was found.
+     */
     fun measureAppStartupTime(
         packageName: String,
         mainActivity: String,
@@ -56,26 +74,30 @@ object AndroidTestCommands {
         }
     }
 
+    /**
+     * Evaluates the test results against the provided thresholds.
+     *
+     * @param launchTime The measured launch time.
+     * @param elementFound Whether the element was found.
+     * @param thresholds The list of thresholds to evaluate against.
+     * @return True if the results meet the thresholds, false otherwise.
+     */
     private fun evaluateResults(launchTime: String, elementFound: String, thresholds: List<Triple<String, String, String>>?): Boolean {
-        // If element not found, always fail
         if (elementFound.uppercase() != "TRUE") {
             println("❌ Element not found, failing test.")
             return false
         }
-        // If no thresholds, default to pass if element found
         if (thresholds.isNullOrEmpty()) return true
         val launchTimeMs = launchTime.toLongOrNull() ?: return false
-        // Find a threshold for launchTime (by output name)
         val launchTimeThreshold = thresholds.find { it.third == "launchTime" }
         if (launchTimeThreshold != null) {
             val target = launchTimeThreshold.first.toLongOrNull() ?: return false
             val type = launchTimeThreshold.second
-            // Example: type could be "MAX", "MIN", "EQUAL"
             return when (type.uppercase()) {
                 "MAX" -> launchTimeMs <= target
                 "MIN" -> launchTimeMs >= target
-                "Target" -> launchTimeMs == target
-                else -> true // If unknown type, default to pass
+                "TARGET" -> launchTimeMs == target
+                else -> true
             }
         }
         return true

@@ -88,3 +88,6 @@ build/
 
 # Ignore ui_dumps folder
 ui_dumps/
+
+# Visual Paradigm auto-generated files
+*.vpp.*

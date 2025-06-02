@@ -4,8 +4,19 @@ import domain.TestPlanVersion
 import java.sql.Connection
 import repos.IRepos.ITestPlanVersionRepository
 
+/**
+ * Repository implementation for accessing and managing TestPlanVersion entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class TestPlanVersionRepository(private val connection: Connection) : ITestPlanVersionRepository {
 
+    /**
+     * Finds a TestPlanVersion by its unique identifier.
+     *
+     * @param id The ID of the TestPlanVersion to retrieve.
+     * @return The [TestPlanVersion] if found, or null otherwise.
+     */
     override fun findById(id: Int): TestPlanVersion? {
         val query =
                 """
@@ -33,6 +44,12 @@ class TestPlanVersionRepository(private val connection: Connection) : ITestPlanV
         } else null
     }
 
+    /**
+     * Saves a new TestPlanVersion to the database.
+     *
+     * @param testPlanVersion The [TestPlanVersion] entity to save.
+     * @return The generated ID of the inserted TestPlanVersion, or -1 if not generated.
+     */
     override fun save(testPlanVersion: TestPlanVersion): Int {
         val query =
                 """
@@ -58,6 +75,12 @@ class TestPlanVersionRepository(private val connection: Connection) : ITestPlanV
         } else -1
     }
 
+    /**
+     * Finds the latest TestPlanVersion for a given TestPlan ID, ordered by creation timestamp.
+     *
+     * @param testPlanId The ID of the TestPlan.
+     * @return The latest [TestPlanVersion] if found, or null otherwise.
+     */
     override fun findLatestVersionByTestPlanId(testPlanId: Int): TestPlanVersion? {
         val query =
                 """
@@ -87,6 +110,12 @@ class TestPlanVersionRepository(private val connection: Connection) : ITestPlanV
         } else null
     }
 
+    /**
+     * Retrieves all TestPlanVersion records for a given TestPlan ID, ordered by creation timestamp descending.
+     *
+     * @param testPlanId The ID of the TestPlan whose versions are to be retrieved.
+     * @return A list of [TestPlanVersion] entities associated with the given TestPlan ID.
+     */
     override fun findByTestPlanId(testPlanId: Int): List<TestPlanVersion> {
         val query =
                 """

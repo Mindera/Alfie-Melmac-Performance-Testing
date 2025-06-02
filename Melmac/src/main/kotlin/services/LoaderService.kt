@@ -8,6 +8,19 @@ import repos.IRepos.*
 import services.IServices.ILoaderService
 import java.io.File
 
+/**
+ * Service implementation for loading and synchronizing configuration data
+ * from a JSON file into the application's repositories.
+ *
+ * @property metricRepo Repository for Metric entities.
+ * @property metricParameterRepo Repository for MetricParameter entities.
+ * @property executionTypeRepo Repository for ExecutionType entities.
+ * @property executionTypeParameterRepo Repository for ExecutionTypeParameter entities.
+ * @property metricOutputRepo Repository for MetricOutput entities.
+ * @property executionTypeMetricRepo Repository for ExecutionTypeMetric join entities.
+ * @property thresholdTypeRepo Repository for ThresholdType entities.
+ * @property configFilePath Path to the configuration JSON file.
+ */
 class LoaderService(
     private val metricRepo: IMetricRepository,
     private val metricParameterRepo: IMetricParameterRepository,
@@ -19,6 +32,11 @@ class LoaderService(
     private val configFilePath: String = "data.json"
 ) : ILoaderService {
 
+    /**
+     * Synchronizes data from the configuration file into the repositories.
+     * Loads threshold types, metrics, metric parameters, outputs, execution types,
+     * execution type parameters, and links execution types to metrics.
+     */
     override fun syncDataFromConfig() {
         val config = loadMetricsConfig()
 
@@ -131,6 +149,12 @@ class LoaderService(
         }
     }
 
+    /**
+     * Loads the metrics configuration from the JSON file.
+     *
+     * @return [DataConfig] object parsed from the configuration file.
+     * @throws IllegalStateException if the configuration file is not found.
+     */
     private fun loadMetricsConfig(): DataConfig {
         val devFile = File("src/main/resources/data.json")
         val inputStream =

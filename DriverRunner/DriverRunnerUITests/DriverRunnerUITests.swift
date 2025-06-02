@@ -1,8 +1,12 @@
 import XCTest
 
+// MARK: - DriverRunnerUITests
+
 final class DriverRunnerUITests: XCTestCase {
     private var app: XCUIApplication!
 
+    // MARK: setUp
+    // Sets up the test environment and initializes the XCUIApplication with the bundle ID from environment variables.
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -12,6 +16,8 @@ final class DriverRunnerUITests: XCTestCase {
         app = XCUIApplication(bundleIdentifier: bundleID)
     }
 
+    // MARK: testAppStartup
+    // Main test entry point. Reads environment variables, runs the launch test, prints results, and fails if any step fails.
     func testAppStartup() {
         print("📦 All environment variables:")
         ProcessInfo.processInfo.environment.forEach { print("\($0.key): \($0.value)") }
@@ -46,6 +52,8 @@ final class DriverRunnerUITests: XCTestCase {
         }
     }
 
+    // MARK: runAppLaunchTest
+    // Launches the app, waits for a UI element, measures launch duration, checks thresholds, and logs the result.
     private func runAppLaunchTest(
         waitForElement identifier: String,
         timeout: Double,
@@ -102,7 +110,11 @@ final class DriverRunnerUITests: XCTestCase {
     }
 }
 
+// MARK: - String Extension
+
 extension String {
+    // MARK: toDouble
+    // Converts the string to a Double, if possible.
     func toDouble() -> Double? {
         return Double(self)
     }
@@ -110,6 +122,8 @@ extension String {
 
 // MARK: - Data Models
 
+// MARK: TestStep
+// Represents a single test step with action, target, value, metric, and elementFound flag.
 struct TestStep: Decodable {
     let action: String
     let target: String?
@@ -118,6 +132,8 @@ struct TestStep: Decodable {
     let elementFound: Bool
 }
 
+// MARK: TestStepResult
+// Represents the result of a test step, including success, error, and timestamp.
 struct TestStepResult: Codable {
     let action: String
     let target: String?
@@ -131,10 +147,14 @@ struct TestStepResult: Codable {
 
 // MARK: - Logger
 
+// MARK: TestResultLogger
+// Singleton logger for collecting and serializing test step results.
 final class TestResultLogger {
     static let shared = TestResultLogger()
     private(set) var steps: [TestStepResult] = []
 
+    // MARK: log
+    // Logs a test step result with success, error, and timestamp.
     func log(step: TestStep, success: Bool, error: String?) {
         let formatter = ISO8601DateFormatter()
         steps.append(
@@ -150,10 +170,14 @@ final class TestResultLogger {
             ))
     }
 
+    // MARK: reset
+    // Clears all logged test step results.
     func reset() {
         steps.removeAll()
     }
 
+    // MARK: toJSON
+    // Serializes an array of TestStepResult to a pretty-printed JSON string.
     static func toJSON(from results: [TestStepResult]) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted

@@ -5,20 +5,20 @@ import java.nio.file.Paths
 import utils.*
 
 /**
- * Object responsible for managing Android apps. Provides functionality to install and uninstall
- * Android apps using ADB commands.
+ * Object responsible for managing Android apps.
+ * Provides functionality to install and uninstall Android apps using ADB commands.
  */
 object AndroidAppManager : AppManager {
 
     /**
      * Installs an Android app on the connected device or emulator.
      *
-     * @param appPath The file path to the APK to be installed.
-     * @throws RuntimeException if the installation fails.
+     * @param app The APK file name to be installed (should be located in src/main/resources/apps).
+     * @throws RuntimeException if the APK is not found or installation fails after 3 attempts.
      */
     override fun installApp(app: String) {
         val appPath =
-                Paths.get(System.getProperty("user.dir"), "src/main/resources/apps").resolve(app)
+            Paths.get(System.getProperty("user.dir"), "src/main/resources/apps").resolve(app)
         Logger.info("Resolved APK path: $appPath")
         if (!appPath.toFile().exists()) {
             throw RuntimeException("APK not found at $appPath")
@@ -30,9 +30,9 @@ object AndroidAppManager : AppManager {
         var output = ""
         while (!success && attempts < 3) {
             val process =
-                    ProcessBuilder("adb", "install", "-r", appPath.toString())
-                            .redirectErrorStream(true)
-                            .start()
+                ProcessBuilder("adb", "install", "-r", appPath.toString())
+                    .redirectErrorStream(true)
+                    .start()
             output = process.inputStream.bufferedReader().readText()
             process.waitFor()
             Logger.info("adb install output (attempt ${attempts + 1}):\n$output")
@@ -46,7 +46,7 @@ object AndroidAppManager : AppManager {
         }
         if (!success) {
             throw RuntimeException(
-                    "Failed to install Android app after $attempts attempts. adb output:\n$output"
+                "Failed to install Android app after $attempts attempts. adb output:\n$output"
             )
         }
         Logger.info("✅ Android app installed successfully.")

@@ -7,16 +7,35 @@ import io.ktor.server.routing.*
 import io.ktor.http.*
 import services.IServices.IThresholdTypeService
 
+/**
+ * Controller for handling threshold type-related endpoints.
+ * Provides routes for retrieving threshold types by ID or name.
+ *
+ * @property service The service used to interact with threshold type data sources.
+ */
 class ThresholdTypeController(
     private val service: IThresholdTypeService
 ) : IThresholdTypeController {
 
+    /**
+     * Defines the routes for threshold type-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
         route("/threshold-types") {
+            /**
+             * GET /threshold-types
+             * Retrieves all threshold types.
+             */
             get {
                 call.respond(service.getAll())
             }
 
+            /**
+             * GET /threshold-types/{id}
+             * Retrieves a threshold type by its ID.
+             */
             get("/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull()
                 if (id == null) {
@@ -31,6 +50,10 @@ class ThresholdTypeController(
                 call.respond(thresholdType)
             }
 
+            /**
+             * GET /threshold-types/by-name/{name}
+             * Retrieves a threshold type by its name.
+             */
             get("/by-name/{name}") {
                 val name = call.parameters["name"]
                 if (name.isNullOrBlank()) {

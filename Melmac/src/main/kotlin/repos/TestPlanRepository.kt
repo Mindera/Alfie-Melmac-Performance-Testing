@@ -4,7 +4,19 @@ import domain.TestPlan
 import java.sql.Connection
 import repos.IRepos.ITestPlanRepository
 
+/**
+ * Repository implementation for accessing and managing TestPlan entities in the database.
+ *
+ * @property connection The JDBC connection used for database operations.
+ */
 class TestPlanRepository(private val connection: Connection) : ITestPlanRepository {
+
+    /**
+     * Finds a TestPlan by its unique identifier.
+     *
+     * @param testPlanId The ID of the TestPlan to retrieve.
+     * @return The [TestPlan] if found, or null otherwise.
+     */
     override fun findById(testPlanId: Int): TestPlan? {
         val query = "SELECT TestPlanID, TestName, MetricMetricID FROM TestPlan WHERE TestPlanID = ?"
         connection.prepareStatement(query).use { statement ->
@@ -21,6 +33,13 @@ class TestPlanRepository(private val connection: Connection) : ITestPlanReposito
         }
     }
 
+    /**
+     * Saves a new TestPlan to the database.
+     *
+     * @param testPlan The [TestPlan] entity to save.
+     * @return The generated ID of the inserted TestPlan.
+     * @throws Exception if the insert fails or no key is generated.
+     */
     override fun save(testPlan: TestPlan): Int {
         val query = "INSERT INTO TestPlan (TestName, MetricMetricID) VALUES (?, ?)"
         connection.prepareStatement(query, java.sql.Statement.RETURN_GENERATED_KEYS).use { statement
