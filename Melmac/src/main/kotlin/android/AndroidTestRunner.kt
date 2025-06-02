@@ -15,7 +15,7 @@ import dtos.TestExecutionConfigDTO
 class AndroidTestRunner (
     private val deviceManager: DeviceManager,
     private val appManager: AppManager
-) {S
+) {
     /**
      * Runs the specified test based on the provided configuration.
      *
