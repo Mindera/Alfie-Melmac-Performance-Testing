@@ -1,4 +1,4 @@
-@startuml Use Case Diagram for Melmac Performance Testing Framework
+@startuml use-case-diagram
 left to right direction
 
 actor "Developer or CI/CD Pipeline" as Dev
