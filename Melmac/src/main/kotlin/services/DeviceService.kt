@@ -8,6 +8,8 @@ import utils.Tools
 import repos.IRepos.IDeviceRepository
 import repos.IRepos.IOperSysVersionRepository
 import repos.IRepos.IOperSysRepository
+import mappers.AvailableDeviceMapper
+import domain.Device
 
 /**
  * Service implementation for managing device information.
@@ -36,12 +38,10 @@ class DeviceService (
         val os = osRepository.findById(osVersion.operativeSystemOperSysId)
                 ?: return null
 
-        return AvailableDeviceDTO(
-                id = device.deviceId,
-                deviceName = device.deviceName,
-                deviceSerialNumber = device.deviceSerialNumber,
-                osName = os.operSysName,
-                osVersion = osVersion.version
+        return AvailableDeviceMapper.toDto(
+            device = device,
+            osName = os.operSysName,
+            osVersion = osVersion.version
         )
     }
 
@@ -148,13 +148,13 @@ class DeviceService (
 
                 if (available) {
                     result.add(
-                            AvailableDeviceDTO(
-                                    id = null,
-                                    deviceName = name,
-                                    deviceSerialNumber = udid,
-                                    osName = "iOS",
-                                    osVersion = version
-                            )
+                        AvailableDeviceDTO(
+                            id = null,
+                            deviceName = name,
+                            deviceSerialNumber = udid,
+                            osName = "iOS",
+                            osVersion = version
+                        )
                     )
                 }
             }
@@ -174,11 +174,11 @@ class DeviceService (
         return avds.map { avdName ->
             val version = readAndroidAVDVersion(avdName)
             AvailableDeviceDTO(
-                    id = null,
-                    deviceName = avdName,
-                    deviceSerialNumber = null,
-                    osName = "Android",
-                    osVersion = version
+                id = null,
+                deviceName = avdName,
+                deviceSerialNumber = null,
+                osName = "Android",
+                osVersion = version
             )
         }
     }

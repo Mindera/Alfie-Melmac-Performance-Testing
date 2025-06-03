@@ -66,7 +66,7 @@ class ThresholdTypeRepository(private val connection: Connection) : IThresholdTy
      */
     override fun findByName(name: String): ThresholdType? {
         val query =
-                "SELECT ThresholdTypeID, ThresholdTypeName, ThresholdTypeDescription FROM ThresholdType WHERE ThresholdTypeName = ?"
+                "SELECT ThresholdTypeID, ThresholdTypeName, ThresholdTypeDescription FROM ThresholdType WHERE LOWER(ThresholdTypeName) = LOWER(?)"
         val statement = connection.prepareStatement(query)
         statement.setString(1, name)
         val resultSet = statement.executeQuery()

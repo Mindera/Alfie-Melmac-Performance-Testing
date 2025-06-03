@@ -7,6 +7,8 @@ import dtos.DataConfig
 import repos.IRepos.*
 import services.IServices.ILoaderService
 import java.io.File
+import java.time.Instant
+import java.time.format.DateTimeParseException
 
 /**
  * Service implementation for loading and synchronizing configuration data
@@ -29,6 +31,7 @@ class LoaderService(
     private val metricOutputRepo: IMetricOutputRepository,
     private val executionTypeMetricRepo: IExecutionTypeMetricRepository,
     private val thresholdTypeRepo: IThresholdTypeRepository,
+    private val bootstrapUpdateRepo: IBootstrapUpdateRepository,
     private val configFilePath: String = "data.json"
 ) : ILoaderService {
 
@@ -40,7 +43,22 @@ class LoaderService(
     override fun syncDataFromConfig() {
         val config = loadMetricsConfig()
 
-        // Load threshold types
+        val fileLastUpdated = try {
+            Instant.parse(config.lastUpdated)
+        } catch (e: DateTimeParseException) {
+            throw IllegalStateException("Invalid lastUpdated format in data.json: ${config.lastUpdated}")
+        }
+
+        val dbLastUpdated = bootstrapUpdateRepo.getLatestUpdateDate()
+
+        if (dbLastUpdated != null && !fileLastUpdated.isAfter(dbLastUpdated)) {
+            return
+        }
+
+        if (dbLastUpdated == null || fileLastUpdated != dbLastUpdated) {
+            bootstrapUpdateRepo.save(fileLastUpdated)
+        }
+
         config.thresholdTypes.forEach { configThresholdType ->
             val existingType = thresholdTypeRepo.findByName(configThresholdType.thresholdTypeName)
             if (existingType == null) {
@@ -58,7 +76,6 @@ class LoaderService(
             }
         }
 
-        // Load metrics and related entities
         config.metrics.forEach { configMetric ->
             val existingMetric = metricRepo.findByName(configMetric.name)
             val dbMetricId =
@@ -121,7 +138,6 @@ class LoaderService(
                         existingExecTypeByName.executionTypeId!!
                     }
 
-                // Ensure the ExecutionType is linked to the Metric in the join table
                 executionTypeMetricRepo.link(dbMetricId, dbExecTypeId)
 
                 execType.parameters.forEach { param ->

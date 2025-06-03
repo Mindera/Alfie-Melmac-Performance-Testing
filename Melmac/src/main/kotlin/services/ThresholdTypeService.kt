@@ -3,6 +3,7 @@ package services
 import dtos.ThresholdTypeResponseDTO
 import repos.IRepos.IThresholdTypeRepository
 import services.IServices.IThresholdTypeService
+import mappers.ThresholdTypeMapper
 
 /**
  * Service implementation for managing Threshold Types.
@@ -21,11 +22,7 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
      */
     override fun getAll(): List<ThresholdTypeResponseDTO> {
         return thresholdTypeRepository.findAll().map {
-            ThresholdTypeResponseDTO(
-                    thresholdTypeId = it.thresholdTypeId ?: 0,
-                    thresholdTypeName = it.thresholdTypeName,
-                    thresholdTypeDescription = it.thresholdTypeDescription
-            )
+            ThresholdTypeMapper.toDto(it)
         }
     }
 
@@ -37,11 +34,7 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
      */
     override fun getById(id: Int): ThresholdTypeResponseDTO? {
         return thresholdTypeRepository.findById(id)?.let {
-            ThresholdTypeResponseDTO(
-                    thresholdTypeId = it.thresholdTypeId ?: 0,
-                    thresholdTypeName = it.thresholdTypeName,
-                    thresholdTypeDescription = it.thresholdTypeDescription
-            )
+            ThresholdTypeMapper.toDto(it)
         }
     }
 
@@ -53,11 +46,7 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
      */
     override fun getByName(name: String): ThresholdTypeResponseDTO? {
         return thresholdTypeRepository.findByName(name)?.let {
-            ThresholdTypeResponseDTO(
-                    thresholdTypeId = it.thresholdTypeId ?: 0,
-                    thresholdTypeName = it.thresholdTypeName,
-                    thresholdTypeDescription = it.thresholdTypeDescription
-            )
+            ThresholdTypeMapper.toDto(it)
         }
     }
 }

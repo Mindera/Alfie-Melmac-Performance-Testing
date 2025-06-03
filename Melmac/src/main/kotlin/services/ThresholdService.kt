@@ -3,7 +3,9 @@ package services
 import domain.*
 import dtos.*
 import repos.IRepos.IThresholdRepository
+import repos.IRepos.IThresholdTypeRepository
 import services.IServices.IThresholdService
+import mappers.TestThresholdMapper
 import java.time.LocalDateTime
 
 /**
@@ -14,7 +16,8 @@ import java.time.LocalDateTime
  * @property thresholdRepository Repository for TestThreshold entities.
  */
 class ThresholdService(
-    private val thresholdRepository: IThresholdRepository
+    private val thresholdRepository: IThresholdRepository,
+    private val thresholdTypeRepository: IThresholdTypeRepository
 ) : IThresholdService {
 
     /**
@@ -26,13 +29,7 @@ class ThresholdService(
     override fun getThresholdByTestPlanVersionId(testPlanVersionId: Int): List<TestThresholdResponseDTO> {
         val thresholds = thresholdRepository.findByTestPlanVersionId(testPlanVersionId)
         return thresholds.map { threshold ->
-            TestThresholdResponseDTO(
-                testThresholdId = threshold.testThresholdId ?: 0,
-                thresholdTypeThresholdTypeId = threshold.thresholdTypeThresholdTypeId,
-                targetValue = threshold.targetValue,
-                metricOutputMetricOutputId = threshold.metricOutputMetricOutputId,
-                testPlanVersionTestPlanVersionId = threshold.testPlanVersionTestPlanVersionId
-            )
+            TestThresholdMapper.toDto(threshold)
         }
     }
 
@@ -44,13 +41,7 @@ class ThresholdService(
      */
     override fun getThresholdById(id: Int): TestThresholdResponseDTO? {
         val threshold = thresholdRepository.findById(id) ?: return null
-        return TestThresholdResponseDTO(
-            testThresholdId = threshold.testThresholdId ?: 0,
-            thresholdTypeThresholdTypeId = threshold.thresholdTypeThresholdTypeId,
-            targetValue = threshold.targetValue,
-            metricOutputMetricOutputId = threshold.metricOutputMetricOutputId,
-            testPlanVersionTestPlanVersionId = threshold.testPlanVersionTestPlanVersionId
-        )
+        return TestThresholdMapper.toDto(threshold)
     }
 
     /**
@@ -60,21 +51,19 @@ class ThresholdService(
      * @return [TestThresholdResponseDTO] representing the created threshold.
      */
     override fun createTestThreshold(request: TestThresholdRequestDTO): TestThresholdResponseDTO {
-        val newThreshold = TestThreshold(
-            testThresholdId = null,
-            targetValue = request.targetValue,
-            thresholdTypeThresholdTypeId = request.thresholdTypeThresholdTypeId,
-            testPlanVersionTestPlanVersionId = request.testPlanVersionTestPlanVersionId,
-            metricOutputMetricOutputId = request.metricOutputMetricOutputId
+        val thresholdTypeId = thresholdTypeRepository
+            .findByName(request.thresholdType)
+            ?.thresholdTypeId
+            ?: throw IllegalArgumentException("Threshold type not found: ${request.thresholdType}")
+        val newThreshold = TestThresholdMapper.fromRequestDto(
+            request,
+            request.testPlanVersionTestPlanVersionId,
+            thresholdTypeId
         )
         val thresholdId = thresholdRepository.save(newThreshold)
 
-        return TestThresholdResponseDTO(
-            testThresholdId = thresholdId,
-            thresholdTypeThresholdTypeId = request.thresholdTypeThresholdTypeId,
-            targetValue = request.targetValue,
-            metricOutputMetricOutputId = request.metricOutputMetricOutputId,
-            testPlanVersionTestPlanVersionId = request.testPlanVersionTestPlanVersionId
+        return TestThresholdMapper.toDto(
+            newThreshold.copy(testThresholdId = thresholdId)
         )
     }
 }

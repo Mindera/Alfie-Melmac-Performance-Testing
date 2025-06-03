@@ -4,6 +4,10 @@ import domain.*
 import dtos.*
 import repos.IRepos.*
 import services.IServices.ITestPlanVersionService
+import mappers.TestThresholdMapper
+import mappers.TestMetricParameterMapper
+import mappers.TestExecutionTypeParameterMapper
+import mappers.TestPlanVersionMapper
 
 /**
  * Service implementation for managing Test Plan Versions.
@@ -37,74 +41,30 @@ class TestPlanVersionService(
         val versions = testPlanVersionRepository.findByTestPlanId(id)
         return versions.map { version: TestPlanVersion ->
             val thresholds =
-                    testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
-                            .map { threshold ->
-                                TestThresholdResponseDTO(
-                                        testThresholdId = threshold.testThresholdId!!,
-                                        targetValue = threshold.targetValue,
-                                        thresholdTypeThresholdTypeId =
-                                                threshold.thresholdTypeThresholdTypeId,
-                                        testPlanVersionTestPlanVersionId =
-                                                threshold.testPlanVersionTestPlanVersionId,
-                                        metricOutputMetricOutputId =
-                                                threshold.metricOutputMetricOutputId
-                                )
-                            }
+                testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
+                    .map { threshold -> TestThresholdMapper.toDto(threshold) }
 
             val metricParameters =
-                    testPlanMetricParameterRepository.findByTestPlanVersionId(
-                                    version.testPlanVersionId
-                            )
-                            .map { parameter ->
-                                TestMetricParameterResponseDTO(
-                                        testMetricParameterId = parameter.testMetricParameterId!!,
-                                        parameterValue = parameter.parameterValue,
-                                        metricParameterMetricParameterId =
-                                                parameter.metricParameterMetricParameterId,
-                                        testPlanVersionTestPlanVersionId =
-                                                parameter.testPlanVersionTestPlanVersionId
-                                )
-                            }
+                testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
+                    .map { parameter -> TestMetricParameterMapper.toDto(parameter) }
 
             val executionTypeParameters =
-                    testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(
-                                    version.testPlanVersionId
-                            )
-                            .map { parameter ->
-                                TestExecutionTypeParameterResponseDTO(
-                                        testExecutionTypeParameterId =
-                                                parameter.testExecutionTypeParameterId!!,
-                                        parameterValue = parameter.parameterValue,
-                                        executionTypeParameterExecutionTypeParameterId =
-                                                parameter
-                                                        .executionTypeParameterExecutionTypeParameterId,
-                                        testPlanVersionTestPlanVersionId =
-                                                parameter.testPlanVersionTestPlanVersionId
-                                )
-                            }
+                testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
+                    .map { parameter -> TestExecutionTypeParameterMapper.toDto(parameter) }
 
             val testSuiteVersionId =
-                    testSuiteVersionPlanRepository
-                            .findByTestPlanVersionId(version.testPlanVersionId)
-                            .firstOrNull()
-                            ?.testSuiteVersionTestSuiteVersionId
-                            ?: 0
+                testSuiteVersionPlanRepository
+                    .findByTestPlanVersionId(version.testPlanVersionId)
+                    .firstOrNull()
+                    ?.testSuiteVersionTestSuiteVersionId
+                    ?: 0
 
-            TestPlanVersionResponseDTO(
-                    testPlanVersionId = version.testPlanVersionId,
-                    version = version.version,
-                    creationTimestamp = version.creationTimestamp,
-                    notes = version.notes,
-                    testPlanTestPlanId = version.testPlanTestPlanId,
-                    deviceDeviceId = version.deviceDeviceId,
-                    appVersionAppVersionId = version.appVersionAppVersionId,
-                    appPackage = version.appPackage,
-                    mainActivity = version.mainActivity,
-                    executionTypeExecutionTypeId = version.executionTypeExecutionTypeId,
-                    thresholds = thresholds,
-                    metricParameters = metricParameters,
-                    executionTypeParameters = executionTypeParameters,
-                    testSuiteVersionId = testSuiteVersionId
+            TestPlanVersionMapper.toDto(
+                version,
+                thresholds,
+                metricParameters,
+                executionTypeParameters,
+                testSuiteVersionId
             )
         }
     }
@@ -120,73 +80,33 @@ class TestPlanVersionService(
             testPlanId: Int
     ): TestPlanVersionResponseDTO? {
         val version =
-                testPlanVersionRepository.findLatestVersionByTestPlanId(testPlanId) ?: return null
+            testPlanVersionRepository.findLatestVersionByTestPlanId(testPlanId) ?: return null
 
         val thresholds =
-                testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!).map {
-                        threshold ->
-                    TestThresholdResponseDTO(
-                            testThresholdId = threshold.testThresholdId!!,
-                            targetValue = threshold.targetValue,
-                            thresholdTypeThresholdTypeId = threshold.thresholdTypeThresholdTypeId,
-                            testPlanVersionTestPlanVersionId =
-                                    threshold.testPlanVersionTestPlanVersionId,
-                            metricOutputMetricOutputId = threshold.metricOutputMetricOutputId
-                    )
-                }
+            testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
+                .map { threshold -> TestThresholdMapper.toDto(threshold) }
 
         val metricParameters =
-                testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                        .map { parameter ->
-                            TestMetricParameterResponseDTO(
-                                    testMetricParameterId = parameter.testMetricParameterId!!,
-                                    parameterValue = parameter.parameterValue,
-                                    metricParameterMetricParameterId =
-                                            parameter.metricParameterMetricParameterId,
-                                    testPlanVersionTestPlanVersionId =
-                                            parameter.testPlanVersionTestPlanVersionId
-                            )
-                        }
+            testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
+                .map { parameter -> TestMetricParameterMapper.toDto(parameter) }
 
         val executionTypeParameters =
-                testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(
-                                version.testPlanVersionId
-                        )
-                        .map { parameter ->
-                            TestExecutionTypeParameterResponseDTO(
-                                    testExecutionTypeParameterId =
-                                            parameter.testExecutionTypeParameterId!!,
-                                    parameterValue = parameter.parameterValue,
-                                    executionTypeParameterExecutionTypeParameterId =
-                                            parameter
-                                                    .executionTypeParameterExecutionTypeParameterId,
-                                    testPlanVersionTestPlanVersionId =
-                                            parameter.testPlanVersionTestPlanVersionId
-                            )
-                        }
+            testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
+                .map { parameter -> TestExecutionTypeParameterMapper.toDto(parameter) }
 
         val testSuiteVersionId =
-                testSuiteVersionPlanRepository
-                        .findByTestPlanVersionId(version.testPlanVersionId)
-                        .firstOrNull()
-                        ?.testSuiteVersionTestSuiteVersionId
-                        ?: 0
+            testSuiteVersionPlanRepository
+                .findByTestPlanVersionId(version.testPlanVersionId)
+                .firstOrNull()
+                ?.testSuiteVersionTestSuiteVersionId
+                ?: 0
 
-        return TestPlanVersionResponseDTO(
-                testPlanVersionId = version.testPlanVersionId,
-                version = version.version,
-                creationTimestamp = version.creationTimestamp,
-                notes = version.notes,
-                testPlanTestPlanId = version.testPlanTestPlanId,
-                deviceDeviceId = version.deviceDeviceId,
-                appVersionAppVersionId = version.appVersionAppVersionId,
-                appPackage = version.appPackage,
-                mainActivity = version.mainActivity,
-                executionTypeExecutionTypeId = version.executionTypeExecutionTypeId,
-                thresholds = thresholds,
-                metricParameters = metricParameters,
-                executionTypeParameters = executionTypeParameters,
-                testSuiteVersionId = testSuiteVersionId
+        return TestPlanVersionMapper.toDto(
+            version,
+            thresholds,
+            metricParameters,
+            executionTypeParameters,
+            testSuiteVersionId
         )
     }
 
@@ -201,70 +121,30 @@ class TestPlanVersionService(
         val version = testPlanVersionRepository.findById(id) ?: return null
 
         val thresholds =
-                testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!).map {
-                        threshold ->
-                    TestThresholdResponseDTO(
-                            testThresholdId = threshold.testThresholdId!!,
-                            targetValue = threshold.targetValue,
-                            thresholdTypeThresholdTypeId = threshold.thresholdTypeThresholdTypeId,
-                            testPlanVersionTestPlanVersionId =
-                                    threshold.testPlanVersionTestPlanVersionId,
-                            metricOutputMetricOutputId = threshold.metricOutputMetricOutputId
-                    )
-                }
+            testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
+                .map { threshold -> TestThresholdMapper.toDto(threshold) }
 
         val metricParameters =
-                testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                        .map { parameter ->
-                            TestMetricParameterResponseDTO(
-                                    testMetricParameterId = parameter.testMetricParameterId!!,
-                                    parameterValue = parameter.parameterValue,
-                                    metricParameterMetricParameterId =
-                                            parameter.metricParameterMetricParameterId,
-                                    testPlanVersionTestPlanVersionId =
-                                            parameter.testPlanVersionTestPlanVersionId
-                            )
-                        }
+            testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
+                .map { parameter -> TestMetricParameterMapper.toDto(parameter) }
 
         val executionTypeParameters =
-                testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(
-                                version.testPlanVersionId
-                        )
-                        .map { parameter ->
-                            TestExecutionTypeParameterResponseDTO(
-                                    testExecutionTypeParameterId =
-                                            parameter.testExecutionTypeParameterId!!,
-                                    parameterValue = parameter.parameterValue,
-                                    executionTypeParameterExecutionTypeParameterId =
-                                            parameter
-                                                    .executionTypeParameterExecutionTypeParameterId,
-                                    testPlanVersionTestPlanVersionId =
-                                            parameter.testPlanVersionTestPlanVersionId
-                            )
-                        }
+            testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
+                .map { parameter -> TestExecutionTypeParameterMapper.toDto(parameter) }
 
         val testSuiteVersionId =
-                testSuiteVersionPlanRepository
-                        .findByTestPlanVersionId(version.testPlanVersionId)
-                        .firstOrNull()
-                        ?.testSuiteVersionTestSuiteVersionId
-                        ?: 0
+            testSuiteVersionPlanRepository
+                .findByTestPlanVersionId(version.testPlanVersionId)
+                .firstOrNull()
+                ?.testSuiteVersionTestSuiteVersionId
+                ?: 0
 
-        return TestPlanVersionResponseDTO(
-                testPlanVersionId = version.testPlanVersionId,
-                version = version.version,
-                creationTimestamp = version.creationTimestamp,
-                notes = version.notes,
-                testPlanTestPlanId = version.testPlanTestPlanId,
-                deviceDeviceId = version.deviceDeviceId,
-                appVersionAppVersionId = version.appVersionAppVersionId,
-                appPackage = version.appPackage,
-                mainActivity = version.mainActivity,
-                executionTypeExecutionTypeId = version.executionTypeExecutionTypeId,
-                thresholds = thresholds,
-                metricParameters = metricParameters,
-                executionTypeParameters = executionTypeParameters,
-                testSuiteVersionId = testSuiteVersionId
+        return TestPlanVersionMapper.toDto(
+            version,
+            thresholds,
+            metricParameters,
+            executionTypeParameters,
+            testSuiteVersionId
         )
     }
 }

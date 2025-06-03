@@ -2,6 +2,6 @@ package dtos
 
 data class TestMetricParameterRequestDTO(
     val parameterValue: String,
-    val metricParameterMetricParameterId: Int,
+    val metricParameter: String,
     val testPlanVersionTestPlanVersionId: Int
 )

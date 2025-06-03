@@ -1,6 +1,7 @@
 package dtos
 
 data class DataConfig(
+    val lastUpdated: String,
     val metrics: List<MetricConfigDTO>,
     val thresholdTypes: List<ThresholdTypeConfigDTO>
 )
