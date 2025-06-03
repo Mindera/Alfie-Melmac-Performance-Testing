@@ -52,6 +52,9 @@ val appModule = module {
 
     // --- Repositories ---
 
+    // Bootstrap Update
+    single<IBootstrapUpdateRepository> { BootstrapUpdateRepository(get()) }
+
     // Metrics
     single<IMetricRepository> { MetricRepository(get()) }
     single<IMetricOutputRepository> { MetricOutputRepository(get()) }
@@ -106,6 +109,7 @@ val appModule = module {
                 get(),
                 get(),
                 get(),
+                get(),
                 get(named("metricsConfigPath"))
         )
     }
@@ -132,10 +136,15 @@ val appModule = module {
                 get()
         )
     }
-    single<IThresholdService> { ThresholdService(get()) }
+    single<IThresholdService> { ThresholdService(get(), get()) }
     single<IThresholdTypeService> { ThresholdTypeService(get()) }
     single<ITestPlanService> {
         TestPlanService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
                 get(),
                 get(),
                 get(),

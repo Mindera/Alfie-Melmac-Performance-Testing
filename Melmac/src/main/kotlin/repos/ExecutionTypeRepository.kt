@@ -79,8 +79,8 @@ class ExecutionTypeRepository(private val connection: Connection) : IExecutionTy
         SELECT et.ExecutionTypeID, et.ExecutionTypeName, et.ExecutionTypeDescription
         FROM ExecutionType et
         INNER JOIN ExecutionType_Metric etm ON etm.ExecutionTypeExecutionTypeID = et.ExecutionTypeID
-        WHERE etm.MetricMetricID = ? AND et.ExecutionTypeName = ?
-    """.trimIndent()
+        WHERE etm.MetricMetricID = ? AND LOWER(et.ExecutionTypeName) = LOWER(?)
+        """.trimIndent()
 
         val statement = connection.prepareStatement(query)
         statement.setInt(1, metricId)

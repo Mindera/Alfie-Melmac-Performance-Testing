@@ -2,6 +2,6 @@ package dtos
 
 data class TestExecutionTypeParameterRequestDTO(
     val parameterValue: String,
-    val executionTypeParameterExecutionTypeParameterId: Int,
+    val executionTypeParameter: String,
     val testPlanVersionTestPlanVersionId: Int
 )

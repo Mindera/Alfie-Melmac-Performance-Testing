@@ -4,6 +4,11 @@ import domain.*
 import dtos.*
 import repos.IRepos.*
 import services.IServices.IMetricService
+import mappers.MetricMapper
+import mappers.MetricOutputMapper
+import mappers.MetricParameterMapper
+import mappers.ExecutionTypeMapper
+import mappers.ExecutionTypeParameterMapper
 
 /**
  * Service implementation for managing metrics and their related entities.
@@ -30,11 +35,7 @@ class MetricService(
      */
     override fun getAllMetrics(): List<MetricResponseDTO> {
         return metricRepository.findAll().map { metric ->
-            MetricResponseDTO(
-                    metricId = metric.metricId
-                                    ?: throw IllegalStateException("Metric ID cannot be null"),
-                    metricName = metric.metricName
-            )
+            MetricMapper.toDto(metric)
         }
     }
 
@@ -46,11 +47,7 @@ class MetricService(
      */
     override fun getMetricById(id: Int): MetricResponseDTO? {
         val metric = metricRepository.findById(id) ?: return null
-        return MetricResponseDTO(
-                metricId = metric.metricId
-                                ?: throw IllegalStateException("Metric ID cannot be null"),
-                metricName = metric.metricName
-        )
+        return MetricMapper.toDto(metric)
     }
 
     /**
@@ -61,16 +58,7 @@ class MetricService(
      */
     override fun getOutputsByMetricId(metricId: Int): List<MetricOutputResponseDTO> {
         return metricOutputRepository.findByMetricId(metricId).map { output: MetricOutput ->
-            MetricOutputResponseDTO(
-                    if (output.metricOutputId == null) {
-                        throw IllegalStateException("MetricOutput ID cannot be null")
-                    } else {
-                        output.metricOutputId
-                    },
-                    output.outputName,
-                    output.unit,
-                    output.metricMetricId
-            )
+            MetricOutputMapper.toDto(output)
         }
     }
 
@@ -82,15 +70,7 @@ class MetricService(
      */
     override fun getParametersByMetricId(metricId: Int): List<MetricParameterResponseDTO> {
         return metricParameterRepository.findByMetricId(metricId).map { param ->
-            MetricParameterResponseDTO(
-                    metricParameterId = param.metricParameterId
-                                    ?: throw IllegalStateException(
-                                            "MetricParameter ID cannot be null"
-                                    ),
-                    parameterName = param.parameterName,
-                    parameterType = param.parameterType,
-                    metricMetricId = param.metricMetricId
-            )
+            MetricParameterMapper.toDto(param)
         }
     }
 
@@ -102,15 +82,7 @@ class MetricService(
      */
     override fun getExecutionTypesByMetricId(metricId: Int): List<ExecutionTypeResponseDTO> {
         return executionTypeRepository.findByMetricId(metricId).map { execType: ExecutionType ->
-            ExecutionTypeResponseDTO(
-                    if (execType.executionTypeId == null) {
-                        throw IllegalStateException("ExecutionType ID cannot be null")
-                    } else {
-                        execType.executionTypeId
-                    },
-                    execType.executionTypeName,
-                    execType.executionTypeDescription
-            )
+            ExecutionTypeMapper.toDto(execType)
         }
     }
 
@@ -125,16 +97,7 @@ class MetricService(
     ): List<ExecutionTypeParameterResponseDTO> {
         return executionTypeParameterRepository.findByExecutionTypeId(executionTypeId).map {
                 param: ExecutionTypeParameter ->
-            ExecutionTypeParameterResponseDTO(
-                    if (param.executionTypeParameterId == null) {
-                        throw IllegalStateException("ExecutionTypeParameter ID cannot be null")
-                    } else {
-                        param.executionTypeParameterId
-                    },
-                    param.parameterName,
-                    param.parameterType,
-                    param.executionTypeExecutionTypeId
-            )
+            ExecutionTypeParameterMapper.toDto(param)
         }
     }
 }

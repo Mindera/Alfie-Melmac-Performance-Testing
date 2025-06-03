@@ -93,27 +93,27 @@ jobs:
             -d "{
               \"notes\": \"Test plan for App Startup Time metric\",
               \"testName\": \"Startup Time Plan\",
-              \"metricMetricId\": 1,
+              \"metricName\": \"App Startup Time\",
               \"deviceName\": \"iPhone 16 Pro\",
               \"appName\": \"Alfie.app\",
               \"appVersion\": \"0.8.1\",
               \"appPackage\": \"com.mindera.alfie.debug\",
-              \"executionTypeExecutionTypeId\": 1,
+              \"executionType\": \"Cold Start\",
               \"thresholds\": [
                 {
                   \"targetValue\": 5000,
-                  \"thresholdTypeThresholdTypeId\": 2,
+                  \"thresholdType\": \"Max\",
                   \"metricOutputMetricOutputId\": 1
                 }
               ],
               \"metricParameters\": [
                 {
                   \"parameterValue\": \"account-btn\",
-                  \"metricParameterMetricParameterId\": 1
+                  \"metricParameter\": \"elementToWaitFor\"
                 },
                 {
                   \"parameterValue\": \"200000\",
-                  \"metricParameterMetricParameterId\": 2
+                  \"metricParameter\": \"timeout\"
                 }
               ],
               \"executionTypeParameters\": [],

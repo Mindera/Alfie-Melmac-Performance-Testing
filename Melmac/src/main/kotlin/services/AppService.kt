@@ -1,5 +1,6 @@
 package services
 
+import domain.App
 import domain.AppVersion
 import dtos.AppResponseDTO
 import dtos.AppVersionResponseDTO
@@ -9,6 +10,8 @@ import repos.IRepos.IAppRepository
 import repos.IRepos.IAppVersionRepository
 import services.IServices.IAppService
 import utils.Tools
+import mappers.AppMapper
+import mappers.AppVersionMapper
 
 /**
  * Service implementation for managing applications and their versions.
@@ -32,12 +35,7 @@ class AppService(
      */
     override fun getAllAppsFromDatabase(): List<AppResponseDTO> {
         val apps = appRepository.findAll()
-        return apps.map { app ->
-            AppResponseDTO(
-                    appId = app.appId ?: throw IllegalStateException("App ID cannot be null"),
-                    appName = app.appName
-            )
-        }
+        return apps.map { app -> AppMapper.toDto(app) }
     }
 
     /**
@@ -57,14 +55,7 @@ class AppService(
                         app.appId ?: throw IllegalStateException("App ID cannot be null")
                 )
 
-        return versions.map { version: AppVersion ->
-            AppVersionResponseDTO(
-                    appVersionId = version.appVersionId
-                                    ?: throw IllegalStateException("AppVersion ID cannot be null"),
-                    appId = version.appId,
-                    appVersion = version.appVersion
-            )
-        }
+        return versions.map { version: AppVersion -> AppVersionMapper.toDto(version) }
     }
 
     /**
@@ -79,10 +70,7 @@ class AppService(
                 appRepository.findById(appId)
                         ?: throw IllegalArgumentException("App with id '$appId' not found")
 
-        return AppResponseDTO(
-                appId = app.appId ?: throw IllegalStateException("App ID cannot be null"),
-                appName = app.appName
-        )
+        return AppMapper.toDto(app)
     }
 
     /**
@@ -97,12 +85,7 @@ class AppService(
                 appVersionRepository.findById(appVersionId)
                         ?: throw IllegalArgumentException("App Version with id '$appVersionId' not found")
 
-        return AppVersionResponseDTO(
-                appVersionId = appVersion.appVersionId
-                                ?: throw IllegalStateException("AppVersion ID cannot be null"),
-                appId = appVersion.appId,
-                appVersion = appVersion.appVersion
-        )
+        return AppVersionMapper.toDto(appVersion)
     }
 
     /**
@@ -121,10 +104,7 @@ class AppService(
                 appRepository.findById(appVersion.appId)
                         ?: throw IllegalArgumentException("App with id '${appVersion.appId}' not found")
 
-        return AppResponseDTO(
-                appId = app.appId ?: throw IllegalStateException("App ID cannot be null"),
-                appName = app.appName
-        )
+        return AppMapper.toDto(app)
     }
 
     // --- Folder Methods ---
@@ -152,7 +132,7 @@ class AppService(
         val appNames = files.map { it.name }.distinct()
 
         return appNames.mapIndexed { index, appName ->
-            AppResponseDTO(appId = index + 1, appName = appName)
+            AppMapper.toDto(App(appId = index + 1, appName = appName))
         }
     }
 
@@ -186,7 +166,7 @@ class AppService(
             )
         }
 
-        return AppResponseDTO(appId = 1, appName = appName)
+        return AppMapper.toDto(App(appId = 1, appName = appName))
     }
 
     /**
@@ -230,7 +210,13 @@ class AppService(
                     }
                             ?: "unknown"
 
-            AppVersionResponseDTO(appVersionId = index + 1, appId = index + 1, appVersion = version)
+            AppVersionMapper.toDto(
+                AppVersion(
+                    appVersionId = index + 1,
+                    appId = index + 1,
+                    appVersion = version
+                )
+            )
         }
     }
 
@@ -268,6 +254,12 @@ class AppService(
             )
         }
 
-        return AppVersionResponseDTO(appVersionId = 1, appId = 1, appVersion = appVersion)
+        return AppVersionMapper.toDto(
+            AppVersion(
+                appVersionId = 1,
+                appId = 1,
+                appVersion = appVersion
+            )
+        )
     }
 }

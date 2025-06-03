@@ -48,6 +48,7 @@ DROP TABLE TestSuiteVersion;
 DROP TABLE TestPlan;
 DROP TABLE TestPlanVersion;
 DROP TABLE TestSuiteVersionPlan;
+DROP TABLE BootstrapUpdate;
 CREATE TABLE Device (DeviceID int IDENTITY NOT NULL, DeviceName varchar(255) NOT NULL, DeviceSerialNumber varchar(255) NULL, OSVersionOSVersionID int NOT NULL, PRIMARY KEY (DeviceID)); CREATE UNIQUE INDEX UQ_Device_Serial ON Device (DeviceSerialNumber) WHERE DeviceSerialNumber IS NOT NULL;
 CREATE TABLE OperativeSystem (OperSysID int IDENTITY NOT NULL, OperSysName varchar(255) NOT NULL UNIQUE, PRIMARY KEY (OperSysID));
 CREATE TABLE OSVersion (OSVersionID int IDENTITY NOT NULL, Version varchar(255) NOT NULL, OperativeSystemOperSysID int NOT NULL, PRIMARY KEY (OSVersionID), CONSTRAINT UQ_VERSION_PER_OS UNIQUE (Version, OperativeSystemOperSysID));
@@ -71,6 +72,7 @@ CREATE TABLE TestSuiteVersion (TestSuiteVersionID int IDENTITY NOT NULL, Version
 CREATE TABLE TestPlan (TestPlanID int IDENTITY NOT NULL, TestName varchar(255) NOT NULL, MetricMetricID int NOT NULL, PRIMARY KEY (TestPlanID));
 CREATE TABLE TestPlanVersion (TestPlanVersionID int IDENTITY NOT NULL, Version varchar(255) NOT NULL, CreationTimestamp datetime NOT NULL, Notes varchar(255) NULL, AppPackage varchar(255) NOT NULL, AppMainActivity varchar(255) NULL, TestPlanTestPlanID int NOT NULL, DeviceDeviceID int NOT NULL, AppVersionAppVersionID int NOT NULL, ExecutionTypeExecutionTypeID int NOT NULL, PRIMARY KEY (TestPlanVersionID), CONSTRAINT UQ_VERSION_PER_TEST_PLAN UNIQUE (Version, TestPlanTestPlanID));
 CREATE TABLE TestSuiteVersionPlan (TestSuiteVersionTestSuiteVersionID int NOT NULL, TestPlanVersionTestPlanVersionID int NOT NULL, [Order] int NOT NULL, PRIMARY KEY (TestSuiteVersionTestSuiteVersionID, TestPlanVersionTestPlanVersionID), CONSTRAINT UQ_SUITE_VERSION_ORDER UNIQUE (TestSuiteVersionTestSuiteVersionID, [Order]));
+CREATE TABLE BootstrapUpdate (BootstrapUpdateID int IDENTITY NOT NULL, UpdateDate datetime NOT NULL UNIQUE, PRIMARY KEY (BootstrapUpdateID));
 ALTER TABLE OSVersion ADD CONSTRAINT FKOSVersion102342 FOREIGN KEY (OperativeSystemOperSysID) REFERENCES OperativeSystem (OperSysID);
 ALTER TABLE Device ADD CONSTRAINT FKDevice97329 FOREIGN KEY (OSVersionOSVersionID) REFERENCES OSVersion (OSVersionID);
 ALTER TABLE AppVersion ADD CONSTRAINT FKAppVersion811825 FOREIGN KEY (AppAppID) REFERENCES App (AppID);

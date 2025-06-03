@@ -60,7 +60,7 @@ class MetricRepository(private val connection: Connection) : IMetricRepository {
      * @return The [Metric] if found, or null otherwise.
      */
     override fun findByName(name: String): Metric? {
-        val query = "SELECT MetricID, MetricName FROM Metric WHERE MetricName = ?"
+        val query = "SELECT MetricID, MetricName FROM Metric WHERE LOWER(MetricName) = LOWER(?)"
         val statement = connection.prepareStatement(query)
         statement.setString(1, name)
         val resultSet = statement.executeQuery()

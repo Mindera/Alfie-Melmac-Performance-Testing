@@ -138,24 +138,28 @@ jobs:
             -d "{
               \"notes\": \"Test plan for App Startup Time metric\",
               \"testName\": \"Startup Time Plan\",
-              \"metricMetricId\": 1,
+              \"metricName\": \"App Startup Time\",
               \"deviceName\": \"Medium_Phone_API_35\",
               \"appName\": \"Alfie.apk\",
               \"appVersion\": \"0.8.0\",
               \"appPackage\": \"au.com.alfie.ecomm.debug\",
               \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
-              \"executionTypeExecutionTypeId\": 1,
+              \"executionType\": \"Cold Start\",
               \"thresholds\": [
                 {
                   \"targetValue\": 20000,
-                  \"thresholdTypeThresholdTypeId\": 2,
+                  \"thresholdType\": \"Max\",
                   \"metricOutputMetricOutputId\": 1
                 }
               ],
               \"metricParameters\": [
                 {
                   \"parameterValue\": \"home-tab\",
-                  \"metricParameterMetricParameterId\": 1
+                  \"metricParameter\": \"elementToWaitFor\"
+                },
+                {
+                  \"parameterValue\": \"200000\",
+                  \"metricParameter\": \"timeout\"
                 }
               ],
               \"executionTypeParameters\": [],
