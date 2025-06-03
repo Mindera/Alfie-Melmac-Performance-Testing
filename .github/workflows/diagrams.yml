@@ -6,7 +6,6 @@ permissions:
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -55,7 +54,7 @@ jobs:
         run: |
           if ! git diff --cached --quiet; then
             git commit -m "Update diagrams"
-            git push origin HEAD:${GITHUB_REF##*/}
+            git push origin main
           else
             echo "No changes to SVG files"
           fi
