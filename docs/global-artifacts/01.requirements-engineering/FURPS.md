@@ -11,27 +11,26 @@ _Specifies functionalities that:_
 ### **Startup Time Testing**
 - Executes startup time measurements via:
   - **ADB shell commands** (Android)
-  - **XCUI test commands written in Swift** (iOS)
+  - **Xcode tools including XCTest/XCUI Test commands written in Swift** (iOS)
 - Measures:
   - **Cold start** – launch from terminated state.
-  - **Warm start** – launch from background (app still in memory).
-  - **Hot start** – launch when the app is still in the foreground but needs to reload UI.
-- Captures timestamps for:
-  - **Process start**
-  - **First frame rendered**
-  - **App ready for interaction**
+- Captures:
+  - **Time until a specified UI element is detected (used as readiness indicator)**.
 - Logs raw execution data for processing.
 
 ### **Data Processing & Report Generation**
 - Kotlin processes raw test data.
 - Generates **structured reports** with:
-  - **Average startup time**
-  - **Min/max startup times**
-  - **Standard deviation**
-- Supports **exporting reports in JSON, CSV, or HTML**.
+  - **Test execution details**
+  - **Performance metrics**
+  - **Test results**
+- Supports multiple output formats:
+  - **CLI output**
+  - **Summary reports in .MD (Markdown) format**
 
 ### **Database Model for Performance Tracking**
 - A **database model** will be designed and implemented to track:
+  - **Test Suites and Test Cases Configuration**
   - **Test execution history**
   - **Performance trends over time**
   - **Detailed logs of each test iteration**
@@ -43,7 +42,7 @@ _Specifies functionalities that:_
 - Notification methods include:
   - **Email alerts**
   - **PR comments**
-  - **Other automated messaging systems**
+  - **Summary reports in CI/CD pipelines**
 
 ### **Automation & CI/CD Integration**
 - CLI-based execution.
@@ -70,8 +69,8 @@ _Specifies functionalities that:_
 ---
 
 ## **Supportability**
-- **Kotlin** processes data and generates reports.
-- Uses **ADB (Android)** and **XCUI (iOS)** for test execution.
+- **Kotlin** processes data.
+- Uses **ADB (Android)** and **XCode Tools (iOS)** for test execution.
 - **Swift** is used for writing XCUI test commands for iOS device interaction.
 - Designed for **modularity** to support future features.
 
@@ -84,20 +83,22 @@ _Specifies functionalities that:_
 | -------------------- | -------- | --------------------------------------------- |
 | Programming Languages | Kotlin   | Used for data processing and reporting.       |
 | Programming Languages | Swift    | Used for XCUI test commands for iOS devices.  |
-| Tools                | ADB & XCUI | Primary tools for executing mobile performance tests. |
+| Tools                | ADB | Primary tool for executing mobile performance tests on Android devices. |
+| Tools                | XCode Tools | Primary tools for executing mobile performance tests on iOS devices. |
 
 ### **Implementation Constraints**
 | Subcategory | Category | Description                                   |
 | ----------- | -------- | --------------------------------------------- |
 | Tools       | ADB      | Executes Android performance tests.           |
-| Tools       | XCUI     | Executes iOS performance tests using Swift.   |
-| Storage     | Database | Tracks and logs test results for historical analysis. |
+| Tools       | XCode Tools | Executes iOS performance tests.               |
+| Storage     | SQL Server | Tracks and logs test results for historical analysis. |
 
 ### **Interface Constraints**
-- Provides CLI commands for test execution.
-- Exports reports in **JSON, CSV, or HTML**.
+- CLI and HTTP endpoints for launching and managing tests.
+- Compatible with CI environments for automated execution.
 - Database allows querying and analytics.
 
 ### **Physical Constraints**
-- Runs on developer machines and CI/CD environments.
+- Must run on macOS (Android and iOS) and Linux/Windows/macOS (Android only) environments.
+- Requires device access (USB or simulator/emulator).
 - Database must handle **large volumes of test data efficiently**.

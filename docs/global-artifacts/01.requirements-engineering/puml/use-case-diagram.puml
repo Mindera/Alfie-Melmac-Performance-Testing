@@ -1,0 +1,18 @@
+@startuml Use Case Diagram for Melmac Performance Testing Framework
+left to right direction
+
+actor "Developer or CI/CD Pipeline" as Dev
+
+rectangle "Melmac Performance Testing Framework" {
+    usecase "UC1: Create Test Suite" as UC1
+    usecase "UC2: Create Test Plan" as UC2
+    usecase "UC3: Run Test Suite" as UC3
+    usecase "UC4: Run Test Plan" as UC4
+}
+
+Dev --> UC1
+Dev --> UC2
+Dev --> UC3
+Dev --> UC4
+
+@enduml

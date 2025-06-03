@@ -85,6 +85,7 @@ build/
 # Include config.json
 !config.json
 !data.json
+!plantuml-1.2023.1.jar
 
 # Ignore ui_dumps folder
 ui_dumps/

@@ -267,12 +267,6 @@ jobs:
               executionTypesJson=$(curl -s "http://localhost:8080/metrics/$metricId/execution-types")
               executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName // "N/A"')
 
-              echo "- **App Name:** $appName" >> results/summary.md
-              echo "- **App Version:** $appVersion" >> results/summary.md
-              echo "- **App Package:** $appPackage" >> results/summary.md
-              echo "- **Main Activity:** $mainActivity" >> results/summary.md
-              echo "- **Execution Type:** $executionTypeName" >> results/summary.md
-
               echo "#### Test Execution: $testName" >> results/summary.md
               echo "- **Metric:** $metricName" >> results/summary.md
               echo "- **Device:** $deviceName" >> results/summary.md
