@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 echo "LOG: Generate Plantuml Diagrams"
 exportFormat="svg"
 #monochrome="true"
