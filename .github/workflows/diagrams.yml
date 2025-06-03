@@ -12,12 +12,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Get the code from the repository
       uses: actions/checkout@v4
       with:
-        ref: 'main'
         fetch-depth: 0 
 
     - name: Create error logs directory
