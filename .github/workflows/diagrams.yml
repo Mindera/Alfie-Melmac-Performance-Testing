@@ -31,6 +31,12 @@ jobs:
     - name: Set execute permissions on build scripts
       run: chmod +x tools/generate/generate-plantuml-diagrams.sh || true
 
+    - name: Debug script presence
+      run: |
+        ls -l tools/generate/
+        file tools/generate/generate-plantuml-diagrams.sh
+        head -5 tools/generate/generate-plantuml-diagrams.sh
+
     - name: Install Graphviz
       run: sudo apt-get install -y graphviz
 
