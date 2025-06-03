@@ -12,50 +12,50 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Get the code from the repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 
+      - name: Get the code from the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Create error logs directory
-      run: mkdir -p error-logs
+      - name: Create error logs directory
+        run: mkdir -p error-logs
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
 
-    - name: Set execute permissions on build scripts
-      run: chmod +x tools/generate/generate-plantuml-diagrams.sh || true
+      - name: Set execute permissions on build scripts
+        run: chmod +x tools/generate/generate-plantuml-diagrams.sh || true
 
-    - name: Debug script presence
-      run: |
-        ls -l tools/generate/
-        file tools/generate/generate-plantuml-diagrams.sh
-        head -5 tools/generate/generate-plantuml-diagrams.sh
+      - name: Debug script presence
+        run: |
+          ls -l tools/generate/
+          file tools/generate/generate-plantuml-diagrams.sh
+          head -5 tools/generate/generate-plantuml-diagrams.sh
 
-    - name: Install Graphviz
-      run: sudo apt-get install -y graphviz
+      - name: Install Graphviz
+        run: sudo apt-get install -y graphviz
 
-    - name: Set up Git user
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-    - name: Update .svg
-      run: ./tools/generate/generate-plantuml-diagrams.sh
-      
-    - name: Add SVG files
-      run: git add *.svg
+      - name: Update .svg
+        run: ./tools/generate/generate-plantuml-diagrams.sh
 
-    - name: Commit and push if there are changes
-      run: |
-        if ! git diff --cached --quiet; then
-          git commit -m "Update diagrams"
-          git push origin HEAD:main
-        else
-          echo "No changes to SVG files"
-        fi
+      - name: Add SVG files
+        run: git add *.svg
+
+      - name: Commit and push if there are changes
+        run: |
+          if ! git diff --cached --quiet; then
+            git commit -m "Update diagrams"
+            git push origin HEAD:main
+          else
+            echo "No changes to SVG files"
+          fi
