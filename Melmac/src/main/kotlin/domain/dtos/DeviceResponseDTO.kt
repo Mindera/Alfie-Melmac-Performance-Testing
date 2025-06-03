@@ -1,7 +1,8 @@
-package domain.dtos
+package dtos
 
 data class DeviceResponseDTO(
-    val id: String,
-    val name: String,
-    val osVersionId: Int
+    val deviceId: Int,
+    val deviceName: String,
+    val deviceSerialNumber: String? = null,
+    val osVersionOsVersionId: Int
 )

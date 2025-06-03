@@ -1,6 +1,6 @@
-package domain.dtos
+package dtos
 
 data class TestSuiteRequestDTO(
-    val name: String,
-    val description: String? = null
+    val testSuiteName: String,
+    val testSuiteDescription: String?
 )

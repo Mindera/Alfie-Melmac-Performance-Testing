@@ -1,12 +1,7 @@
-package domain.dtos
-
-import java.time.Instant
+package dtos
 
 data class AppVersionResponseDTO(
-    val id: Int,
+    val appVersionId: Int,
     val appId: Int,
-    val fileName: String,
-    val platform: String,
-    val versionName: String,
-    val uploadedAt: Instant
+    val appVersion: String
 )

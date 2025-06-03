@@ -1,7 +1,7 @@
-package domain.dtos
+package dtos
 
 data class OSVersionResponseDTO(
-    val id: Int,
-    val versionName: String,
-    val osId: Int
+    val osVersionId: Int,
+    val version: String,
+    val operativeSystemOperSysId: Int
 )

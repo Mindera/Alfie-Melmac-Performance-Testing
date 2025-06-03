@@ -1,8 +1,6 @@
 package android
 
 import core.DeviceManager
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import utils.Logger
 import utils.Tools
 
@@ -20,15 +18,31 @@ object AndroidDeviceManager : DeviceManager {
      */
     override fun startDevice(deviceName: String) {
         Logger.info("📱 Starting Android emulator: $deviceName")
-        val emulatorPath = "${System.getProperty("user.home")}/Library/Android/sdk/emulator/emulator"
-        val process = ProcessBuilder(
-            emulatorPath,
-            "-avd",
-            deviceName,
-            "-no-snapshot-load",
-            "-no-snapshot-save",
-            "-no-boot-anim"
-        ).start()
+        val sdkHome =
+            System.getenv("ANDROID_HOME")
+                ?: System.getenv("ANDROID_SDK_ROOT")
+                ?: "${System.getProperty("user.home")}/Library/Android/sdk"
+        val emulatorPath = "$sdkHome/emulator/emulator"
+
+        val args =
+            mutableListOf(
+                emulatorPath,
+                "-avd",
+                deviceName,
+                "-no-snapshot-load",
+                "-no-snapshot-save",
+                "-no-boot-anim",
+                "-no-window",
+                "-no-audio",
+            )
+
+        val process = ProcessBuilder(args).redirectErrorStream(true).start()
+
+        Thread {
+            process.inputStream.bufferedReader().useLines { lines ->
+                lines.forEach { Logger.info("[emulator] $it") }
+            }
+        }.start()
 
         Logger.info("⏳ Waiting for Android emulator device...")
         waitForDeviceBoot(process)
@@ -65,21 +79,22 @@ object AndroidDeviceManager : DeviceManager {
      * Waits for the Android emulator to complete the boot process.
      *
      * @param process The process of the emulator being started.
-     * @throws RuntimeException if the emulator fails to boot within the timeout period.
+     * @throws RuntimeException if the emulator fails to boot within the timeout period or if the package manager is not ready.
      */
     private fun waitForDeviceBoot(process: Process) {
-        val bootTimeout = 300
+        val bootTimeout = 900
         var secondsWaited = 0
 
         ProcessBuilder("adb", "wait-for-device").start().waitFor()
 
         while (true) {
-            val bootStatus = ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
-                .start()
-                .inputStream
-                .bufferedReader()
-                .readText()
-                .trim()
+            val bootStatus =
+                ProcessBuilder("adb", "shell", "getprop", "sys.boot_completed")
+                    .start()
+                    .inputStream
+                    .bufferedReader()
+                    .readText()
+                    .trim()
 
             if (bootStatus == "1") {
                 Logger.info("✅ Android emulator boot completed!")
@@ -95,6 +110,33 @@ object AndroidDeviceManager : DeviceManager {
             Logger.info("⏳ Still booting... waited ${secondsWaited}s")
             Thread.sleep(5000)
             secondsWaited += 5
+        }
+        Logger.info("⏳ Waiting for Android package manager to be fully functional...")
+        var pmReady = false
+        var pmTries = 0
+        while (!pmReady && pmTries < 60) {
+            val pmOutput =
+                ProcessBuilder("adb", "shell", "pm", "path", "android")
+                    .redirectErrorStream(true)
+                    .start()
+                    .inputStream
+                    .bufferedReader()
+                    .readText()
+                    .trim()
+
+            if (pmOutput.startsWith("package:")) {
+                pmReady = true
+                Logger.info("✅ Android package manager is fully functional.")
+            } else {
+                Logger.info("⏳ Still waiting for package manager... attempt ${pmTries + 1}")
+                Thread.sleep(2000)
+                pmTries++
+            }
+        }
+        if (!pmReady) {
+            Logger.error("❌ Timeout! Android package manager not ready after waiting.")
+            process.destroy()
+            throw RuntimeException("Android package manager not ready after waiting.")
         }
     }
 }

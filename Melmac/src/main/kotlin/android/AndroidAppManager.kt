@@ -1,7 +1,8 @@
 package android
 
 import core.AppManager
-import utils.Logger
+import java.nio.file.Paths
+import utils.*
 
 /**
  * Object responsible for managing Android apps.
@@ -12,15 +13,41 @@ object AndroidAppManager : AppManager {
     /**
      * Installs an Android app on the connected device or emulator.
      *
-     * @param appPath The file path to the APK to be installed.
-     * @throws RuntimeException if the installation fails.
+     * @param app The APK file name to be installed (should be located in src/main/resources/apps).
+     * @throws RuntimeException if the APK is not found or installation fails after 3 attempts.
      */
-    override fun installApp(appPath: String) {
-        Logger.info("Installing Android app: $appPath")
-        val process = ProcessBuilder("adb", "install", "-r", appPath).start()
-        process.waitFor()
-        if (process.exitValue() != 0) {
-            throw RuntimeException("Failed to install Android app.")
+    override fun installApp(app: String) {
+        val appPath =
+            Paths.get(System.getProperty("user.dir"), "src/main/resources/apps").resolve(app)
+        Logger.info("Resolved APK path: $appPath")
+        if (!appPath.toFile().exists()) {
+            throw RuntimeException("APK not found at $appPath")
+        }
+        Logger.info("Installing Android app: $app")
+
+        var success = false
+        var attempts = 0
+        var output = ""
+        while (!success && attempts < 3) {
+            val process =
+                ProcessBuilder("adb", "install", "-r", appPath.toString())
+                    .redirectErrorStream(true)
+                    .start()
+            output = process.inputStream.bufferedReader().readText()
+            process.waitFor()
+            Logger.info("adb install output (attempt ${attempts + 1}):\n$output")
+            if (process.exitValue() == 0 && !output.contains("Failure")) {
+                success = true
+            } else {
+                Logger.error("Install failed, retrying in 5 seconds...")
+                Thread.sleep(5000)
+            }
+            attempts++
+        }
+        if (!success) {
+            throw RuntimeException(
+                "Failed to install Android app after $attempts attempts. adb output:\n$output"
+            )
         }
         Logger.info("✅ Android app installed successfully.")
     }

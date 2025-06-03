@@ -1,11 +1,13 @@
 package services.IServices
 
-import domain.dtos.TestExecutionRequestDTO
-import domain.dtos.TestExecutionResponseDTO
+import dtos.TestExecutionResponseDTO
 
+/**
+ * Service interface for managing test executions.
+ * Provides methods to retrieve and run test executions.
+ */
 interface ITestExecutionService {
-    fun create(request: TestExecutionRequestDTO): TestExecutionResponseDTO
-    fun listAll(): List<TestExecutionResponseDTO>
-    fun listBySuiteId(suiteId: Int): List<TestExecutionResponseDTO>
+    fun getAllTestExecutions(): List<TestExecutionResponseDTO>
+    fun getTestExecutionById(id: Int): TestExecutionResponseDTO?
+    fun runTestExecution(testPlanVersionId: Int): TestExecutionResponseDTO
 }
-

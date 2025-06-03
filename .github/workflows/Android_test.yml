@@ -1,0 +1,400 @@
+name: Alfie Android Test Automation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  android-tests:
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: "https://github.com/Mindera/Alfie-UITests/releases/download/asdsad/Alfie.apk"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Configure Android SDK
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+          # Accept licenses and install required packages
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;31.0.0"
+
+          # Verify installation
+          adb --version
+          if [ $? -eq 0 ]; then
+            echo "✅ Android SDK setup complete"
+          else
+            echo "❌ Failed to setup Android SDK"
+            exit 1
+          fi
+
+      - name: Add emulator to PATH
+        run: echo "$ANDROID_HOME/emulator" >> $GITHUB_PATH
+
+      - name: Install Android system image (x86_64)
+        run: sdkmanager "system-images;android-35;google_apis;x86_64"
+
+      - name: Create AVD with proper env
+        run: |
+          mkdir -p ~/.android/avd
+          export ANDROID_SDK_HOME=$HOME
+          echo "no" | avdmanager create avd -n Medium_Phone_API_35 -k "system-images;android-35;google_apis;x86_64"
+
+      - name: Confirm AVD .ini files exist
+        run: |
+          ls -l ~/.android/avd
+          cat ~/.android/avd/*.ini || echo "No .ini found"
+
+      - name: List Android devices
+        run: |
+          echo "=== Emulator List ==="
+          emulator -list-avds
+          echo "=== AVD List ==="
+          avdmanager list avd
+          echo "=== Connected Devices ==="
+          adb devices
+
+      - name: Generate Gradle Wrapper
+        working-directory: Melmac
+        run: gradle wrapper --gradle-version 8.13
+
+      - name: Make Gradle Wrapper executable
+        working-directory: Melmac
+        run: chmod +x gradlew
+
+      - name: Build backend
+        working-directory: Melmac
+        run: ./gradlew build
+
+      - name: Prepare apps folder and download APK
+        working-directory: Melmac
+        run: |
+          mkdir -p src/main/resources/apps
+          echo "Downloading APK from $APP_URL"
+          curl -L "$APP_URL" -o src/main/resources/apps/Alfie.apk
+          ls -l src/main/resources/apps
+
+      - name: Start backend
+        working-directory: Melmac
+        run: ./gradlew run > $GITHUB_WORKSPACE/backend.log 2>&1 &
+
+      - name: Tail backend log
+        run: tail -f $GITHUB_WORKSPACE/backend.log &
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..31}; do
+            if curl -s http://localhost:8080/; then
+              echo "Backend is up!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend did not start in time" >&2
+          exit 1
+
+      - name: Create test suite
+        working-directory: Melmac
+        run: |
+          mkdir -p results
+          curl -s -X POST http://localhost:8080/test-suites \
+          -H "Content-Type: application/json" \
+          -d '{
+              "testSuiteName": "My Test Suite",
+              "testSuiteDescription": "Description of my test suite"
+          }' | tee results/test_suite.json
+
+          TEST_SUITE_ID=$(jq '.testSuiteId' results/test_suite.json)
+          echo "🧪 Extracted TEST_SUITE_ID: $TEST_SUITE_ID"
+          echo "TEST_SUITE_ID=$TEST_SUITE_ID" >> $GITHUB_ENV
+
+      - name: Create Android test plan
+        working-directory: Melmac
+        run: |
+          PLAN_INDEX=1
+          curl -s -X POST http://localhost:8080/test-plans \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"notes\": \"Test plan for App Startup Time metric\",
+              \"testName\": \"Startup Time Plan\",
+              \"metricMetricId\": 1,
+              \"deviceName\": \"Medium_Phone_API_35\",
+              \"appName\": \"Alfie.apk\",
+              \"appVersion\": \"0.8.0\",
+              \"appPackage\": \"au.com.alfie.ecomm.debug\",
+              \"mainActivity\": \"au.com.alfie.ecomm.MainActivity\",
+              \"executionTypeExecutionTypeId\": 1,
+              \"thresholds\": [
+                {
+                  \"targetValue\": 20000,
+                  \"thresholdTypeThresholdTypeId\": 2,
+                  \"metricOutputMetricOutputId\": 1
+                }
+              ],
+              \"metricParameters\": [
+                {
+                  \"parameterValue\": \"home-tab\",
+                  \"metricParameterMetricParameterId\": 1
+                }
+              ],
+              \"executionTypeParameters\": [],
+              \"testSuiteVersionId\": ${TEST_SUITE_ID}
+            }" | tee results/test_plan_${PLAN_INDEX}.json
+
+      - name: Run Android test suite
+        working-directory: Melmac
+        run: |
+          mkdir -p results
+
+          echo "🚀 Running test suite with ID: $TEST_SUITE_ID"
+          echo "📡 Sending POST request to: http://localhost:8080/test-suites/$TEST_SUITE_ID/run"
+
+          : > results/suite_execution.json
+
+          http_code=$(curl -s -w "%{http_code}" -o results/suite_execution.json -X POST "http://localhost:8080/test-suites/$TEST_SUITE_ID/run")
+          echo "🔁 HTTP status code: $http_code"
+          echo "HTTP_CODE=$http_code" >> $GITHUB_ENV
+
+          echo "📄 Raw response body:"
+          cat results/suite_execution.json || echo "❌ suite_execution.json not found or empty"
+
+          if [ "$http_code" -ne 200 ]; then
+          echo "❌ Failed to run test suite. HTTP $http_code"
+          # Não termina o job para que o resumo corra
+          else
+          echo "✅ Suite execution request succeeded"
+          fi
+
+      - name: Generate summary
+        working-directory: Melmac
+        if: always()
+        run: |
+          mkdir -p results
+          http_status=$HTTP_CODE
+          if test -f results/suite_execution.json && [ "$http_status" = "200" ]; then
+            suiteExecutionId=$(jq '.suiteExecutionId' results/suite_execution.json)
+            testSuiteVersionId=$(jq '.testSuiteVersionTestSuiteVersionId' results/suite_execution.json)
+
+            echo "## Performance Test Suite Results (Android)" > results/summary.md
+            echo "" >> results/summary.md
+            echo "**Suite Execution:** $suiteExecutionId" >> results/summary.md
+            echo "**Test Suite Version:** $testSuiteVersionId" >> results/summary.md
+            echo "" >> results/summary.md
+
+            echo "### Test Execution Results" >> results/summary.md
+
+            # Build a map of testPlanVersionId to plan config (for multiple test plans)
+            declare -A PLAN_CONFIGS
+            for plan_file in results/test_plan_*.json; do
+              if [ -f "$plan_file" ]; then
+                planVersionId=$(jq '.testPlanVersionId // empty' "$plan_file")
+                if [ -n "$planVersionId" ]; then
+                  PLAN_CONFIGS[$planVersionId]="$plan_file"
+                fi
+              fi
+            done
+
+            jq -c '.executionResults[]' results/suite_execution.json | while read -r exec; do
+              testPlanVersionId=$(echo "$exec" | jq '.testPlanVersionTestPlanVersionId')
+              passed=$(echo "$exec" | jq -r '.passed')
+              initialTimestamp=$(echo "$exec" | jq -r '.initialTimestamp')
+              endTimestamp=$(echo "$exec" | jq -r '.endTimestamp')
+
+              # Use stored plan config if available, else fallback to API
+              plan_file="${PLAN_CONFIGS[$testPlanVersionId]}"
+              if [ -n "$plan_file" ] && [ -f "$plan_file" ]; then
+                planVersion=$(cat "$plan_file")
+              else
+                planVersion=$(curl -s "http://localhost:8080/test-plan-versions/$testPlanVersionId")
+              fi
+
+              if ! echo "$planVersion" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for planVersion: $planVersion" >> results/summary.md
+                continue
+              fi
+              
+              appPackage=$(echo "$planVersion" | jq -r '.appPackage // "N/A"')
+              mainActivity=$(echo "$planVersion" | jq -r '.mainActivity // "N/A"')
+              executionTypeId=$(echo "$planVersion" | jq '.executionTypeExecutionTypeId')
+              appVersionId=$(echo "$planVersion" | jq '.appVersionAppVersionId')
+              deviceId=$(echo "$planVersion" | jq '.deviceDeviceId')
+              testPlanId=$(echo "$planVersion" | jq '.testPlanTestPlanId // .testPlanId')
+              appName=$(echo "$planVersion" | jq -r '.appName // "N/A"')
+              
+              # Get testName and metricId from /test-plans/{id}
+              planInfo=$(curl -s "http://localhost:8080/test-plans/$testPlanId")
+              testName=$(echo "$planInfo" | jq -r '.testName // "N/A"')
+              metricId=$(echo "$planInfo" | jq -r '.metricMetricId')
+              
+              # Get metric name
+              metricName=$(curl -s "http://localhost:8080/metrics/$metricId" | jq -r '.metricName // "N/A"')
+              
+              # Get device name (using new endpoint)
+              deviceName=$(curl -s "http://localhost:8080/devices/$deviceId" | jq -r '.deviceName // "N/A"')
+              
+              # Get app version and app name from DB
+              appVersionResp=$(curl -s "http://localhost:8080/apps/db/version/$appVersionId")
+              appVersion=$(echo "$appVersionResp" | jq -r '.appVersion // "N/A"')
+              appNameResp=$(curl -s "http://localhost:8080/apps/db/appByVersionId/$appVersionId")
+              appName=$(echo "$appNameResp" | jq -r '.appName // "N/A"')
+              
+              # Get execution type name
+              executionTypesJson=$(curl -s "http://localhost:8080/metrics/$metricId/execution-types")
+              executionTypeName=$(echo "$executionTypesJson" | jq -r --arg id "$executionTypeId" '.[] | select(.executionTypeId == ($id|tonumber)) | .executionTypeName // "N/A"')
+
+              echo "- **App Name:** $appName" >> results/summary.md
+              echo "- **App Version:** $appVersion" >> results/summary.md
+              echo "- **App Package:** $appPackage" >> results/summary.md
+              echo "- **Main Activity:** $mainActivity" >> results/summary.md
+              echo "- **Execution Type:** $executionTypeName" >> results/summary.md
+
+              echo "#### Test Execution: $testName" >> results/summary.md
+              echo "- **Metric:** $metricName" >> results/summary.md
+              echo "- **Device:** $deviceName" >> results/summary.md
+              echo "- **App Name:** $appName" >> results/summary.md
+              echo "- **App Version:** $appVersion" >> results/summary.md
+              echo "- **App Package:** $appPackage" >> results/summary.md
+              echo "- **Main Activity:** $mainActivity" >> results/summary.md
+              echo "- **Execution Type:** $executionTypeName" >> results/summary.md
+              echo "" >> results/summary.md
+
+              # Table with execution-only values
+              echo "| Test Result | Start Time | End Time |" >> results/summary.md
+              echo "|-------------|------------|----------|" >> results/summary.md
+              echo "| $passed | $initialTimestamp | $endTimestamp |" >> results/summary.md
+              echo "" >> results/summary.md
+
+              # Always get metric outputs for this metric via /metrics/{id}/outputs
+              metricOutputsJson=$(curl -s "http://localhost:8080/metrics/$metricId/outputs")
+              if ! echo "$metricOutputsJson" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for metric outputs: $metricOutputsJson" >> results/summary.md
+                continue
+              fi
+
+              # Thresholds (names only, using metricOutputsJson for output names)
+              echo "##### Thresholds" >> results/summary.md
+              echo "| Target Value | Threshold Type | Metric Output |" >> results/summary.md
+              echo "|--------------|---------------|--------------|" >> results/summary.md
+              for row in $(echo "$planVersion" | jq -c '.thresholds[]'); do
+                targetValue=$(echo "$row" | jq -r '.targetValue // "N/A"')
+                thresholdTypeId=$(echo "$row" | jq -r '.thresholdTypeThresholdTypeId // empty')
+                metricOutputId=$(echo "$row" | jq -r '.metricOutputMetricOutputId // empty')
+
+                thresholdTypeName="N/A"
+                if [ -n "$thresholdTypeId" ] && [ "$thresholdTypeId" != "null" ]; then
+                  thresholdTypeResp=$(curl -s "http://localhost:8080/threshold-types/$thresholdTypeId")
+                  if echo "$thresholdTypeResp" | jq empty > /dev/null 2>&1; then
+                    thresholdTypeName=$(echo "$thresholdTypeResp" | jq -r '.thresholdTypeName // "N/A"')
+                  fi
+                fi
+
+                metricOutputName="N/A"
+                if [ -n "$metricOutputId" ] && [ "$metricOutputId" != "null" ]; then
+                  metricOutputName=$(echo "$metricOutputsJson" | jq -r --arg id "$metricOutputId" '.[] | select(.metricOutputId == ($id|tonumber)) | .outputName')
+                  if [ -z "$metricOutputName" ]; then metricOutputName="N/A"; fi
+                fi
+
+                echo "| $targetValue | $thresholdTypeName | $metricOutputName |" >> results/summary.md
+              done
+              echo "" >> results/summary.md
+
+              # Metric Output Results (names only, using metricOutputsJson for output names)
+              echo "##### Metric Output Results" >> results/summary.md
+              echo "| Metric Output | Value |" >> results/summary.md
+              echo "|--------------|-------|" >> results/summary.md
+              outputsResp=$(curl -s "http://localhost:8080/test-executions/outputs?testExecutionId=$(echo "$exec" | jq '.testExecutionId')")
+              if ! echo "$outputsResp" | jq empty > /dev/null 2>&1; then
+                echo "❌ Invalid JSON for test execution outputs: $outputsResp" >> results/summary.md
+                continue
+              fi
+              echo "$outputsResp" | jq -c '.[]' | while read -r output; do
+                metricOutputId=$(echo "$output" | jq -r '.metricOutputMetricOutputId // empty')
+                value=$(echo "$output" | jq -r '.value // "N/A"')
+                metricOutputName="N/A"
+                if [ -n "$metricOutputId" ] && [ "$metricOutputId" != "null" ]; then
+                  metricOutputName=$(echo "$metricOutputsJson" | jq -r --arg id "$metricOutputId" '.[] | select(.metricOutputId == ($id|tonumber)) | .outputName')
+                  if [ -z "$metricOutputName" ]; then metricOutputName="N/A"; fi
+                fi
+                echo "| $metricOutputName | $value |" >> results/summary.md
+              done
+              echo "" >> results/summary.md
+
+            done
+
+            echo "✅ Summary generated"
+          else
+            echo "## Performance Test Suite Results (Android)" > results/summary.md
+            echo "" >> results/summary.md
+            echo "❌ Test suite execution failed." >> results/summary.md
+            echo "" >> results/summary.md
+            echo "**HTTP Status:** $http_status" >> results/summary.md
+            echo "" >> results/summary.md
+            if test -f results/suite_execution.json; then
+              echo '```json' >> results/summary.md
+              cat results/suite_execution.json >> results/summary.md
+              echo '```' >> results/summary.md
+            else
+              echo "No suite_execution.json found." >> results/summary.md
+            fi
+          fi
+
+      - name: Upload test results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-performance-test-results
+          path: Melmac/results/summary.md
+
+      - name: Add results to GitHub Actions summary
+        if: always()
+        run: |
+          if [ -f Melmac/results/summary.md ]; then
+          cat Melmac/results/summary.md >> $GITHUB_STEP_SUMMARY
+          else
+          echo "No summary file found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = "No summary file found.";
+            if (fs.existsSync('Melmac/results/summary.md')) {
+                body = fs.readFileSync('Melmac/results/summary.md', 'utf8');
+            }
+            github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `### 📝 Performance Test Results\n\n${body}`
+            });
+
+      - name: Upload backend log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-backend-log
+          path: backend.log

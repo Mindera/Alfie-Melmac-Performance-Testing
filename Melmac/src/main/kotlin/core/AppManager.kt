@@ -9,9 +9,9 @@ interface AppManager {
     /**
      * Installs an application on the connected device or emulator.
      *
-     * @param appPath The file path to the application to be installed (e.g., APK for Android, .app for iOS).
+     * @param app The application to be installed (e.g., APK for Android, .app for iOS).
      */
-    fun installApp(appPath: String)
+    fun installApp(app: String)
 
     /**
      * Uninstalls an application from the connected device or emulator.

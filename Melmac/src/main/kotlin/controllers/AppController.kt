@@ -1,74 +1,154 @@
 package controllers
 
 import controllers.IControllers.IAppController
-import services.IServices.IAppService
-import domain.AppVersion
+import dtos.AppResponseDTO
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import domain.dtos.AppRegistrationRequestDTO
-import domain.dtos.AppResponseDTO
-import domain.dtos.AppVersionResponseDTO
-import org.koin.ktor.ext.inject
+import services.IServices.IAppService
 
-class AppController : IAppController {
+/**
+ * Controller for handling app-related endpoints.
+ * Provides routes for retrieving app and app version information from both the database and the folder.
+ *
+ * @property appService The service used to interact with app data sources.
+ */
+class AppController(private val appService: IAppService) : IAppController {
+
+    /**
+     * Defines the routes for app-related operations.
+     *
+     * @receiver Route The Ktor routing context.
+     */
     override fun Route.routes() {
-        val service by inject<IAppService>()
 
         route("/apps") {
-            get {
-                val apps = service.listApps()
-                val response = apps.map { AppResponseDTO(it.id!!, it.name) }
-                call.respond(response)
+            
+            // --- Database endpoints ---
+
+            /**
+             * GET /apps/db
+             * Retrieves all apps from the database.
+             */
+            get("/db") {
+                val apps: List<AppResponseDTO> = appService.getAllAppsFromDatabase()
+                call.respond(apps)
             }
 
-            get("/{id}/versions") {
-                val appId = call.parameters["id"]?.toIntOrNull()
+            /**
+             * GET /apps/db/{appId}
+             * Retrieves a specific app by its ID from the database.
+             */
+            get("/db/{appId}") {
+                val appId = call.parameters["appId"]?.toIntOrNull()
                 if (appId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid app ID.")
+                    call.respond(HttpStatusCode.BadRequest, "Invalid App ID")
                     return@get
                 }
-                val versions = service.listVersions(appId)
-                val response = versions.map {
-                    AppVersionResponseDTO(
-                        id = it.id!!,
-                        appId = it.appId,
-                        fileName = it.fileName,
-                        platform = it.platform,
-                        versionName = it.versionName,
-                        uploadedAt = it.uploadedAt
-                    )
+
+                try {
+                    val app = appService.getAppByIdFromDatabase(appId)
+                    call.respond(app)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.NotFound, e.message ?: "App not found")
                 }
-                call.respond(response)
             }
 
-            post("/register") {
-                val request = call.receive<AppRegistrationRequestDTO>()
-                val version = AppVersion(
-                    id = null,
-                    appId = -1, // will be filled in service
-                    filePath = request.version.filePath,
-                    fileName = request.version.fileName,
-                    platform = request.version.platform,
-                    versionName = request.version.versionName,
-                    minSdk = request.version.minSdk,
-                    minIosVersion = request.version.minIosVersion
-                )
+            /**
+             * GET /apps/db/{appId}/versions
+             * Retrieves all versions for a specific app from the database.
+             */
+            get("/db/{appId}/versions") {
+                val appId = call.parameters["appId"]?.toIntOrNull()
+                if (appId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid App ID")
+                    return@get
+                }
 
-                val saved = service.registerAppAndVersion(request.appName, version)
-                call.respond(
-                    HttpStatusCode.Created,
-                    AppVersionResponseDTO(
-                        id = saved.id!!,
-                        appId = saved.appId,
-                        fileName = saved.fileName,
-                        platform = saved.platform,
-                        versionName = saved.versionName,
-                        uploadedAt = saved.uploadedAt
+                try {
+                    val versions = appService.getAppVersionsByAppIdFromDatabase(appId)
+                    call.respond(versions)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.NotFound, e.message ?: "App not found")
+                }
+            }
+
+            /**
+             * GET /apps/db/appByVersionId/{appVersionId}
+             * Retrieves an app by its version ID from the database.
+             */
+            get("/db/appByVersionId/{appVersionId}") {
+                val appVersionId = call.parameters["appVersionId"]?.toIntOrNull()
+                if (appVersionId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid App Version ID")
+                    return@get
+                }
+
+                try {
+                    val app = appService.getAppByVersionIdFromDatabase(appVersionId)
+                    call.respond(app)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.NotFound, e.message ?: "App not found")
+                }
+            }
+
+            /**
+             * GET /apps/db/version/{appVersionId}
+             * Retrieves a specific app version by its ID from the database.
+             */
+            get("/db/version/{appVersionId}") {
+                val appVersionId = call.parameters["appVersionId"]?.toIntOrNull()
+                if (appVersionId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid App Version ID")
+                    return@get
+                }
+
+                try {
+                    val appVersion = appService.getAppVersionByIdFromDatabase(appVersionId)
+                    call.respond(appVersion)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.NotFound, e.message ?: "App Version not found")
+                }
+            }
+
+            // --- Folder endpoints ---
+
+            /**
+             * GET /apps/folder
+             * Retrieves all apps from the folder.
+             */
+            get("/folder") {
+                try {
+                    val apps: List<AppResponseDTO> = appService.getAllAppsFromFolder()
+                    call.respond(apps)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                            HttpStatusCode.BadRequest,
+                            e.message
+                                    ?: "Failed to retrieve apps. Please check the folder path and try again."
                     )
-                )
+                }
+            }
+
+            /**
+             * GET /apps/folder/{appName}/versions
+             * Retrieves all versions for a specific app from the folder.
+             */
+            get("/folder/{appName}/versions") {
+                val appName = call.parameters["appName"]
+
+                if (appName.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "Missing 'appName' path parameter")
+                    return@get
+                }
+
+                try {
+                    val versions = appService.getAppVersionsFromFolder(appName)
+                    call.respond(versions)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid app name")
+                }
             }
         }
     }

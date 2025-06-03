@@ -1,5 +1,6 @@
 package android
 
+import dtos.TestExecutionConfigDTO
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -7,42 +8,99 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Utility object for executing Android test commands using ADB.
+ * Provides commands for running Android app tests, including app startup measurement and UI element search.
  */
 object AndroidTestCommands {
 
     /**
-     * Measures the time taken to launch the app and locate a specific UI element.
+     * Runs the app startup test using the provided configuration.
+     *
+     * @param config The test execution configuration.
+     * @return A map containing launch time, element found status, and success status.
+     */
+    fun runAppStartupTest(config: TestExecutionConfigDTO): Map<String, String> {
+        val packageName = config.appPackage
+        val mainActivity = config.mainActivity ?: throw IllegalArgumentException("Missing 'mainActivity' in config")
+        val element = config.metricParams["elementToWaitFor"] ?: throw IllegalArgumentException("Missing 'elementToWaitFor' metric parameter")
+        val timeout = config.metricParams["timeout"]?.toIntOrNull() ?: 60
+
+        return try {
+            val (launchTime, elementFound) = measureAppStartupTime(packageName, mainActivity, element, timeout)
+            val thresholds = config.testThresholds
+            val success = evaluateResults(launchTime, elementFound, thresholds)
+            mapOf(
+                "launchTime" to launchTime,
+                "elementFound" to elementFound,
+                "success" to success.toString()
+            )
+        } catch (e: Exception) {
+            println("❌ Test failed: ${e.message}")
+            mapOf(
+                "launchTime" to "Not Found",
+                "elementFound" to "False",
+                "success" to "False"
+            )
+        }
+    }
+
+    /**
+     * Measures the app startup time by launching the app and searching for a UI element.
      *
      * @param packageName The package name of the app.
-     * @param mainActivity The main activity of the app.
-     * @param resourceId The resource ID of the target UI element.
-     * @return `true` if the element is found, `false` otherwise.
+     * @param mainActivity The main activity to launch.
+     * @param resourceId The resource ID of the UI element to wait for.
+     * @param timeoutInSeconds The timeout in seconds to wait for the element.
+     * @return A pair containing the launch time and whether the element was found.
      */
-    fun measureAppStartupTime(packageName: String, mainActivity: String, resourceId: String): Boolean {
+    fun measureAppStartupTime(
+        packageName: String,
+        mainActivity: String,
+        resourceId: String,
+        timeoutInSeconds: Int = 60
+    ): Pair<String, String> {
         try {
-            println("🚀 Launching Android app: $packageName/$mainActivity")
-
-            // Ensure a clean app state
+            println("🚀 Launching Android app: $packageName")
             forceStopApp(packageName)
-
-            // Record the start time
             val startTime = System.currentTimeMillis()
-
-            // Launch the app
             launchApp(packageName, mainActivity)
-
-            // Search for the target UI element
             println("🔍 Searching for UI element: $resourceId")
-            val elementFoundTime = searchForElement(resourceId)
-
-            // Calculate and log the total time taken
+            val elementFoundTime = searchForElement(resourceId, timeoutInSeconds)
             logStartupTime(startTime, elementFoundTime)
-            return true
+            val launchTime = (elementFoundTime - startTime).toString()
+            return Pair(launchTime, true.toString())
         } catch (e: Exception) {
             println("❌ Error during app startup time measurement: ${e.message}")
+            return Pair("Not Found", false.toString())
+        }
+    }
+
+    /**
+     * Evaluates the test results against the provided thresholds.
+     *
+     * @param launchTime The measured launch time.
+     * @param elementFound Whether the element was found.
+     * @param thresholds The list of thresholds to evaluate against.
+     * @return True if the results meet the thresholds, false otherwise.
+     */
+    private fun evaluateResults(launchTime: String, elementFound: String, thresholds: List<Triple<String, String, String>>?): Boolean {
+        if (elementFound.uppercase() != "TRUE") {
+            println("❌ Element not found, failing test.")
             return false
         }
+        if (thresholds.isNullOrEmpty()) return true
+        val launchTimeMs = launchTime.toLongOrNull() ?: return false
+        val launchTimeThreshold = thresholds.find { it.third == "launchTime" }
+        if (launchTimeThreshold != null) {
+            val target = launchTimeThreshold.first.toLongOrNull() ?: return false
+            val type = launchTimeThreshold.second
+            return when (type.uppercase()) {
+                "MAX" -> launchTimeMs <= target
+                "MIN" -> launchTimeMs >= target
+                "TARGET" -> launchTimeMs == target
+                else -> true
+            }
+        }
+        return true
     }
 
     /**
@@ -69,7 +127,9 @@ object AndroidTestCommands {
      */
     private fun launchApp(packageName: String, mainActivity: String) {
         println("🚀 Launching app: $packageName/$mainActivity")
-        val process = ProcessBuilder("adb", "shell", "am", "start", "-n", "$packageName/$mainActivity").start()
+        val process =
+                ProcessBuilder("adb", "shell", "am", "start", "-n", "$packageName/$mainActivity")
+                        .start()
         process.waitFor()
         if (process.exitValue() != 0) {
             throw RuntimeException("Failed to launch Android app.")
@@ -98,7 +158,7 @@ object AndroidTestCommands {
      * @return The timestamp when the element was found.
      * @throws RuntimeException if the element is not found within the timeout period.
      */
-    private fun searchForElement(resourceId: String, timeoutInSeconds: Int = 60): Long {
+    private fun searchForElement(resourceId: String, timeoutInSeconds: Int): Long {
         val timeoutInMillis = timeoutInSeconds.toLong() * 1000
         val elementFound = AtomicBoolean(false)
         var elementFoundTime: Long = -1
@@ -110,7 +170,8 @@ object AndroidTestCommands {
         val analysisExecutor = Executors.newFixedThreadPool(2)
 
         submitDumpGenerationTasks(dumpExecutor, executionSubfolder, dumpQueue, elementFound)
-        submitDumpAnalysisTasks(analysisExecutor, dumpQueue, resourceId, elementFound) { foundTime ->
+        submitDumpAnalysisTasks(analysisExecutor, dumpQueue, resourceId, elementFound) { foundTime
+            ->
             elementFoundTime = foundTime
         }
 
@@ -120,7 +181,9 @@ object AndroidTestCommands {
             println("✅ UI element '$resourceId' found. Timestamp: $elementFoundTime")
             return elementFoundTime
         } else {
-            throw RuntimeException("❌ Timeout! UI element '$resourceId' not found or not interactable within $timeoutInSeconds seconds.")
+            throw RuntimeException(
+                    "❌ Timeout! UI element '$resourceId' not found or not interactable within $timeoutInSeconds seconds."
+            )
         }
     }
 
@@ -154,10 +217,10 @@ object AndroidTestCommands {
      * @param elementFound The atomic flag indicating whether the element has been found.
      */
     private fun submitDumpGenerationTasks(
-        dumpExecutor: java.util.concurrent.ExecutorService,
-        executionSubfolder: File,
-        dumpQueue: LinkedBlockingQueue<File>,
-        elementFound: AtomicBoolean
+            dumpExecutor: java.util.concurrent.ExecutorService,
+            executionSubfolder: File,
+            dumpQueue: LinkedBlockingQueue<File>,
+            elementFound: AtomicBoolean
     ) {
         repeat(2) { generatorIndex ->
             dumpExecutor.submit {
@@ -168,7 +231,9 @@ object AndroidTestCommands {
                             dumpQueue.put(dumpFile)
                         }
                     } catch (e: Exception) {
-                        println("❌ [Generator $generatorIndex] Error during dump generation: ${e.message}")
+                        println(
+                                "❌ [Generator $generatorIndex] Error during dump generation: ${e.message}"
+                        )
                     }
                 }
             }
@@ -187,10 +252,13 @@ object AndroidTestCommands {
         val dumpFile = File(executionSubfolder, "ui_dump_$timestamp.xml")
         println("📝 [Generator $generatorIndex] Generating dump file: ${dumpFile.absolutePath}")
 
-        val dumpProcess = ProcessBuilder("adb", "shell", "uiautomator", "dump", "/sdcard/ui_dump.xml").start()
+        val dumpProcess =
+                ProcessBuilder("adb", "shell", "uiautomator", "dump", "/sdcard/ui_dump.xml").start()
         dumpProcess.waitFor()
         if (dumpProcess.exitValue() == 0) {
-            val pullProcess = ProcessBuilder("adb", "pull", "/sdcard/ui_dump.xml", dumpFile.absolutePath).start()
+            val pullProcess =
+                    ProcessBuilder("adb", "pull", "/sdcard/ui_dump.xml", dumpFile.absolutePath)
+                            .start()
             pullProcess.waitFor()
             if (pullProcess.exitValue() == 0) {
                 println("✅ [Generator $generatorIndex] Dump file pulled: ${dumpFile.absolutePath}")
@@ -210,11 +278,11 @@ object AndroidTestCommands {
      * @param onElementFound Callback invoked when the element is found.
      */
     private fun submitDumpAnalysisTasks(
-        analysisExecutor: java.util.concurrent.ExecutorService,
-        dumpQueue: LinkedBlockingQueue<File>,
-        resourceId: String,
-        elementFound: AtomicBoolean,
-        onElementFound: (Long) -> Unit
+            analysisExecutor: java.util.concurrent.ExecutorService,
+            dumpQueue: LinkedBlockingQueue<File>,
+            resourceId: String,
+            elementFound: AtomicBoolean,
+            onElementFound: (Long) -> Unit
     ) {
         repeat(2) { analyzerIndex ->
             analysisExecutor.submit {
@@ -222,10 +290,18 @@ object AndroidTestCommands {
                     try {
                         val dumpFile = dumpQueue.poll(100, TimeUnit.MILLISECONDS)
                         if (dumpFile != null && dumpFile.exists()) {
-                            analyzeDumpFile(analyzerIndex, dumpFile, resourceId, elementFound, onElementFound)
+                            analyzeDumpFile(
+                                    analyzerIndex,
+                                    dumpFile,
+                                    resourceId,
+                                    elementFound,
+                                    onElementFound
+                            )
                         }
                     } catch (e: Exception) {
-                        println("❌ [Analyzer $analyzerIndex] Error during dump analysis: ${e.message}")
+                        println(
+                                "❌ [Analyzer $analyzerIndex] Error during dump analysis: ${e.message}"
+                        )
                     }
                 }
             }
@@ -242,17 +318,19 @@ object AndroidTestCommands {
      * @param onElementFound Callback invoked when the element is found.
      */
     private fun analyzeDumpFile(
-        analyzerIndex: Int,
-        dumpFile: File,
-        resourceId: String,
-        elementFound: AtomicBoolean,
-        onElementFound: (Long) -> Unit
+            analyzerIndex: Int,
+            dumpFile: File,
+            resourceId: String,
+            elementFound: AtomicBoolean,
+            onElementFound: (Long) -> Unit
     ) {
         println("🔍 [Analyzer $analyzerIndex] Analyzing dump file: ${dumpFile.absolutePath}")
         val uiXmlContent = dumpFile.readText()
         val elementRegex = Regex("""<.*?resource-id="$resourceId".*?>""")
         if (elementRegex.containsMatchIn(uiXmlContent)) {
-            println("✅ [Analyzer $analyzerIndex] UI element '$resourceId' is visible and interactable!")
+            println(
+                    "✅ [Analyzer $analyzerIndex] UI element '$resourceId' is visible and interactable!"
+            )
             elementFound.set(true)
             onElementFound(System.currentTimeMillis())
         }
@@ -266,9 +344,9 @@ object AndroidTestCommands {
      * @param timeoutInMillis The maximum time to wait for task completion, in milliseconds.
      */
     private fun waitForCompletion(
-        dumpExecutor: java.util.concurrent.ExecutorService,
-        analysisExecutor: java.util.concurrent.ExecutorService,
-        timeoutInMillis: Long
+            dumpExecutor: java.util.concurrent.ExecutorService,
+            analysisExecutor: java.util.concurrent.ExecutorService,
+            timeoutInMillis: Long
     ) {
         dumpExecutor.shutdown()
         analysisExecutor.shutdown()

@@ -4,12 +4,37 @@
       "id" : "21C9ACB7-80E8-4824-B54D-A0CB45E6DCEB",
       "name" : "Test Scheme Action",
       "options" : {
-
+        "targetForVariableExpansion" : {
+          "containerPath" : "container:DriverRunner.xcodeproj",
+          "identifier" : "B2B6925F2DA423280009743A",
+          "name" : "DriverRunnerUITests"
+        }
       }
     }
   ],
   "defaultOptions" : {
-
+    "environmentVariableEntries" : [
+      {
+        "key" : "COMMAND_BUNDLE_ID",
+        "value" : "$(COMMAND_BUNDLE_ID)"
+      },
+      {
+        "key" : "TEST_ELEMENT",
+        "value" : "$(TEST_ELEMENT)"
+      },
+      {
+        "key" : "TEST_TIMEOUT",
+        "value" : "$(TEST_TIMEOUT)"
+      },
+      {
+        "key" : "TEST_THRESHOLD_TYPE",
+        "value" : "$(TEST_THRESHOLD_TYPE)"
+      },
+      {
+        "key" : "TEST_THRESHOLD_VALUE",
+        "value" : "$(TEST_THRESHOLD_VALUE)"
+      }
+    ]
   },
   "testTargets" : [
     {

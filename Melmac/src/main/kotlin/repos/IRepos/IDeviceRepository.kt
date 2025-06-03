@@ -2,8 +2,12 @@ package repos.IRepos
 
 import domain.Device
 
+/**
+ * Repository interface for managing Device entities.
+ */
 interface IDeviceRepository {
-    fun findAll(): List<Device>
-    fun findById(id: String): Device?
-    fun save(device: Device)
+    fun findById(id: Int): Device?
+    fun save(device: Device): Int
+    fun findByName(name: String): Device?
+    fun findBySerialNumber(serialNumber: String): Device?
 }

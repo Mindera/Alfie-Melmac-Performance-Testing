@@ -1,9 +1,15 @@
 package services.IServices
 
-import domain.dtos.ThresholdTypeResponseDTO
-import domain.dtos.ThresholdTypeRequestDTO
+import dtos.ThresholdTypeResponseDTO
 
+/**
+ * Service interface for managing threshold types.
+ * Provides methods to retrieve all threshold types, get a threshold type by ID,
+ * and get a threshold type by name.
+ */
 interface IThresholdTypeService {
-    suspend fun getAll(): List<ThresholdTypeResponseDTO>
-    suspend fun create(dto: ThresholdTypeRequestDTO): ThresholdTypeResponseDTO
+    fun getAll(): List<ThresholdTypeResponseDTO>
+    fun getById(id: Int): ThresholdTypeResponseDTO?
+    fun getByName(name: String): ThresholdTypeResponseDTO?
 }
+

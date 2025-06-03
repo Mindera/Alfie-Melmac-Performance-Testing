@@ -16,12 +16,11 @@ import java.io.File
  *   "server": {
  *     "port": 8080
  *   },
- *   "ios": {
- *     "simulator": "iPhone 14"
- *   },
- *   "android": {
- *     "emulator": "Pixel_5_API_30"
- *   }
+ *  "database": {
+ *    "url": "jdbc:mysql://localhost:3306/melmac",
+ *    "username": "root",
+ *    "password": "password"
+ *  }
  * }
  * ```
  */
@@ -33,17 +32,6 @@ object Config {
     private val config: JsonNode = ObjectMapper().readTree(File("config.json"))
 
     /**
-     * Retrieves the configuration for a specific platform.
-     *
-     * @param platform The name of the platform (e.g., "ios", "android").
-     * @return A [JsonNode] containing the configuration for the specified platform.
-     * @throws IllegalArgumentException If the configuration for the specified platform is not found.
-     */
-    fun getPlatformConfig(platform: String): JsonNode {
-        return config[platform] ?: throw IllegalArgumentException("Configuration for platform '$platform' not found")
-    }
-
-    /**
      * Retrieves the server configuration.
      *
      * @return A [JsonNode] containing the server configuration (e.g., port number).
@@ -51,5 +39,15 @@ object Config {
      */
     fun getServerConfig(): JsonNode {
         return config["server"] ?: throw IllegalArgumentException("Server configuration not found")
+    }
+
+    /**
+     * Retrieves the database configuration.
+     *
+     * @return A [JsonNode] containing the database configuration (e.g., URL, username, password).
+     * @throws IllegalArgumentException If the database configuration is not found.
+     */
+    fun getDatabaseConfig(): JsonNode {
+        return config["database"] ?: throw IllegalArgumentException("Database configuration not found")
     }
 }

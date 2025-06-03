@@ -1,10 +1,15 @@
 package services.IServices
 
-import domain.dtos.TestSuiteRequestDTO
-import domain.dtos.TestSuiteResponseDTO
+import dtos.*
 
+/**
+ * Service interface for managing metrics and their associated data.
+ * Provides methods to retrieve metric information, including outputs, parameters, and execution types.
+ */
 interface ITestSuiteService {
-    fun create(request: TestSuiteRequestDTO): TestSuiteResponseDTO
-    fun listAll(): List<TestSuiteResponseDTO>
-    fun findById(id: Int): TestSuiteResponseDTO?
+    fun createTestSuite(request: TestSuiteRequestDTO): TestSuiteResponseDTO
+    fun getAllTestSuites(): List<TestSuiteResponseDTO>
+    fun getTestSuiteById(id: Int): TestSuiteResponseDTO?
+    fun getTestPlanVersionsBySuiteId(suiteId: Int): List<TestPlanVersionResponseDTO>
+    fun runTestSuiteExecution(suiteId: Int): SuiteExecutionResponseDTO
 }

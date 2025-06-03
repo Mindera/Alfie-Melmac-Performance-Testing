@@ -1,12 +1,11 @@
 package domain
 
-import java.time.Instant
+import java.time.LocalDateTime
 
 data class TestSuite(
-    val id: Int? = null,
-    val name: String,
-    val description: String? = null,
-    val initialTimestamp: Instant? = null,
-    val endTimestamp: Instant? = null
+    val testSuiteId: Int? = null,
+    val testSuiteName: String,
+    val testSuiteDescription: String?,
+    val creationTimestamp: LocalDateTime,
+    val isActive: Boolean
 )
-

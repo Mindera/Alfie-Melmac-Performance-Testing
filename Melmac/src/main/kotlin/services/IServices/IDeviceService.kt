@@ -1,12 +1,15 @@
 package services.IServices
 
-import domain.dtos.OSResponseDTO
-import domain.dtos.DeviceResponseDTO
-import domain.dtos.OSVersionResponseDTO
+import dtos.AvailableDeviceDTO
 
+/**
+ * Service interface for managing available devices.
+ * Provides methods to retrieve device information based on various criteria.
+ */
 interface IDeviceService {
-    fun syncAllDevices()
-    fun getAllDevices(): List<DeviceResponseDTO>
-    fun getAllOSVersions(): List<OSVersionResponseDTO>
-    fun getAllOS(): List<OSResponseDTO>
+    fun getAllAvailableDevices(): List<AvailableDeviceDTO>;
+    fun getDeviceById(deviceId: Int): AvailableDeviceDTO?;
+    fun getAvailableDevicesByMinVersion(minOsVersion: String): List<AvailableDeviceDTO>;
+    fun getDeviceBySerialNumber(serialNumber: String): AvailableDeviceDTO?;
+    fun getDeviceByName(name: String): AvailableDeviceDTO?;
 }

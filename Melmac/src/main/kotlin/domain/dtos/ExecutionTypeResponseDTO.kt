@@ -1,7 +1,7 @@
-package domain.dtos
+package dtos
 
 data class ExecutionTypeResponseDTO(
-    val id: Int,
-    val name: String,
-    val description: String? = null,
+    val executionTypeId: Int,
+    val executionTypeName: String,
+    val executionTypeDescription: String?
 )

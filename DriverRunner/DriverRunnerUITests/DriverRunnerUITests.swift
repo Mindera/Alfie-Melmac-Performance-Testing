@@ -1,13 +1,12 @@
 import XCTest
-import Swifter
+
+// MARK: - DriverRunnerUITests
 
 final class DriverRunnerUITests: XCTestCase {
     private var app: XCUIApplication!
-    private var server: HttpServer?
-    private var endExpectation: XCTestExpectation?
 
-    // MARK: - XCTest Lifecycle
-
+    // MARK: setUp
+    // Sets up the test environment and initializes the XCUIApplication with the bundle ID from environment variables.
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -15,97 +14,93 @@ final class DriverRunnerUITests: XCTestCase {
 
         let bundleID = ProcessInfo.processInfo.environment["COMMAND_BUNDLE_ID"] ?? "com.mindera.alfie.debug"
         app = XCUIApplication(bundleIdentifier: bundleID)
-
-        endExpectation = XCTestExpectation(description: "Waiting for test request")
-        startServer()
     }
 
-    override func tearDown() {
-        server?.stop()
-        print("🛑 Server stopped")
-        super.tearDown()
-    }
-
-    // MARK: - XCTest Entry Point
-
-    func testWaitForTestRequests() {
-        print("🕹️ Starting testWaitForTestRequests")
-        print("✅ App: \(app.debugDescription)")
-        wait(for: [endExpectation!], timeout: 300)
-    }
-
-    // MARK: - HTTP Server Setup
-
-    private func startServer() {
-        server = HttpServer()
-
-        server?["/health"] = { _ in
-            .ok(.text("OK"))
+    // MARK: testAppStartup
+    // Main test entry point. Reads environment variables, runs the launch test, prints results, and fails if any step fails.
+    func testAppStartup() {
+        print("📦 All environment variables:")
+        ProcessInfo.processInfo.environment.forEach { print("\($0.key): \($0.value)") }
+        guard let elementID = ProcessInfo.processInfo.environment["TEST_ELEMENT"],
+              let timeoutString = ProcessInfo.processInfo.environment["TEST_TIMEOUT"],
+              let timeout = Double(timeoutString) else {
+            XCTFail("Missing required TEST_ELEMENT or TEST_TIMEOUT")
+            return
         }
 
-        server?["/test-launch"] = { request in
-            defer {
-                self.endExpectation?.fulfill()
-            }
+        let thresholdType = ProcessInfo.processInfo.environment["TEST_THRESHOLD_TYPE"]
+        let thresholdValue = ProcessInfo.processInfo.environment["TEST_THRESHOLD_VALUE"]?.toDouble()
 
-            guard let elementID = request.queryParams.first(where: { $0.0 == "element" })?.1 else {
-                XCTFail("❌ Missing 'element' query parameter")
-                return .badRequest(.text("Missing 'element' query parameter"))
-            }
+        print("📦 Running with:")
+        print("- elementID: \(elementID)")
+        print("- timeout: \(timeout)")
+        print("- thresholdType: \(thresholdType ?? "nil")")
+        print("- thresholdValue: \(thresholdValue?.description ?? "nil")")
 
-            var results: [TestStepResult] = []
-            DispatchQueue.main.sync {
-                results = self.runAppLaunchTest(waitForElement: elementID)
-            }
+        let results = runAppLaunchTest(
+            waitForElement: elementID,
+            timeout: timeout,
+            thresholdType: thresholdType,
+            thresholdValue: thresholdValue
+        )
 
-            return .ok(.text(TestResultLogger.toJSON(from: results)))
-        }
+        print("✅ Result JSON:")
+        print(TestResultLogger.toJSON(from: results))
 
-
-        server?["/hierarchy"] = { _ in
-            .ok(.text(self.app.debugDescription))
-        }
-
-        server?["/finish"] = { _ in
-            DispatchQueue.main.sync {
-                self.endExpectation?.fulfill()
-            }
-            return .ok(.text("Test manually completed"))
-        }
-
-        do {
-            try server?.start(4000)
-            print("🚀 Server started on port 4000")
-        } catch {
-            XCTFail("❌ Failed to start server: \(error.localizedDescription)")
+        if let failed = results.first(where: { !$0.success }) {
+            XCTFail(failed.error ?? "Test failed")
         }
     }
 
-    // MARK: - App Test Logic
-
-    private func runAppLaunchTest(waitForElement identifier: String) -> [TestStepResult] {
+    // MARK: runAppLaunchTest
+    // Launches the app, waits for a UI element, measures launch duration, checks thresholds, and logs the result.
+    private func runAppLaunchTest(
+        waitForElement identifier: String,
+        timeout: Double,
+        thresholdType: String?,
+        thresholdValue: Double?
+    ) -> [TestStepResult] {
         TestResultLogger.shared.reset()
 
         let start = Date()
         app.launch()
 
         let element = app.descendants(matching: .any)[identifier]
-        let appeared = element.waitForExistence(timeout: 10)
+        let appeared = element.waitForExistence(timeout: timeout)
 
-        let duration = Date().timeIntervalSince(start)
-        let success = appeared
-        let error = appeared ? nil : "Element \(identifier) did not appear"
+        let duration = Int((Date().timeIntervalSince(start)) * 1000)
+        var success = appeared
+        var error: String? = appeared ? nil : "Element \(identifier) did not appear"
 
-        if !appeared {
-            XCTFail("❌ Element '\(identifier)' did not appear within timeout.")
+        if appeared, let type = thresholdType, let value = thresholdValue {
+            switch type.uppercased() {
+            case "MAX":
+                if Double(duration) > value {
+                    success = false
+                    error = "Launch time \(duration)ms exceeded MAX threshold \(value)ms"
+                }
+            case "MIN":
+                if Double(duration) < value {
+                    success = false
+                    error = "Launch time \(duration)ms below MIN threshold \(value)ms"
+                }
+            case "TARGET":
+                if Double(duration) != value {
+                    success = false
+                    error = "Launch time \(duration)ms not equal to threshold \(value)ms"
+                }
+            default:
+                break
+            }
         }
 
         TestResultLogger.shared.log(
             step: TestStep(
                 action: "measureStartup",
                 target: identifier,
-                value: String(format: "%.3f", duration),
-                metric: "launchDuration"
+                value: "\(duration)",
+                metric: "launchDuration",
+                elementFound: appeared
             ),
             success: success,
             error: error
@@ -115,20 +110,36 @@ final class DriverRunnerUITests: XCTestCase {
     }
 }
 
+// MARK: - String Extension
+
+extension String {
+    // MARK: toDouble
+    // Converts the string to a Double, if possible.
+    func toDouble() -> Double? {
+        return Double(self)
+    }
+}
+
 // MARK: - Data Models
 
+// MARK: TestStep
+// Represents a single test step with action, target, value, metric, and elementFound flag.
 struct TestStep: Decodable {
     let action: String
     let target: String?
     let value: String?
     let metric: String?
+    let elementFound: Bool
 }
 
+// MARK: TestStepResult
+// Represents the result of a test step, including success, error, and timestamp.
 struct TestStepResult: Codable {
     let action: String
     let target: String?
     let value: String?
     let metric: String?
+    let elementFound: Bool
     let success: Bool
     let error: String?
     let timestamp: String
@@ -136,32 +147,43 @@ struct TestStepResult: Codable {
 
 // MARK: - Logger
 
+// MARK: TestResultLogger
+// Singleton logger for collecting and serializing test step results.
 final class TestResultLogger {
     static let shared = TestResultLogger()
     private(set) var steps: [TestStepResult] = []
 
+    // MARK: log
+    // Logs a test step result with success, error, and timestamp.
     func log(step: TestStep, success: Bool, error: String?) {
         let formatter = ISO8601DateFormatter()
-        steps.append(TestStepResult(
-            action: step.action,
-            target: step.target,
-            value: step.value,
-            metric: step.metric,
-            success: success,
-            error: error,
-            timestamp: formatter.string(from: Date())
-        ))
+        steps.append(
+            TestStepResult(
+                action: step.action,
+                target: step.target,
+                value: step.value,
+                metric: step.metric,
+                elementFound: step.elementFound,
+                success: success,
+                error: error,
+                timestamp: formatter.string(from: Date())
+            ))
     }
 
+    // MARK: reset
+    // Clears all logged test step results.
     func reset() {
         steps.removeAll()
     }
 
+    // MARK: toJSON
+    // Serializes an array of TestStepResult to a pretty-printed JSON string.
     static func toJSON(from results: [TestStepResult]) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         guard let data = try? encoder.encode(results),
-              let json = String(data: data, encoding: .utf8) else {
+              let json = String(data: data, encoding: .utf8)
+        else {
             return "[]"
         }
         return json

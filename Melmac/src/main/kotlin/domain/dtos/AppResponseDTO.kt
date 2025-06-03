@@ -1,6 +1,6 @@
-package domain.dtos
+package dtos
 
 data class AppResponseDTO(
-    val id: Int,
-    val name: String
+    val appId: Int,
+    val appName: String
 )

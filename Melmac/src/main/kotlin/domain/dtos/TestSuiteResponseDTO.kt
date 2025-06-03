@@ -1,9 +1,11 @@
-package domain.dtos
+package dtos
+
+import java.time.LocalDateTime
 
 data class TestSuiteResponseDTO(
-    val id: Int,
-    val name: String,
-    val description: String? = null,
-    val initialTimestamp: String? = null,
-    val endTimestamp: String? = null,
+    val testSuiteId: Int,
+    val testSuiteName: String,
+    val testSuiteDescription: String?,
+    val creationTimestamp: LocalDateTime,
+    val isActive: Boolean
 )

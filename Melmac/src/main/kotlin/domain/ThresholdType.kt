@@ -1,6 +1,7 @@
 package domain
 
 data class ThresholdType(
-    val id: Int? = null,
-    val name: String
+    val thresholdTypeId: Int? = null,
+    val thresholdTypeName: String,
+    val thresholdTypeDescription: String?
 )

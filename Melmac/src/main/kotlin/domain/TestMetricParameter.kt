@@ -1,8 +1,8 @@
 package domain
 
 data class TestMetricParameter(
-    val id: Int,
-    val testExecutionId: Int,
-    val metricParameterId: Int,
-    val value: String
+    val testMetricParameterId: Int? = null,
+    val parameterValue: String,
+    val metricParameterMetricParameterId: Int,
+    val testPlanVersionTestPlanVersionId: Int
 )

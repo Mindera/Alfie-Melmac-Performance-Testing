@@ -11,6 +11,7 @@ out/
 .idea/
 *.swp
 *.swo
+bin/
 
 # Gradle
 .gradle/
@@ -83,6 +84,10 @@ build/
 
 # Include config.json
 !config.json
+!data.json
 
 # Ignore ui_dumps folder
 ui_dumps/
+
+# Visual Paradigm auto-generated files
+*.vpp.*

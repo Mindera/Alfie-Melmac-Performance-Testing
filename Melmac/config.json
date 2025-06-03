@@ -3,17 +3,14 @@
     "host": "localhost",
     "port": 8080
   },
-  "ios": {
-    "device_name": "iPhone 16 Pro",
-    "app_path": "../Alfie.app",
-    "bundle_id": "com.mindera.alfie.debug",
-    "target_resource_id": "account-btn"
-  },
-  "android": {
-    "device_name": "Medium_Phone_API_35",
-    "apk_path": "../Alfie.apk",
-    "package_name": "au.com.alfie.ecomm.debug",
-    "main_activity": "au.com.alfie.ecomm.MainActivity",
-    "target_resource_id": "home-tab"
+  "database": {
+    "host": "vsgate-s1.dei.isep.ipp.pt",
+    "port": 10704,
+    "user": "sa",
+    "password": "U14GbRFkxA==Xa5",
+    "database": "Melmac",
+    "encrypt": true,
+    "trustServerCertificate": true,
+    "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    }
   }
-}

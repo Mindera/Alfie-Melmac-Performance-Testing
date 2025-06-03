@@ -1,7 +1,7 @@
 package domain
 
 data class OSVersion(
-    val id: Int? = null,
-    val versionName: String,
-    val osId: Int
+    val osVersionId: Int? = null,
+    val version: String,
+    val operativeSystemOperSysId: Int
 )
