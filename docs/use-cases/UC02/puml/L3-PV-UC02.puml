@@ -1,0 +1,337 @@
+@startuml L3-PV-UC02
+
+title Level 3 - Create Test Plan (MelmacBE)
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<Container (C4)>> MelmacBE"
+    participant "<<Controller>>\nTestPlanController" as Controller
+    participant "<<Service>>\nTestPlanService" as Service
+    participant "<<Domain>>\nTestPlan" as TestPlan
+    participant "<<Repository>>\nMetricRepository" as MetricRepo
+    participant "<<Repository>>\nTestPlanRepository" as PlanRepo
+    participant "<<Service>>\nDeviceService" as DeviceService
+    participant "<<Repository>>\nOSRepository" as OSRepo
+    participant "<<Repository>>\nOSVersionRepository" as OSVersionRepo
+    participant "<<Repository>>\nDeviceRepository" as DeviceRepo
+    participant "<<Repository>>\nAppRepository" as AppRepo
+    participant "<<Repository>>\nAppVersionRepository" as AppVersionRepo
+    participant "<<Repository>>\nExecutionTypeRepository" as ExecutionTypeRepo
+    participant "<<Domain>>\nTestPlanVersion" as TestPlanVersion
+    participant "<<Repository>>\nTestPlanVersionRepository" as PlanVersionRepo
+    participant "<<Repository>>\nThresholdTypeRepository" as ThresholdTypeRepo
+    participant "<<Mapper>>\nTestThresholdMapper" as ThresholdMapper
+    participant "<<Domain>>\nTestThreshold" as TestThreshold
+    participant "<<Repository>>\nTestThresholdRepository" as ThresholdRepo
+    participant "<<Repository>>\nMetricParameterRepository" as MetricParameterRepo
+    participant "<<Mapper>>\nTestMetricParameterMapper" as MetricParameterMapper
+    participant "<<Domain>>\nTestMetricParameter" as TestMetricParameter
+    participant "<<Repository>>\nTestMetricParameterRepository" as TestMetricParameterRepo
+    participant "<<Mapper>>\nTestExecutionTypeMapper" as ExecutionTypeMapper
+    participant "<<Domain>>\nTestExecutionType" as TestExecutionType
+    participant "<<Repository>>\nTestExecutionTypeRepository" as TestExecutionTypeRepo
+    participant "<<Domain>>\nTestSuiteVersionPlan" as TestSuiteVersionPlan
+    participant "<<Repository>>\nTestSuiteVersionPlanRepository" as TestSuiteVersionPlanRepo
+    participant "<<Mapper>>\nTestPlanVersionMapper" as TestPlanVersionMapper
+    participant "<<DTO>>\nTestPlanVersionDTO" as TestPlanVersion
+end box
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> Controller: Asks to create a new Test Plan
+activate Controller
+Controller -> Service: createTestPlan(TestPlanVersionRequestDTO)
+activate Service
+Service -> MetricRepo: findByName(MetricName)
+activate MetricRepo
+MetricRepo -> DB: Query to find Metric by name
+activate DB
+DB --> DB: Finds Metric
+DB --> MetricRepo: returns Metric
+deactivate DB
+MetricRepo --> Service: returns Metric
+deactivate MetricRepo
+Service -> TestPlan: create(TestPlanVersionRequestDTO, Metric)
+activate TestPlan
+TestPlan --> TestPlan: Validates and initializes TestPlan
+TestPlan --> Service: returns TestPlan
+deactivate TestPlan
+Service -> PlanRepo: save(TestPlan)
+activate PlanRepo
+PlanRepo -> DB: Query to save TestPlan
+activate DB
+DB --> DB: Saves TestPlan
+DB --> PlanRepo: returns saved TestPlanId
+deactivate DB
+PlanRepo --> Service: returns TestPlanId
+deactivate PlanRepo
+Service -> DeviceService: getDeviceByName(DeviceName)
+activate DeviceService
+DeviceService -> DeviceService: Finds Device by name
+DeviceService --> Service: returns Device
+deactivate DeviceService
+Service -> OSRepo: findByName(OSName)
+activate OSRepo
+OSRepo -> DB: Query to find OS by name
+activate DB
+alt OS found
+    DB --> DB: Finds OS
+    DB --> OSRepo: returns OS
+else OS not found
+    DB --> DB: OS not found
+    DB --> OSRepo: returns null
+    deactivate DB
+    OSRepo --> Service: throws NotFoundException
+    deactivate OSRepo
+    Service -> OSRepo: save(OperatingSystem)
+    activate OSRepo
+    OSRepo -> DB: Query to save OperatingSystem
+    activate DB
+    DB --> DB: Saves OperatingSystem
+    DB --> OSRepo: returns saved OperatingSystem
+end
+deactivate DB
+OSRepo --> Service: returns OperatingSystem
+deactivate OSRepo
+Service -> OSVersionRepo: searchByOperSysId(OperatingSystemId)
+activate OSVersionRepo
+OSVersionRepo -> DB: Query to find OSVersions by OperatingSystemId
+activate DB
+alt OSVersions found
+    DB --> DB: Finds OSVersions
+    DB --> OSVersionRepo: returns OSVersions
+else OSVersions not found
+    DB --> DB: No OSVersions found
+    DB --> OSVersionRepo: returns empty list
+end
+deactivate DB
+OSVersionRepo --> Service: returns list of OSVersions
+deactivate OSVersionRepo
+alt OSVersion is not in the list
+    Service -> OSVersionRepo: save(OperatingSystemVersion)
+    activate OSVersionRepo
+    OSVersionRepo -> DB: Query to save OperatingSystemVersion
+    activate DB
+    DB --> DB: Saves OperatingSystemVersion
+    DB --> OSVersionRepo: returns saved OperatingSystemVersion
+    deactivate DB
+end
+OSVersionRepo --> Service: returns saved OperatingSystemVersion
+deactivate OSVersionRepo
+Service -> DeviceRepo: findBySerialNumber(DeviceSerialNumber)
+activate DeviceRepo
+DeviceRepo -> DB: Query to find Device by serial number
+activate DB
+alt Device found
+    DB --> DB: Finds Device
+    DB --> DeviceRepo: returns Device
+else Device not found
+    DB --> DB: Device not found
+    DB --> DeviceRepo: returns null
+    deactivate DB
+    DeviceRepo --> Service: throws NotFoundException
+    deactivate DeviceRepo
+    Service -> DeviceRepo: save(Device)
+    activate DeviceRepo
+    DeviceRepo -> DB: Query to save Device
+    activate DB
+    DB --> DB: Saves Device
+    DB --> DeviceRepo: returns saved Device
+    deactivate DB
+end
+DeviceRepo --> Service: returns Device
+deactivate DeviceRepo
+Service -> AppRepo: findByName(AppName)
+activate AppRepo
+AppRepo -> DB: Query to find App by name
+activate DB
+alt App found
+    DB --> DB: Finds App
+    DB --> AppRepo: returns App
+else App not found
+    DB --> DB: App not found
+    DB --> AppRepo: returns null
+    deactivate DB
+    AppRepo --> Service: throws NotFoundException
+    deactivate AppRepo
+    Service -> AppRepo: save(App)
+    activate AppRepo
+    AppRepo -> DB: Query to save App
+    activate DB
+    DB --> DB: Saves App
+    DB --> AppRepo: returns saved App
+    deactivate DB
+end
+AppRepo --> Service: returns App
+deactivate AppRepo
+Service -> AppVersionRepo: searchByAppIdAndVersion(AppId, AppVersion)
+activate AppVersionRepo
+AppVersionRepo -> DB: Query to find AppVersions by AppId and version
+activate DB
+alt AppVersions found
+    DB --> DB: Finds AppVersions
+    DB --> AppVersionRepo: returns AppVersions
+else AppVersions not found
+    DB --> DB: No AppVersions found
+    DB --> AppVersionRepo: returns empty list
+    deactivate DB
+    AppVersionRepo --> Service: throws NotFoundException
+    deactivate AppVersionRepo
+    Service -> AppVersionRepo: save(AppVersion)
+    activate AppVersionRepo
+    AppVersionRepo -> DB: Query to save AppVersion
+    activate DB
+    DB --> DB: Saves AppVersion
+    DB --> AppVersionRepo: returns saved AppVersion
+    deactivate DB
+end
+AppVersionRepo --> Service: returns AppVersion
+deactivate AppVersionRepo
+Service -> ExecutionTypeRepo: findByName(ExecutionTypeName)
+activate ExecutionTypeRepo
+ExecutionTypeRepo -> DB: Query to find ExecutionType by name
+activate DB
+DB --> DB: Finds ExecutionType
+DB --> ExecutionTypeRepo: returns ExecutionType
+deactivate DB
+ExecutionTypeRepo --> Service: returns ExecutionType
+deactivate ExecutionTypeRepo
+Service -> TestPlanVersion: create(TestPlanVersionParams)
+activate TestPlanVersion
+TestPlanVersion --> TestPlanVersion: Validates and initializes TestPlanVersion
+TestPlanVersion --> Service: returns TestPlanVersion
+deactivate TestPlanVersion
+Service -> PlanVersionRepo: save(TestPlanVersion)
+activate PlanVersionRepo
+PlanVersionRepo -> DB: Query to save TestPlanVersion
+activate DB
+DB --> DB: Saves TestPlanVersion
+DB --> PlanVersionRepo: returns saved TestPlanVersion
+deactivate DB
+PlanVersionRepo --> Service: returns TestPlanVersion
+deactivate PlanVersionRepo
+Service -> ThresholdTypeRepo: findByName(ThresholdTypeName)
+activate ThresholdTypeRepo
+ThresholdTypeRepo -> DB: Query to find ThresholdType by name
+activate DB
+DB --> DB: Finds ThresholdType
+DB --> ThresholdTypeRepo: returns ThresholdType
+deactivate DB
+ThresholdTypeRepo --> Service: returns ThresholdType
+deactivate ThresholdTypeRepo
+Service -> ThresholdMapper: fromRequestDTO(Threshold, TestPlanVersionId, ThresholdTypeId)
+activate ThresholdMapper
+ThresholdMapper -> TestThreshold: create(TestThreshold)
+activate TestThreshold
+TestThreshold --> TestThreshold: Validates and initializes TestThreshold
+TestThreshold --> ThresholdMapper: returns TestThreshold
+deactivate TestThreshold
+ThresholdMapper --> Service: returns TestThreshold
+deactivate ThresholdMapper
+Service -> ThresholdRepo: save(TestThreshold)
+activate ThresholdRepo
+ThresholdRepo -> DB: Query to save TestThreshold
+activate DB
+DB --> DB: Saves TestThreshold
+DB --> ThresholdRepo: returns saved TestThreshold
+deactivate DB
+ThresholdRepo --> Service: returns TestThreshold
+deactivate ThresholdRepo
+Service -> MetricParameterRepo: findByMetricIdAndName(MetricId, MetricParameterName)
+activate MetricParameterRepo
+MetricParameterRepo -> DB: Query to find MetricParameter by MetricId and name
+activate DB
+DB --> DB: Finds MetricParameter
+DB --> MetricParameterRepo: returns MetricParameter
+deactivate DB
+MetricParameterRepo --> Service: returns MetricParameter
+deactivate MetricParameterRepo
+Service -> MetricParameterMapper: fromRequestDTO(TestMetricParameter, TestPlanVersionId, MetricParameterId)
+activate MetricParameterMapper
+MetricParameterMapper -> TestMetricParameter: create(TestMetricParameter)
+activate TestMetricParameter
+TestMetricParameter --> TestMetricParameter: Validates and initializes TestMetricParameter
+TestMetricParameter --> MetricParameterMapper: returns TestMetricParameter
+deactivate TestMetricParameter
+MetricParameterMapper --> Service: returns TestMetricParameter
+deactivate MetricParameterMapper
+Service -> TestMetricParameterRepo: save(TestMetricParameter)
+activate TestMetricParameterRepo
+TestMetricParameterRepo -> DB: Query to save TestMetricParameter
+activate DB
+DB --> DB: Saves TestMetricParameter
+DB --> TestMetricParameterRepo: returns saved TestMetricParameter
+deactivate DB
+TestMetricParameterRepo --> Service: returns TestMetricParameter
+deactivate TestMetricParameterRepo
+Service -> ExecutionTypeRepo: findByExecutionTypeIdAndName(ExecutionTypeId, ExecutionTypeName)
+activate ExecutionTypeRepo
+ExecutionTypeRepo -> DB: Query to find ExecutionType by ExecutionTypeId and name
+activate DB
+DB --> DB: Finds ExecutionType
+DB --> ExecutionTypeRepo: returns ExecutionType
+deactivate DB
+ExecutionTypeRepo --> Service: returns ExecutionType
+deactivate ExecutionTypeRepo
+Service -> ExecutionTypeMapper: fromRequestDTO(TestExecutionType, TestPlanVersionId, ExecutionTypeId)
+activate ExecutionTypeMapper
+ExecutionTypeMapper -> TestExecutionType: create(TestExecutionType)
+activate TestExecutionType
+TestExecutionType --> TestExecutionType: Validates and initializes TestExecutionType
+TestExecutionType --> ExecutionTypeMapper: returns TestExecutionType
+deactivate TestExecutionType
+ExecutionTypeMapper --> Service: returns TestExecutionType
+deactivate ExecutionTypeMapper
+Service -> TestExecutionTypeRepo: save(TestExecutionType)
+activate TestExecutionTypeRepo
+TestExecutionTypeRepo -> DB: Query to save TestExecutionType
+activate DB
+DB --> DB: Saves TestExecutionType
+DB --> TestExecutionTypeRepo: returns saved TestExecutionType
+deactivate DB
+TestExecutionTypeRepo --> Service: returns TestExecutionType
+deactivate TestExecutionTypeRepo
+Service -> TestSuiteVersionPlan: create(TestSuiteVersionPlanParams)
+activate TestSuiteVersionPlan
+TestSuiteVersionPlan --> TestSuiteVersionPlan: Validates and initializes TestSuiteVersionPlan
+TestSuiteVersionPlan --> Service: returns TestSuiteVersionPlan
+deactivate TestSuiteVersionPlan
+Service -> TestSuiteVersionPlanRepo: save(TestSuiteVersionPlan)
+activate TestSuiteVersionPlanRepo
+TestSuiteVersionPlanRepo -> DB: Query to save TestSuiteVersionPlan
+activate DB
+DB --> DB: Saves TestSuiteVersionPlan
+DB --> TestSuiteVersionPlanRepo: returns saved TestSuiteVersionPlan
+deactivate DB
+TestSuiteVersionPlanRepo --> Service: returns TestSuiteVersionPlan
+deactivate TestSuiteVersionPlanRepo
+Service -> TestPlanVersionMapper: toDTO(TestPlanVersion)
+activate TestPlanVersionMapper
+TestPlanVersionMapper -> TestPlanVersion: create(TestPlanVersion)
+activate TestPlanVersion
+TestPlanVersion --> TestPlanVersion: Validates and initializes TestPlanVersion
+TestPlanVersion --> TestPlanVersionMapper: returns TestPlanVersion
+deactivate TestPlanVersion
+TestPlanVersionMapper --> Service: returns TestPlanVersion
+deactivate TestPlanVersionMapper
+Service -> Controller: returns TestPlanVersionResponseDTO
+deactivate Service
+Controller --> D: Confirms Test Plan creation
+deactivate Controller
+deactivate D
+
+@enduml

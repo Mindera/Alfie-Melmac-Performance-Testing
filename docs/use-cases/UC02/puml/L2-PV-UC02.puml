@@ -1,0 +1,47 @@
+@startuml L2-PV-UC02
+
+title Level 2 - Create Test Plan
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<System>> Melmac Performance Testing Framework" 
+    participant "<<Container (C4)>>\nMelmacBE" as BE
+end box 
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> BE: Requests to create a new Test Plan
+activate BE
+BE -> DB: Asks to save Test Plan
+activate DB
+DB --> DB: Saves Test Plan
+DB --> BE: Returns saved Test Plan ID
+deactivate DB
+BE -> DB: Asks to find latest Test Plan Version by Test Plan ID
+activate DB
+DB --> DB: Finds latest Test Plan Version ID
+DB --> BE: Returns latest Test Plan Version ID
+deactivate DB
+BE -> DB: Asks to save Test Plan Version
+activate DB
+DB --> DB: Saves Test Plan Version
+DB --> BE: Returns saved Test Plan Version ID
+deactivate DB
+BE --> D: Confirms creation of Test Plan
+deactivate BE
+
+@enduml

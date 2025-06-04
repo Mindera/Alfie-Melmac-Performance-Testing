@@ -1,0 +1,45 @@
+@startuml L1-PV-UC01
+
+title Level 1 - Create Test Suite
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+participant "System" as System
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> System: Requests to create a new Test Suite
+activate System
+System -> DB: Asks to save Test Suite
+activate DB
+DB --> DB: Saves Test Suite
+DB --> System: Returns saved Test Suite ID
+deactivate DB
+System -> DB: Asks to find latest Test Suite Version by Test Suite ID
+activate DB
+DB --> DB: Finds latest Test Suite Version ID
+DB --> System: Returns latest Test Suite Version ID
+deactivate DB
+System -> DB: Asks to save Test Suite Version
+activate DB
+DB --> DB: Saves Test Suite Version
+DB --> System: Returns saved Test Suite Version ID
+deactivate DB
+System --> D: Confirms creation of Test Suite
+deactivate System
+
+@enduml

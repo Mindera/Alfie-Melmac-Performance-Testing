@@ -1,0 +1,40 @@
+@startuml L1-PV-UC03
+
+title Level 1 - Run Test Suite
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+participant "System" as System
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> System: Request to run Test Suite
+activate System
+loop For each Test Plan
+    ref over System
+            "See Test Plan Execution" at [../UC04/L1-PV-UC04.puml]
+    end ref
+end loop
+System -> DB: Save Test Suite Execution Results
+activate DB
+DB --> System: Test Suite Execution Results Saved
+deactivate DB
+System -> D: Test Suite Execution Completed
+deactivate System
+deactivate D
+
+@enduml

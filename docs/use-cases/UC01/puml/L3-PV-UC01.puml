@@ -1,0 +1,90 @@
+@startuml L3-PV-UC01
+
+title Level 3 - Create Test Suite (MelmacBE)
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<Container (C4)>> MelmacBE"
+    participant "<<Controller>>\nTestSuiteController" as Controller
+    participant "<<Service>>\nTestSuiteService" as Service
+    participant "<<Domain>>\nTestSuite" as TestSuite
+    participant "<<Repository>>\nTestSuiteRepository" as SuiteRepo
+    participant "<<Domain>>\nTestSuiteVersion" as TestSuiteVersion
+    participant "<<Repository>>\nTestSuiteVersionRepository" as VersionRepo
+    participant "<<Mapper>>\nTestSuiteMapper" as Mapper
+    participant "<<DTO>>\nTestSuiteResponseDTO" as ResponseDTO
+end box
+participant "<<External>>\nDatabase" as DB
+
+
+activate D
+D -> Controller: Asks to create a new Test Suite
+activate Controller
+Controller -> Service: createTestSuite(TestSuiteRequestDTO)
+activate Service
+Service -> TestSuite: create(TestSuiteRequestDTO)
+activate TestSuite
+TestSuite --> TestSuite: Validates and initializes TestSuite
+TestSuite --> Service: returns TestSuite
+deactivate TestSuite
+Service -> SuiteRepo: save(TestSuite)
+activate SuiteRepo
+SuiteRepo -> DB: Query to save TestSuite
+activate DB
+DB --> DB: Saves TestSuite
+DB --> SuiteRepo: returns saved TestSuiteId
+deactivate DB
+SuiteRepo --> Service: returns TestSuiteId
+deactivate SuiteRepo
+Service -> SuiteRepo: findLatestVersionByTestSuiteId(TestSuiteId)
+activate SuiteRepo
+SuiteRepo -> DB: Query to find latest TestSuiteVersion by TestSuiteId
+activate DB
+DB --> DB: Finds latest TestSuiteVersionId
+DB --> SuiteRepo: returns latest TestSuiteVersionId
+deactivate DB
+SuiteRepo --> Service: returns latest TestSuiteVersionId
+deactivate SuiteRepo
+Service -> TestSuiteVersion: create(TestSuiteVersionParams, TestSuiteVersionId + 1, TestSuiteId)
+activate TestSuiteVersion
+TestSuiteVersion --> TestSuiteVersion: Validates and initializes TestSuiteVersion
+TestSuiteVersion --> Service: returns TestSuiteVersion
+deactivate TestSuiteVersion
+Service -> VersionRepo: save(TestSuiteVersion)
+activate VersionRepo
+VersionRepo -> DB: Query to save TestSuiteVersion
+activate DB
+DB --> DB: Saves TestSuiteVersion
+DB --> VersionRepo: returns saved TestSuiteVersion
+deactivate DB
+VersionRepo --> Service: returns TestSuiteVersion
+deactivate VersionRepo
+Service -> Mapper: toDTO(TestSuite)
+activate Mapper
+Mapper --> ResponseDTO: create(TestSuite)
+activate ResponseDTO
+ResponseDTO --> Mapper: returns TestSuiteResponseDTO
+deactivate ResponseDTO
+Mapper --> Service: returns TestSuiteResponseDTO
+deactivate Mapper
+Service --> Controller: TestSuiteResponseDTO
+deactivate Service
+Controller --> D: TestSuiteResponseDTO (created)
+deactivate Controller
+deactivate D
+
+@enduml

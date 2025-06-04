@@ -1,0 +1,90 @@
+@startuml L3-PV-UC03
+
+title Level 3 - Run Test Suite
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<Container (C4)>> MelmacBE"
+    participant "<<Controller>>\nTestSuiteController" as Controller
+    participant "<<Service>>\nTestSuiteService" as Service
+    participant "<<Repository>>\nTestSuiteVersionRepository" as SuiteRepo
+    participant "<<Repository>>\nTestSuiteVersionPlanRepository" as VersionRepo
+    participant "<<Service>>\nTestPlanService" as TestExecutionService
+    participant "<<Domain>>\nSuiteExecution" as SuiteExecution
+    participant "<<Repository>>\nSuiteExecutionRepository" as ExecutionRepo
+    participant "<<Mapper>>\nSuiteExecutionMapper" as ExecutionMapper
+    participant "<<DTO>>\nSuiteExecutionResponseDTO" as ResponseDTO
+end box
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> Controller: Request to run Test Suite
+activate Controller
+Controller -> Service: runTestSuite(TestSuiteId)
+activate Service
+Service -> SuiteRepo: findLatestVersionByTestSuiteId(TestSuiteId)
+activate SuiteRepo
+SuiteRepo -> DB: Query to find latest TestSuiteVersion by TestSuiteId
+activate DB
+DB --> DB: Finds latest TestSuiteVersionId
+DB --> SuiteRepo: returns latest TestSuiteVersionId
+deactivate DB
+SuiteRepo --> Service: returns latest TestSuiteVersionId
+deactivate SuiteRepo
+Service -> VersionRepo: findAllByTestSuiteVersionId(TestSuiteVersionId)
+activate VersionRepo
+VersionRepo -> DB: Query to find all TestPlans by TestSuiteVersionId
+activate DB
+DB --> DB: Finds all TestPlans
+DB --> VersionRepo: returns TestPlans
+deactivate DB
+VersionRepo --> Service: returns TestPlans
+deactivate VersionRepo
+loop For each Test Plan
+    Service -> TestExecutionService: runTestExecution(TestPlan)
+    activate TestExecutionService
+    ref over TestExecutionService
+            "See Test Plan Execution" at [../UC04/L3-PV-UC04-MelmacBE.puml] and [../UC04/L3-PV-UC04-DriverRunner.puml]
+    end ref
+    TestExecutionService --> Service: returns Test Plan Execution Results
+    deactivate TestExecutionService      
+end
+Service -> ExecutionRepo: save(SuiteExecution)
+activate ExecutionRepo
+ExecutionRepo -> DB: Query to save SuiteExecution
+activate DB
+DB --> DB: Saves SuiteExecution
+DB --> ExecutionRepo: returns saved SuiteExecution
+deactivate DB
+ExecutionRepo --> Service: returns saved SuiteExecution
+deactivate ExecutionRepo
+Service -> ExecutionMapper: toDTO(SuiteExecution)
+activate ExecutionMapper
+ExecutionMapper -> ResponseDTO: map(SuiteExecution)
+activate ResponseDTO
+ResponseDTO --> ResponseDTO: Validates and initializes SuiteExecutionResponseDTO
+ResponseDTO --> ExecutionMapper: returns SuiteExecutionResponseDTO
+deactivate ResponseDTO
+ExecutionMapper --> Service: returns SuiteExecutionResponseDTO
+deactivate ExecutionMapper
+Service -> Controller: return(SuiteExecutionResponseDTO)
+deactivate Service
+Controller -> D: Test Suite Execution Completed
+deactivate Controller
+deactivate D
+
+@enduml
