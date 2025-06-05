@@ -14,6 +14,7 @@
 | **App Package**          | The unique identifier (package name) for an Android application. On iOS, this is called a Bundle Identifier.                                                                             |
 | **App Startup Time**     | The time taken for an application to become ready for user interaction after launch.                                                                                                     |
 | **App Version**          | A specific release or build of an application.                                                                                                                                           |
+| **AUT**                  | Application Under Test, the software application being evaluated for performance or functionality.                                                                                       |
 | **Cold Start**           | Launching an app from a terminated state, measuring the time until it is ready for use.                                                                                                  |
 | **Device**               | Physical or virtual hardware where tests are executed (e.g., smartphone, emulator).                                                                                                      |
 | **Device Name**          | The human-readable name assigned to a device.                                                                                                                                            |
