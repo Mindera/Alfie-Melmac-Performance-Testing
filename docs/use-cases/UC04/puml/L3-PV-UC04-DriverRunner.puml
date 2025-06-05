@@ -1,0 +1,71 @@
+@startuml L3-PV-UC04-DriverRunner
+
+title Level 3 - Run Test Plan (DriverRunner)
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+participant "<<Container (C4)>>\nMelmacBE" as BE
+
+box "<<Container (C4)>> DriverRunner"
+    participant "<<Component>>\nXCUITest" as XCUITest
+    participant "<<Component>>\nConfigLoader" as ConfigLoader
+    participant "<<Component>>\nEnvironmentReader" as EnvironmentReader
+    participant "<<Component>>\nTestCoordinator" as TestCoordinator
+    participant "<<Component>>\nTestRunner" as TestRunner
+    participant "<<Component>>\nUIInteractionEngine" as UiInteractionEngine
+end box
+
+participant "<<External>>\nAUT (iOS)" as AUTI
+participant "<<External>>\niOS Device" as iOSDevice
+
+activate BE
+BE -> XCUITest: Ask to run Test Plan
+activate XCUITest
+XCUITest -> ConfigLoader: Load configuration
+activate ConfigLoader
+ConfigLoader -> ConfigLoader: Reads configuration from xctestplan
+ConfigLoader -> XCUITest: Returns configuration
+deactivate ConfigLoader
+XCUITest -> EnvironmentReader: Read environment variables
+activate EnvironmentReader
+EnvironmentReader -> EnvironmentReader: Reads environment variables
+EnvironmentReader -> XCUITest: Returns environment variables
+deactivate EnvironmentReader
+XCUITest -> TestCoordinator: Initialize test coordinator
+activate TestCoordinator
+TestCoordinator -> TestCoordinator: Determines execution order
+TestCoordinator -> XCUITest: Returns test execution order
+deactivate TestCoordinator
+XCUITest -> TestRunner: Start test execution
+activate TestRunner
+TestRunner -> AUTI: Launch AUT on iOS Device
+activate AUTI
+AUTI --> TestRunner: AUT Launched
+deactivate AUTI
+TestRunner -> UiInteractionEngine: Execute test steps on iOS Device
+activate UiInteractionEngine
+UiInteractionEngine -> iOSDevice: Interacts with iOS Device
+activate iOSDevice
+iOSDevice --> UiInteractionEngine: Test Steps Executed
+deactivate iOSDevice
+UiInteractionEngine -> TestRunner: Returns interaction results
+deactivate UiInteractionEngine
+TestRunner --> XCUITest: Returns test execution results
+deactivate TestRunner
+XCUITest --> BE: Returns results of Test Plan execution
+deactivate XCUITest
+deactivate BE
+
+@enduml

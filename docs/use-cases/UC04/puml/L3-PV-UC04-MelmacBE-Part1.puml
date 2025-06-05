@@ -1,0 +1,219 @@
+@startuml L3-PV-UC04-MelmacBE-Part1
+
+title Level 3 - Run Test Plan (MelmacBE) - Part 1
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<Container (C4)>> MelmacBE"
+    participant "<<Controller>>\nTestExecutionController" as Controller
+    participant "<<Service>>\nTestExecutionService" as Service
+    participant "<<Repository>>\nTestPlanVersionRepository" as TestPlanVersionRepository
+    participant "<<Repository>>\nTestPlanRepository" as TestPlanRepository
+    participant "<<Repository>>\nMetricRepository" as MetricRepository
+    participant "<<Repository>>\nExecutionTypeRepository" as ExecutionTypeRepository
+    participant "<<Repository>>\nDeviceRepository" as DeviceRepository
+    participant "<<Repository>>\nOsRepository" as OsRepository
+    participant "<<Repository>>\nAppVersionRepository" as AppVersionRepository
+    participant "<<Repository>>\nAppRepository" as AppRepository
+    participant "<<Repository>>\nTestPlanExecutionTypeParamValueRepo" as TestPlanExecutionTypeParamValueRepo
+    participant "<<Repository>>\nTestPlanMetricParamValueRepo" as TestPlanMetricParamValueRepo
+    participant "<<Repository>>\nExecutionTypeParameterRepository" as ExecutionTypeParameterRepository
+    participant "<<Repository>>\nMetricParameterRepository" as MetricParameterRepository
+    participant "<<Repository>>\nMetricOutputRepository" as MetricOutputRepository
+    participant "<<Repository>>\nTestThresholdRepository" as TestThresholdRepository
+    participant "<<Repository>>\nThresholdTypeRepository" as ThresholdTypeRepository
+    participant "<<Repository>>\nTestExecutionRepository" as TestExecutionRepository
+    participant "<<Repository>>\nTestMetricOutputResultRepository" as TestMetricOutputResultRepository
+    participant "<<Mapper>>\nTestExecutionMapper" as TestExecutionMapper
+    participant "<<DTO>>\nTestConfigurationDTO" as ResponseDTO
+    participant "<<Runner>>\nTestRunner" as TestRunner
+end box
+
+participant "<<Container (C4)>>\nDriverRunner" as DriverRunner
+participant "<<External>>\nAndroid Device" as AndroidDevice
+participant "<<External>>\nAUT (Android)" as AUTA
+participant "<<External>>\niOS Device" as iOSDevice
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> Controller: Asks to run Test Plan
+activate Controller
+Controller -> Service: runTestExecution(TestPlanVersionId)
+activate Service
+Service -> TestPlanVersionRepository: findById(TestPlanVersionId)
+activate TestPlanVersionRepository
+TestPlanVersionRepository -> DB: Query to find TestPlanVersion by Id
+activate DB
+DB --> DB: Finds TestPlanVersion
+DB --> TestPlanVersionRepository: returns TestPlanVersion
+deactivate DB
+TestPlanVersionRepository --> Service: returns TestPlanVersion
+deactivate TestPlanVersionRepository
+Service -> TestPlanRepository: findById(TestPlanId)
+activate TestPlanRepository
+TestPlanRepository -> DB: Query to find TestPlan by Id
+activate DB
+DB --> DB: Finds TestPlan
+DB --> TestPlanRepository: returns TestPlan
+deactivate DB
+TestPlanRepository --> Service: returns TestPlan
+deactivate TestPlanRepository
+Service -> MetricRepository: findById(MetricId)
+activate MetricRepository
+MetricRepository -> DB: Query to find Metric by Id
+activate DB
+DB --> DB: Finds Metric
+DB --> MetricRepository: returns Metric
+deactivate DB
+MetricRepository --> Service: returns Metric
+deactivate MetricRepository
+Service -> ExecutionTypeRepository: findById(ExecutionTypeId)
+activate ExecutionTypeRepository
+ExecutionTypeRepository -> DB: Query to find ExecutionType by Id
+activate DB
+DB --> DB: Finds ExecutionType
+DB --> ExecutionTypeRepository: returns ExecutionType
+deactivate DB
+ExecutionTypeRepository --> Service: returns ExecutionType
+deactivate ExecutionTypeRepository
+Service -> DeviceRepository: findById(DeviceId)
+activate DeviceRepository
+DeviceRepository -> DB: Query to find Device by Id
+activate DB
+DB --> DB: Finds Device
+DB --> DeviceRepository: returns Device
+deactivate DB
+DeviceRepository --> Service: returns Device
+deactivate DeviceRepository
+Service -> OsRepository: findById(OsId)
+activate OsRepository
+OsRepository -> DB: Query to find Os by Id
+activate DB
+DB --> DB: Finds Os
+DB --> OsRepository: returns Os
+deactivate DB
+OsRepository --> Service: returns Os
+deactivate OsRepository
+Service -> AppVersionRepository: findById(AppVersionId)
+activate AppVersionRepository
+AppVersionRepository -> DB: Query to find AppVersion by Id
+activate DB
+DB --> DB: Finds AppVersion
+DB --> AppVersionRepository: returns AppVersion
+deactivate DB
+AppVersionRepository --> Service: returns AppVersion
+deactivate AppVersionRepository
+Service -> AppRepository: findById(AppId)
+activate AppRepository
+AppRepository -> DB: Query to find App by Id
+activate DB
+DB --> DB: Finds App
+DB --> AppRepository: returns App
+deactivate DB
+AppRepository --> Service: returns App
+deactivate AppRepository
+Service -> TestPlanExecutionTypeParamValueRepo: findAllByTestPlanVersionId(TestPlanVersionId)
+activate TestPlanExecutionTypeParamValueRepo
+TestPlanExecutionTypeParamValueRepo -> DB: Query to find all TestPlanExecutionTypeParamValues by TestPlanVersionId
+activate DB
+DB --> DB: Finds all TestPlanExecutionTypeParamValues
+DB --> TestPlanExecutionTypeParamValueRepo: returns TestPlanExecutionTypeParamValues
+deactivate DB
+TestPlanExecutionTypeParamValueRepo --> Service: returns TestPlanExecutionTypeParamValues
+deactivate TestPlanExecutionTypeParamValueRepo
+Service -> TestPlanMetricParamValueRepo: findAllByTestPlanVersionId(TestPlanVersionId)
+activate TestPlanMetricParamValueRepo
+TestPlanMetricParamValueRepo -> DB: Query to find all TestPlanMetricParamValues by TestPlanVersionId
+activate DB
+DB --> DB: Finds all TestPlanMetricParamValues
+DB --> TestPlanMetricParamValueRepo: returns TestPlanMetricParamValues
+deactivate DB
+TestPlanMetricParamValueRepo --> Service: returns TestPlanMetricParamValues
+deactivate TestPlanMetricParamValueRepo
+loop For each Test Plan Execution Type Param Value
+    Service -> ExecutionTypeParameterRepository: findById(ExecutionTypeParameterId)
+    activate ExecutionTypeParameterRepository
+    ExecutionTypeParameterRepository -> DB: Query to find ExecutionTypeParameter by Id
+    activate DB
+    DB --> DB: Finds ExecutionTypeParameter
+    DB --> ExecutionTypeParameterRepository: returns ExecutionTypeParameter
+    deactivate DB
+    ExecutionTypeParameterRepository --> Service: returns ExecutionTypeParameter
+    deactivate ExecutionTypeParameterRepository
+end
+loop For each Test Plan Metric Param Value
+    Service -> MetricParameterRepository: findById(MetricParameterId)
+    activate MetricParameterRepository
+    MetricParameterRepository -> DB: Query to find MetricParameter by Id
+    activate DB
+    DB --> DB: Finds MetricParameter
+    DB --> MetricParameterRepository: returns MetricParameter
+    deactivate DB
+    MetricParameterRepository --> Service: returns MetricParameter
+    deactivate MetricParameterRepository
+end
+Service -> MetricOutputRepository: findByMetricId(MetricId)
+activate MetricOutputRepository
+MetricOutputRepository -> DB: Query to find MetricOutputs by MetricId
+activate DB
+DB --> DB: Finds MetricOutputs
+DB --> MetricOutputRepository: returns MetricOutputs
+deactivate DB
+MetricOutputRepository --> Service: returns MetricOutputs
+deactivate MetricOutputRepository
+Service -> TestThresholdRepository: findByTestPlanVersionId(TestPlanVersionId)
+activate TestThresholdRepository
+TestThresholdRepository -> DB: Query to find TestThresholds by TestPlanVersionId
+activate DB
+DB --> DB: Finds TestThresholds
+DB --> TestThresholdRepository: returns TestThresholds
+deactivate DB
+TestThresholdRepository --> Service: returns TestThresholds
+deactivate TestThresholdRepository
+loop For each Test Threshold
+    Service -> ThresholdTypeRepository: findById(ThresholdTypeId)
+    activate ThresholdTypeRepository
+    ThresholdTypeRepository -> DB: Query to find ThresholdType by Id
+    activate DB
+    DB --> DB: Finds ThresholdType
+    DB --> ThresholdTypeRepository: returns ThresholdType
+    deactivate DB
+    ThresholdTypeRepository --> Service: returns ThresholdType
+    deactivate ThresholdTypeRepository
+    Service --> Service: Joins TestThreshold with ThresholdType and MetricOutput
+end
+Service -> TestExecutionMapper: toConfigDTO(parameters)
+activate TestExecutionMapper
+TestExecutionMapper -> ResponseDTO: map(parameters)
+activate ResponseDTO
+ResponseDTO --> ResponseDTO: Validates and initializes TestConfigurationResponseDTO
+ResponseDTO --> TestExecutionMapper: returns TestConfigurationResponseDTO
+deactivate ResponseDTO
+TestExecutionMapper --> Service: returns TestConfigurationResponseDTO
+deactivate TestExecutionMapper
+Service -> TestRunner: runTestExecution(TestConfigurationDTO)
+activate TestRunner
+ref over TestRunner
+    "See Test Plan Execution Part 2" at [../UC04/L3-PV-UC04-MelmacBE-Part2.puml]
+end ref
+deactivate TestRunner
+deactivate Service
+deactivate Controller
+deactivate D
+
+
+@enduml

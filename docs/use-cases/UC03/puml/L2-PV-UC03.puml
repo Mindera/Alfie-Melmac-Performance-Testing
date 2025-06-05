@@ -1,0 +1,42 @@
+@startuml L2-PV-UC03
+
+title Level 2 - Run Test Suite
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<System>> Melmac Performance Testing Framework" 
+    participant "<<Container (C4)>>\nMelmacBE" as BE
+end box
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> BE: Request to run Test Suite
+activate BE
+loop For each Test Plan
+    ref over BE
+            "See Test Plan Execution" at [../UC04/L2-PV-UC04.puml]
+    end ref
+end loop
+BE -> DB: Save Test Suite Execution Results
+activate DB
+DB --> BE: Test Suite Execution Results Saved
+deactivate DB
+BE -> D: Test Suite Execution Completed
+deactivate BE
+deactivate D
+
+@enduml

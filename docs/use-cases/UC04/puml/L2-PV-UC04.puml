@@ -1,0 +1,97 @@
+@startuml L2-PV-UC04
+
+title Level 2 - Run Test Plan
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+box "<<System>> Melmac Performance Testing Framework"
+    participant "<<Container (C4)>>\nMelmacBE" as BE
+    participant "<<Container (C4)>>\nDriverRunner" as DriverRunner
+end box
+
+participant "<<External>>\nAndroid Device" as AndroidDevice
+participant "<<External>>\nAUT (Android)" as AUTA
+participant "<<External>>\niOS Device" as iOSDevice
+participant "<<External>>\nAUT (iOS)" as AUTI
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> BE: Request to run Test Plan
+activate BE
+alt Test Plan for Android
+    BE -> AndroidDevice: Boot Android Device
+    activate AndroidDevice
+    AndroidDevice --> BE: Android Device Ready
+    deactivate AndroidDevice
+    BE -> AndroidDevice: Install AUT on Android Device
+    activate AndroidDevice
+    AndroidDevice --> BE: AUT Installed
+    deactivate AndroidDevice
+    BE -> AUTA: Launch AUT on Android Device
+    activate AUTA
+    AUTA --> BE: AUT Launched
+    deactivate AUTA
+    BE -> AndroidDevice: Execute Test Plan Steps
+    activate AndroidDevice
+    AndroidDevice --> BE: Test Plan Steps Executed
+    deactivate AndroidDevice
+    BE -> AndroidDevice: Uninstall AUT from Android Device
+    activate AndroidDevice
+    AndroidDevice --> BE: AUT Uninstalled
+    deactivate AndroidDevice
+    BE -> AndroidDevice: Shutdown Android Device
+    activate AndroidDevice
+    AndroidDevice --> BE: Android Device Shutdown
+    deactivate AndroidDevice
+else Test Plan for iOS
+    BE -> iOSDevice: Boot iOS Device
+    activate iOSDevice
+    iOSDevice --> BE: iOS Device Ready
+    deactivate iOSDevice
+    BE -> iOSDevice: Install AUT on iOS Device
+    activate iOSDevice
+    iOSDevice --> BE: AUT Installed
+    deactivate iOSDevice
+    BE -> DriverRunner: Execute Test Plan Steps on iOS Device
+    activate DriverRunner
+    DriverRunner -> AUTI: Launch AUT on iOS Device
+    activate AUTI
+    AUTI --> DriverRunner: AUT Launched
+    deactivate AUTI
+    DriverRunner -> iOSDevice: Execute Test Plan Steps
+    activate iOSDevice
+    iOSDevice --> DriverRunner: Test Plan Steps Executed
+    deactivate iOSDevice
+    DriverRunner --> BE: Return results for iOS Test Plan
+    deactivate DriverRunner
+    BE -> iOSDevice: Uninstall AUT from iOS Device
+    activate iOSDevice
+    iOSDevice --> BE: AUT Uninstalled
+    deactivate iOSDevice
+    BE -> iOSDevice: Shutdown iOS Device
+    activate iOSDevice
+    iOSDevice --> BE: iOS Device Shutdown
+    deactivate iOSDevice
+    end alt
+BE -> DB: Save Test Plan Results
+activate DB
+DB --> BE: Results Saved
+deactivate DB
+BE -> D: Test Plan Execution Completed
+deactivate BE
+deactivate D
+@enduml

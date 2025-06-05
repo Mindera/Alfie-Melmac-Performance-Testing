@@ -1,0 +1,90 @@
+@startuml L1-PV-UC04
+
+title Level 1 - Run Test Plan
+
+hide empty members
+
+skinparam class {
+    BackgroundColor<<valueObject>> #D6EAF8
+    BackgroundColor<<root>> #FDEBD0
+    BackgroundColor<<service>> #D1F2EB
+    BackgroundColor #FEF9E7
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor #EBF5FB
+}
+
+actor Developer as D
+
+participant "System" as System
+participant "<<External>>\nAndroid Device" as AndroidDevice
+participant "<<External>>\nAUT (Android)" as AUTA
+participant "<<External>>\niOS Device" as iOSDevice
+participant "<<External>>\nAUT (iOS)" as AUTI
+participant "<<External>>\nDatabase" as DB
+
+activate D
+D -> System: Request to run Test Plan
+activate System
+alt Test Plan for Android
+    System -> AndroidDevice: Boot Android Device
+    activate AndroidDevice
+    AndroidDevice --> System: Android Device Ready
+    deactivate AndroidDevice
+    System -> AndroidDevice: Install AUT on Android Device
+    activate AndroidDevice
+    AndroidDevice --> System: AUT Installed
+    deactivate AndroidDevice
+    System -> AUTA: Launch AUT on Android Device
+    activate AUTA
+    AUTA --> System: AUT Launched
+    deactivate AUTA
+    System -> AndroidDevice: Execute Test Plan Steps
+    activate AndroidDevice
+    AndroidDevice --> System: Test Plan Steps Executed
+    deactivate AndroidDevice
+    System -> AndroidDevice: Uninstall AUT from Android Device
+    activate AndroidDevice
+    AndroidDevice --> System: AUT Uninstalled
+    deactivate AndroidDevice
+    System -> AndroidDevice: Shutdown Android Device
+    activate AndroidDevice
+    AndroidDevice --> System: Android Device Shutdown
+    deactivate AndroidDevice
+else Test Plan for iOS
+    System -> iOSDevice: Boot iOS Device
+    activate iOSDevice
+    iOSDevice --> System: iOS Device Ready
+    deactivate iOSDevice
+    System -> iOSDevice: Install AUT on iOS Device
+    activate iOSDevice
+    iOSDevice --> System: AUT Installed
+    deactivate iOSDevice
+    System -> AUTI: Launch AUT on iOS Device
+    activate AUTI
+    AUTI --> System: AUT Launched
+    deactivate AUTI
+    System -> iOSDevice: Execute Test Plan Steps
+    activate iOSDevice
+    iOSDevice --> System: Test Plan Steps Executed
+    deactivate iOSDevice
+    System -> iOSDevice: Uninstall AUT from iOS Device
+    activate iOSDevice
+    iOSDevice --> System: AUT Uninstalled
+    deactivate iOSDevice
+    System -> iOSDevice: Shutdown iOS Device
+    activate iOSDevice
+    iOSDevice --> System: iOS Device Shutdown
+    deactivate iOSDevice
+    end alt
+    System -> DB: Save Test Plan Results
+    activate DB
+    DB --> System: Results Saved
+    deactivate DB
+    System -> D: Test Plan Execution Completed
+    deactivate System
+    deactivate D
+
+    @enduml
