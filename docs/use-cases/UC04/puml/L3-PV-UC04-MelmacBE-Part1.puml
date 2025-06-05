@@ -1,6 +1,6 @@
-@startuml L3-PV-UC04-MelmacBE
+@startuml L3-PV-UC04-MelmacBE-Part1
 
-title Level 3 - Run Test Plan (MelmacBE)
+title Level 3 - Run Test Plan (MelmacBE) - Part 1
 
 hide empty members
 
@@ -41,10 +41,6 @@ box "<<Container (C4)>> MelmacBE"
     participant "<<Mapper>>\nTestExecutionMapper" as TestExecutionMapper
     participant "<<DTO>>\nTestConfigurationDTO" as ResponseDTO
     participant "<<Runner>>\nTestRunner" as TestRunner
-    participant "<<Helper>>\nDeviceManager" as DeviceManager
-    participant "<<Helper>>\nAppManager" as AppManager
-    participant "<<Helper>>\nAndroidTestRunner" as AndroidTestRunner
-    participant "<<DTO>>\nTestExecutionResponseDTO" as TestExecutionResponseDTO
 end box
 
 participant "<<Container (C4)>>\nDriverRunner" as DriverRunner
@@ -211,123 +207,13 @@ TestExecutionMapper --> Service: returns TestConfigurationResponseDTO
 deactivate TestExecutionMapper
 Service -> TestRunner: runTestExecution(TestConfigurationDTO)
 activate TestRunner
-alt Test Execution for Android
-    TestRunner -> DeviceManager: boot(Device)
-    activate DeviceManager
-    DeviceManager -> AndroidDevice: boot(Device)
-    activate AndroidDevice
-    AndroidDevice --> DeviceManager: Android Device Ready
-    deactivate AndroidDevice
-    DeviceManager --> TestRunner: Android Device Ready
-    deactivate DeviceManager
-    TestRunner -> AppManager: install(App)
-    activate AppManager
-    AppManager -> AndroidDevice: Install App
-    activate AndroidDevice
-    AndroidDevice --> AppManager: AUT Installed
-    deactivate AndroidDevice
-    AppManager --> TestRunner: AUT Installed
-    deactivate AppManager
-    TestRunner -> AndroidTestRunner: launchAndRun(TestConfigurationDTO)
-    activate AndroidTestRunner
-    AndroidTestRunner -> AUTA: Launch AUT on Android Device
-    activate AUTA
-    AUTA --> AndroidTestRunner: AUT Launched
-    deactivate AUTA
-    AndroidTestRunner -> AndroidDevice: Execute Test Plan Steps
-    activate AndroidDevice
-    AndroidDevice --> AndroidTestRunner: Test Plan Steps Executed
-    deactivate AndroidDevice
-    AndroidTestRunner --> TestRunner: Return results for Android Test Plan
-    deactivate AndroidTestRunner
-    TestRunner -> AppManager: uninstall(App)
-    activate AppManager 
-    AppManager -> AndroidDevice: Uninstall App
-    activate AndroidDevice
-    AndroidDevice --> AppManager: AUT Uninstalled
-    deactivate AndroidDevice
-    AppManager --> TestRunner: AUT Uninstalled
-    deactivate AppManager
-    TestRunner -> DeviceManager: shutdown(Device)
-    activate DeviceManager
-    DeviceManager -> AndroidDevice: Shutdown Android Device
-    activate AndroidDevice
-    AndroidDevice --> DeviceManager: Android Device Shutdown
-    deactivate AndroidDevice
-    DeviceManager --> TestRunner: Android Device Shutdown
-    deactivate DeviceManager
-else Test Execution for iOS
-    TestRunner -> DeviceManager: boot(Device)
-    activate DeviceManager
-    DeviceManager -> iOSDevice: boot(Device)
-    activate iOSDevice
-    iOSDevice --> DeviceManager: iOS Device Ready
-    deactivate iOSDevice
-    DeviceManager --> TestRunner: iOS Device Ready
-    deactivate DeviceManager
-    TestRunner -> AppManager: install(App)
-    activate AppManager
-    AppManager -> iOSDevice: Install App
-    activate iOSDevice
-    iOSDevice --> AppManager: AUT Installed
-    deactivate iOSDevice
-    AppManager --> TestRunner: AUT Installed
-    deactivate AppManager
-    TestRunner -> DriverRunner: launchAndRun(TestConfigurationDTO)
-    activate DriverRunner
-    DriverRunner --> DriverRunner: Runs Test Plan Steps on iOS Device
-    DriverRunner --> TestRunner: Return results for iOS Test Plan
-    deactivate DriverRunner
-    TestRunner -> AppManager: uninstall(App)
-    activate AppManager 
-    AppManager -> iOSDevice: Uninstall App
-    activate iOSDevice
-    iOSDevice --> AppManager: AUT Uninstalled
-    deactivate iOSDevice
-    AppManager --> TestRunner: AUT Uninstalled
-    deactivate AppManager
-    TestRunner -> DeviceManager: shutdown(Device)
-    activate DeviceManager
-    DeviceManager -> iOSDevice: Shutdown iOS Device
-    activate iOSDevice
-    iOSDevice --> DeviceManager: iOS Device Shutdown
-    deactivate iOSDevice
-    DeviceManager --> TestRunner: iOS Device Shutdown
-    deactivate DeviceManager
-end alt
-TestRunner --> Service: returns TestExecution
+ref over TestRunner
+    "See Test Plan Execution Part 2" at [../UC04/L3-PV-UC04-MelmacBE-Part2.puml]
+end ref
 deactivate TestRunner
-Service -> TestExecutionRepository: save(TestExecution)
-activate TestExecutionRepository
-TestExecutionRepository -> DB: Query to save TestExecution
-activate DB
-DB --> DB: Saves TestExecution
-DB --> TestExecutionRepository: returns saved TestExecution
-deactivate DB
-TestExecutionRepository --> Service: returns TestExecution
-deactivate TestExecutionRepository
-Service -> TestMetricOutputResultRepository: saveAll(TestMetricOutputResults)
-activate TestMetricOutputResultRepository
-TestMetricOutputResultRepository -> DB: Query to save TestMetricOutputResults
-activate DB
-DB --> DB: Saves TestMetricOutputResults
-DB --> TestMetricOutputResultRepository: returns saved TestMetricOutputResults
-deactivate DB
-TestMetricOutputResultRepository --> Service: returns TestMetricOutputResults
-deactivate TestMetricOutputResultRepository
-Service -> TestExecutionMapper: toDTO(TestExecution)
-activate TestExecutionMapper
-TestExecutionMapper -> TestExecutionResponseDTO: map(TestExecution)
-activate TestExecutionResponseDTO
-TestExecutionResponseDTO --> TestExecutionResponseDTO: Validates and initializes TestExecutionResponseDTO
-TestExecutionResponseDTO --> TestExecutionMapper: returns TestExecutionResponseDTO
-deactivate TestExecutionResponseDTO
-TestExecutionMapper --> Service: returns TestExecutionResponseDTO
-deactivate TestExecutionMapper
-Service --> Controller: TestExecutionResponseDTO
 deactivate Service
-Controller --> D: Confirmation of Test Plan Execution
 deactivate Controller
 deactivate D
+
 
 @enduml

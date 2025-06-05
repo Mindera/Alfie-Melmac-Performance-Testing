@@ -21,15 +21,6 @@ actor Developer as D
 box "<<Container (C4)>> MelmacBE"
     participant "<<Controller>>\nTestPlanController" as Controller
     participant "<<Service>>\nTestPlanService" as Service
-    participant "<<Domain>>\nTestPlan" as TestPlan
-    participant "<<Repository>>\nMetricRepository" as MetricRepo
-    participant "<<Repository>>\nTestPlanRepository" as PlanRepo
-    participant "<<Service>>\nDeviceService" as DeviceService
-    participant "<<Repository>>\nOSRepository" as OSRepo
-    participant "<<Repository>>\nOSVersionRepository" as OSVersionRepo
-    participant "<<Repository>>\nDeviceRepository" as DeviceRepo
-    participant "<<Repository>>\nAppRepository" as AppRepo
-    participant "<<Repository>>\nAppVersionRepository" as AppVersionRepo
     participant "<<Repository>>\nExecutionTypeRepository" as ExecutionTypeRepo
     participant "<<Domain>>\nTestPlanVersion" as TestPlanVersion
     participant "<<Repository>>\nTestPlanVersionRepository" as PlanVersionRepo
@@ -52,155 +43,11 @@ end box
 participant "<<External>>\nDatabase" as DB
 
 activate D
-D -> Controller: Asks to create a new Test Plan
 activate Controller
-Controller -> Service: createTestPlan(TestPlanVersionRequestDTO)
 activate Service
-Service -> MetricRepo: findByName(MetricName)
-activate MetricRepo
-MetricRepo -> DB: Query to find Metric by name
-activate DB
-DB --> DB: Finds Metric
-DB --> MetricRepo: returns Metric
-deactivate DB
-MetricRepo --> Service: returns Metric
-deactivate MetricRepo
-Service -> TestPlan: create(TestPlanVersionRequestDTO, Metric)
-activate TestPlan
-TestPlan --> TestPlan: Validates and initializes TestPlan
-TestPlan --> Service: returns TestPlan
-deactivate TestPlan
-Service -> PlanRepo: save(TestPlan)
-activate PlanRepo
-PlanRepo -> DB: Query to save TestPlan
-activate DB
-DB --> DB: Saves TestPlan
-DB --> PlanRepo: returns saved TestPlanId
-deactivate DB
-PlanRepo --> Service: returns TestPlanId
-deactivate PlanRepo
-Service -> DeviceService: getDeviceByName(DeviceName)
-activate DeviceService
-DeviceService -> DeviceService: Finds Device by name
-DeviceService --> Service: returns Device
-deactivate DeviceService
-Service -> OSRepo: findByName(OSName)
-activate OSRepo
-OSRepo -> DB: Query to find OS by name
-activate DB
-alt OS found
-    DB --> DB: Finds OS
-    DB --> OSRepo: returns OS
-else OS not found
-    DB --> DB: OS not found
-    DB --> OSRepo: returns null
-    deactivate DB
-    OSRepo --> Service: throws NotFoundException
-    deactivate OSRepo
-    Service -> OSRepo: save(OperatingSystem)
-    activate OSRepo
-    OSRepo -> DB: Query to save OperatingSystem
-    activate DB
-    DB --> DB: Saves OperatingSystem
-    DB --> OSRepo: returns saved OperatingSystem
-end
-deactivate DB
-OSRepo --> Service: returns OperatingSystem
-deactivate OSRepo
-Service -> OSVersionRepo: searchByOperSysId(OperatingSystemId)
-activate OSVersionRepo
-OSVersionRepo -> DB: Query to find OSVersions by OperatingSystemId
-activate DB
-alt OSVersions found
-    DB --> DB: Finds OSVersions
-    DB --> OSVersionRepo: returns OSVersions
-else OSVersions not found
-    DB --> DB: No OSVersions found
-    DB --> OSVersionRepo: returns empty list
-end
-deactivate DB
-OSVersionRepo --> Service: returns list of OSVersions
-deactivate OSVersionRepo
-alt OSVersion is not in the list
-    Service -> OSVersionRepo: save(OperatingSystemVersion)
-    activate OSVersionRepo
-    OSVersionRepo -> DB: Query to save OperatingSystemVersion
-    activate DB
-    DB --> DB: Saves OperatingSystemVersion
-    DB --> OSVersionRepo: returns saved OperatingSystemVersion
-    deactivate DB
-end
-OSVersionRepo --> Service: returns saved OperatingSystemVersion
-deactivate OSVersionRepo
-Service -> DeviceRepo: findBySerialNumber(DeviceSerialNumber)
-activate DeviceRepo
-DeviceRepo -> DB: Query to find Device by serial number
-activate DB
-alt Device found
-    DB --> DB: Finds Device
-    DB --> DeviceRepo: returns Device
-else Device not found
-    DB --> DB: Device not found
-    DB --> DeviceRepo: returns null
-    deactivate DB
-    DeviceRepo --> Service: throws NotFoundException
-    deactivate DeviceRepo
-    Service -> DeviceRepo: save(Device)
-    activate DeviceRepo
-    DeviceRepo -> DB: Query to save Device
-    activate DB
-    DB --> DB: Saves Device
-    DB --> DeviceRepo: returns saved Device
-    deactivate DB
-end
-DeviceRepo --> Service: returns Device
-deactivate DeviceRepo
-Service -> AppRepo: findByName(AppName)
-activate AppRepo
-AppRepo -> DB: Query to find App by name
-activate DB
-alt App found
-    DB --> DB: Finds App
-    DB --> AppRepo: returns App
-else App not found
-    DB --> DB: App not found
-    DB --> AppRepo: returns null
-    deactivate DB
-    AppRepo --> Service: throws NotFoundException
-    deactivate AppRepo
-    Service -> AppRepo: save(App)
-    activate AppRepo
-    AppRepo -> DB: Query to save App
-    activate DB
-    DB --> DB: Saves App
-    DB --> AppRepo: returns saved App
-    deactivate DB
-end
-AppRepo --> Service: returns App
-deactivate AppRepo
-Service -> AppVersionRepo: searchByAppIdAndVersion(AppId, AppVersion)
-activate AppVersionRepo
-AppVersionRepo -> DB: Query to find AppVersions by AppId and version
-activate DB
-alt AppVersions found
-    DB --> DB: Finds AppVersions
-    DB --> AppVersionRepo: returns AppVersions
-else AppVersions not found
-    DB --> DB: No AppVersions found
-    DB --> AppVersionRepo: returns empty list
-    deactivate DB
-    AppVersionRepo --> Service: throws NotFoundException
-    deactivate AppVersionRepo
-    Service -> AppVersionRepo: save(AppVersion)
-    activate AppVersionRepo
-    AppVersionRepo -> DB: Query to save AppVersion
-    activate DB
-    DB --> DB: Saves AppVersion
-    DB --> AppVersionRepo: returns saved AppVersion
-    deactivate DB
-end
-AppVersionRepo --> Service: returns AppVersion
-deactivate AppVersionRepo
+ref over Service 
+    "See Test Plan Creation Part 1" at [./UC02/L3-PV-UC02-Part1.puml]
+end ref
 Service -> ExecutionTypeRepo: findByName(ExecutionTypeName)
 activate ExecutionTypeRepo
 ExecutionTypeRepo -> DB: Query to find ExecutionType by name

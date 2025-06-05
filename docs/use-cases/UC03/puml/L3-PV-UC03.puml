@@ -23,7 +23,7 @@ box "<<Container (C4)>> MelmacBE"
     participant "<<Service>>\nTestSuiteService" as Service
     participant "<<Repository>>\nTestSuiteVersionRepository" as SuiteRepo
     participant "<<Repository>>\nTestSuiteVersionPlanRepository" as VersionRepo
-    participant "<<Service>>\nTestPlanService" as TestExecutionService
+    participant "<<Service>>\nTestExecutionService" as TestExecutionService
     participant "<<Domain>>\nSuiteExecution" as SuiteExecution
     participant "<<Repository>>\nSuiteExecutionRepository" as ExecutionRepo
     participant "<<Mapper>>\nSuiteExecutionMapper" as ExecutionMapper
@@ -58,7 +58,9 @@ loop For each Test Plan
     Service -> TestExecutionService: runTestExecution(TestPlan)
     activate TestExecutionService
     ref over TestExecutionService
-            "See Test Plan Execution" at [../UC04/L3-PV-UC04-MelmacBE.puml] and [../UC04/L3-PV-UC04-DriverRunner.puml]
+        "See Test Plan Execution Part 1" at [../UC04/L3-PV-UC04-MelmacBE-Part1.puml]
+        "See Test Plan Execution Part 2" at [../UC04/L3-PV-UC04-MelmacBE-Part2.puml]
+        "See DriverRunner Execution" at [../UC04/L3-PV-UC04-DriverRunner.puml]
     end ref
     TestExecutionService --> Service: returns Test Plan Execution Results
     deactivate TestExecutionService      
