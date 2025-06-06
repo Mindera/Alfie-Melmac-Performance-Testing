@@ -1,12 +1,19 @@
-# 1. Create Test Suite
+# Alfie Melmac Performance Testing - API Usage
+
+## 1. Create Test Suite
+
+```bash
 curl -X POST http://localhost:8080/test-suites \
   -H "Content-Type: application/json" \
   -d '{
     "testSuiteName": "My Test Suite",
     "testSuiteDescription": "Description of my test suite"
   }'
+```
 
-# 2. Create Android Test Plan
+## 2. Create Android Test Plan
+
+```bash
 curl -X POST http://localhost:8080/test-plans \
   -H "Content-Type: application/json" \
   -d '{
@@ -39,8 +46,11 @@ curl -X POST http://localhost:8080/test-plans \
     "executionTypeParameters": [],
     "testSuiteVersionId": 1
   }'
+```
 
-# 3. Create iOS Test Plan
+## 3. Create iOS Test Plan
+
+```bash
 curl -X POST http://localhost:8080/test-plans \
   -H "Content-Type: application/json" \
   -d '{
@@ -72,9 +82,16 @@ curl -X POST http://localhost:8080/test-plans \
     "executionTypeParameters": [],
     "testSuiteVersionId": 1
   }'
+```
 
-# 4. Execute Test Suite
+## 4. Execute Test Suite
+
+```bash
 curl -X POST http://localhost:8080/test-suites/1/run
+```
 
-# 5. Execute Single Test Plan
+## 5. Execute Single Test Plan
+
+```bash
 curl -X POST "http://localhost:8080/test-executions/run?testPlanVersionId=2"
+```

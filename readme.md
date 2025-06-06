@@ -104,4 +104,14 @@ curl -X GET http://localhost:8080/api/endpoint
 
 Replace `GET` with the desired HTTP method and update the URL to match your application's endpoint.
 
+You can find API usage examples at [`docs/global-artifacts/script.md`](docs/global-artifacts/script.md). This document provides detailed, step-by-step instructions on how to create test plans and execute them using the API.
+
+## 8. How to Configure CI/CD workflows
+
+To configure CI/CD workflows, you can use tools like [GitHub Actions](https://docs.github.com/en/actions), [GitLab CI](https://docs.gitlab.com/ee/ci/), or [Jenkins](https://www.jenkins.io/doc/).  
+You can find example workflow files in the [`.github/workflows`](.github/workflows) directory. These files are clickable and define how your project is built, tested, and deployed.  
+Click on a workflow file to view or edit its configuration directly in your repository.
+
+**Note:** The workflow templates provided are static. If you need to change any parameters (such as environment variables, build steps, or triggers), you must edit the workflow YAML files and commit the changes to your repository for them to take effect.
+
 <img width=100% src="https://capsule-render.vercel.app/api?type=waving&height=120&color=3A4A51&reversal=true&textBg=false&section=footer"/>

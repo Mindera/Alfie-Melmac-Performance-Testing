@@ -1,7 +1,7 @@
 @startuml use-case-diagram
 left to right direction
 
-actor "Developer or CI/CD Pipeline" as Dev
+actor "Developer" as Dev
 
 rectangle "Melmac Performance Testing Framework" {
     usecase "UC1: As a Developer, I want to create a Test Suite" as UC1
