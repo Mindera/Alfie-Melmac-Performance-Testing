@@ -1,0 +1,16 @@
+{
+  "server": {
+    "host": "localhost",
+    "port": 8080
+  },
+  "database": {
+    "host": "vsgate-s1.dei.isep.ipp.pt",
+    "port": 10704,
+    "user": "sa",
+    "password": "U14GbRFkxA==Xa5",
+    "database": "Melmac",
+    "encrypt": true,
+    "trustServerCertificate": true,
+    "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    }
+  }
