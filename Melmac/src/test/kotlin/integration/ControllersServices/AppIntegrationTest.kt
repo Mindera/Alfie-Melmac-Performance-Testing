@@ -259,6 +259,7 @@ class AppIntegrationTest : KoinTest {
 
         mockkObject(Tools)
         every { Tools.isMac() } returns false
+        every { Tools.getApkVersion(any()) } returns "1.2.3"
         every { versionMapper.toDto(any()) } returns AppVersionResponseDTO(1, 1, "1.2.3")
 
         val response = client.get("/apps/folder/TestApp.apk/versions")
