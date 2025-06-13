@@ -28,6 +28,10 @@ class TestPlanVersionService(
         private val testPlanExecutionTypeParameterRepository:
                 ITestPlanExecutionTypeParameterValueRepository,
         private val testSuiteVersionPlanRepository: ITestSuiteVersionPlanRepository,
+        private val testPlanVersionMapper: TestPlanVersionMapper,
+        private val testThresholdMapper: TestThresholdMapper,
+        private val testMetricParameterMapper: TestMetricParameterMapper,
+        private val testExecutionTypeParameterMapper: TestExecutionTypeParameterMapper
 ) : ITestPlanVersionService {
 
     /**
@@ -42,15 +46,15 @@ class TestPlanVersionService(
         return versions.map { version: TestPlanVersion ->
             val thresholds =
                 testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
-                    .map { threshold -> TestThresholdMapper.toDto(threshold) }
+                    .map { threshold -> testThresholdMapper.toDto(threshold) }
 
             val metricParameters =
                 testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                    .map { parameter -> TestMetricParameterMapper.toDto(parameter) }
+                    .map { parameter -> testMetricParameterMapper.toDto(parameter) }
 
             val executionTypeParameters =
                 testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                    .map { parameter -> TestExecutionTypeParameterMapper.toDto(parameter) }
+                    .map { parameter -> testExecutionTypeParameterMapper.toDto(parameter) }
 
             val testSuiteVersionId =
                 testSuiteVersionPlanRepository
@@ -59,7 +63,7 @@ class TestPlanVersionService(
                     ?.testSuiteVersionTestSuiteVersionId
                     ?: 0
 
-            TestPlanVersionMapper.toDto(
+            testPlanVersionMapper.toDto(
                 version,
                 thresholds,
                 metricParameters,
@@ -84,15 +88,15 @@ class TestPlanVersionService(
 
         val thresholds =
             testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
-                .map { threshold -> TestThresholdMapper.toDto(threshold) }
+                .map { threshold -> testThresholdMapper.toDto(threshold) }
 
         val metricParameters =
             testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                .map { parameter -> TestMetricParameterMapper.toDto(parameter) }
+                .map { parameter -> testMetricParameterMapper.toDto(parameter) }
 
         val executionTypeParameters =
             testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                .map { parameter -> TestExecutionTypeParameterMapper.toDto(parameter) }
+                .map { parameter -> testExecutionTypeParameterMapper.toDto(parameter) }
 
         val testSuiteVersionId =
             testSuiteVersionPlanRepository
@@ -101,7 +105,7 @@ class TestPlanVersionService(
                 ?.testSuiteVersionTestSuiteVersionId
                 ?: 0
 
-        return TestPlanVersionMapper.toDto(
+        return testPlanVersionMapper.toDto(
             version,
             thresholds,
             metricParameters,
@@ -122,15 +126,15 @@ class TestPlanVersionService(
 
         val thresholds =
             testThresholdRepository.findByTestPlanVersionId(version.testPlanVersionId!!)
-                .map { threshold -> TestThresholdMapper.toDto(threshold) }
+                .map { threshold -> testThresholdMapper.toDto(threshold) }
 
         val metricParameters =
             testPlanMetricParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                .map { parameter -> TestMetricParameterMapper.toDto(parameter) }
+                .map { parameter -> testMetricParameterMapper.toDto(parameter) }
 
         val executionTypeParameters =
             testPlanExecutionTypeParameterRepository.findByTestPlanVersionId(version.testPlanVersionId)
-                .map { parameter -> TestExecutionTypeParameterMapper.toDto(parameter) }
+                .map { parameter -> testExecutionTypeParameterMapper.toDto(parameter) }
 
         val testSuiteVersionId =
             testSuiteVersionPlanRepository
@@ -139,7 +143,7 @@ class TestPlanVersionService(
                 ?.testSuiteVersionTestSuiteVersionId
                 ?: 0
 
-        return TestPlanVersionMapper.toDto(
+        return testPlanVersionMapper.toDto(
             version,
             thresholds,
             metricParameters,

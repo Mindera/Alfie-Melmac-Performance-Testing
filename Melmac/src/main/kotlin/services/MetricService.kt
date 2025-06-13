@@ -19,13 +19,23 @@ import mappers.ExecutionTypeParameterMapper
  * @property metricParameterRepository Repository for MetricParameter entities.
  * @property executionTypeRepository Repository for ExecutionType entities.
  * @property executionTypeParameterRepository Repository for ExecutionTypeParameter entities.
+ * @property metricMapper Mapper for converting Metric domain objects to DTOs.
+ * @property metricOutputMapper Mapper for converting MetricOutput domain objects to DTOs.
+ * @property metricParameterMapper Mapper for converting MetricParameter domain objects to DTOs.
+ * @property executionTypeMapper Mapper for converting ExecutionType domain objects to DTOs.
+ * @property executionTypeParameterMapper Mapper for converting ExecutionTypeParameter domain objects to DTOs.
  */
 class MetricService(
         private val metricRepository: IMetricRepository,
         private val metricOutputRepository: IMetricOutputRepository,
         private val metricParameterRepository: IMetricParameterRepository,
         private val executionTypeRepository: IExecutionTypeRepository,
-        private val executionTypeParameterRepository: IExecutionTypeParameterRepository
+        private val executionTypeParameterRepository: IExecutionTypeParameterRepository,
+        private val metricMapper: MetricMapper,
+        private val metricOutputMapper: MetricOutputMapper,
+        private val metricParameterMapper: MetricParameterMapper,
+        private val executionTypeMapper: ExecutionTypeMapper,
+        private val executionTypeParameterMapper: ExecutionTypeParameterMapper
 ) : IMetricService {
 
     /**
@@ -35,7 +45,7 @@ class MetricService(
      */
     override fun getAllMetrics(): List<MetricResponseDTO> {
         return metricRepository.findAll().map { metric ->
-            MetricMapper.toDto(metric)
+            metricMapper.toDto(metric)
         }
     }
 
@@ -47,7 +57,7 @@ class MetricService(
      */
     override fun getMetricById(id: Int): MetricResponseDTO? {
         val metric = metricRepository.findById(id) ?: return null
-        return MetricMapper.toDto(metric)
+        return metricMapper.toDto(metric)
     }
 
     /**
@@ -58,7 +68,7 @@ class MetricService(
      */
     override fun getOutputsByMetricId(metricId: Int): List<MetricOutputResponseDTO> {
         return metricOutputRepository.findByMetricId(metricId).map { output: MetricOutput ->
-            MetricOutputMapper.toDto(output)
+            metricOutputMapper.toDto(output)
         }
     }
 
@@ -70,7 +80,7 @@ class MetricService(
      */
     override fun getParametersByMetricId(metricId: Int): List<MetricParameterResponseDTO> {
         return metricParameterRepository.findByMetricId(metricId).map { param ->
-            MetricParameterMapper.toDto(param)
+            metricParameterMapper.toDto(param)
         }
     }
 
@@ -82,7 +92,7 @@ class MetricService(
      */
     override fun getExecutionTypesByMetricId(metricId: Int): List<ExecutionTypeResponseDTO> {
         return executionTypeRepository.findByMetricId(metricId).map { execType: ExecutionType ->
-            ExecutionTypeMapper.toDto(execType)
+            executionTypeMapper.toDto(execType)
         }
     }
 
@@ -97,7 +107,7 @@ class MetricService(
     ): List<ExecutionTypeParameterResponseDTO> {
         return executionTypeParameterRepository.findByExecutionTypeId(executionTypeId).map {
                 param: ExecutionTypeParameter ->
-            ExecutionTypeParameterMapper.toDto(param)
+            executionTypeParameterMapper.toDto(param)
         }
     }
 }

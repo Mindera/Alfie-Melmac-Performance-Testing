@@ -55,7 +55,11 @@ class TestPlanService(
         private val thresholdTypeRepository: IThresholdTypeRepository,
         private val executionTypeRepository: IExecutionTypeRepository,
         private val metricParameterRepository: IMetricParameterRepository,
-        private val executionTypeParameterRepository: IExecutionTypeParameterRepository
+        private val executionTypeParameterRepository: IExecutionTypeParameterRepository,
+        private val testThresholdMapper: TestThresholdMapper,
+        private val testMetricParameterMapper: TestMetricParameterMapper,
+        private val testExecutionTypeParameterMapper: TestExecutionTypeParameterMapper,
+        private val testPlanVersionMapper: TestPlanVersionMapper
 ) : ITestPlanService {
 
         /**
@@ -114,12 +118,12 @@ class TestPlanService(
                 val savedExecutionTypeParameters =
                         saveExecutionTypeParameters(request, savedTestPlanVersion)
                 saveTestSuiteVersionPlan(request, savedTestPlanVersion)
-                return TestPlanVersionMapper.toDto(
+                return testPlanVersionMapper.toDto(
                         savedTestPlanVersion,
-                        savedThresholds.map { TestThresholdMapper.toDto(it) },
-                        savedMetricParameters.map { TestMetricParameterMapper.toDto(it) },
+                        savedThresholds.map { testThresholdMapper.toDto(it) },
+                        savedMetricParameters.map { testMetricParameterMapper.toDto(it) },
                         savedExecutionTypeParameters.map {
-                                TestExecutionTypeParameterMapper.toDto(it)
+                                testExecutionTypeParameterMapper.toDto(it)
                         },
                         request.testSuiteVersionId
                 )
@@ -394,7 +398,7 @@ class TestPlanService(
                                                 ?: throw IllegalArgumentException(
                                                         "Threshold type not found: ${threshold.thresholdType}"
                                                 )
-                                TestThresholdMapper.fromRequestDto(
+                                testThresholdMapper.fromRequestDto(
                                         threshold,
                                         savedTestPlanVersion.testPlanVersionId!!,
                                         thresholdType.thresholdTypeId!!
@@ -430,7 +434,7 @@ class TestPlanService(
                                                 ?: throw IllegalArgumentException(
                                                         "Metric parameter not found: ${parameter.metricParameter}"
                                                 )
-                                TestMetricParameterMapper.fromRequestDto(
+                                testMetricParameterMapper.fromRequestDto(
                                         parameter,
                                         savedTestPlanVersion.testPlanVersionId!!,
                                         metricParameter.metricParameterId!!
@@ -469,7 +473,7 @@ class TestPlanService(
                                                 ?: throw IllegalArgumentException(
                                                         "Execution type parameter not found: ${parameter.executionTypeParameter}"
                                                 )
-                                TestExecutionTypeParameterMapper.fromRequestDto(
+                                testExecutionTypeParameterMapper.fromRequestDto(
                                         parameter,
                                         savedTestPlanVersion.testPlanVersionId!!,
                                         executionTypeParameter.executionTypeParameterId!!

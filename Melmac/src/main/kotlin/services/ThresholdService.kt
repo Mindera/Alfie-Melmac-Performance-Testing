@@ -17,7 +17,8 @@ import java.time.LocalDateTime
  */
 class ThresholdService(
     private val thresholdRepository: IThresholdRepository,
-    private val thresholdTypeRepository: IThresholdTypeRepository
+    private val thresholdTypeRepository: IThresholdTypeRepository,
+    private val mapper: TestThresholdMapper
 ) : IThresholdService {
 
     /**
@@ -29,7 +30,7 @@ class ThresholdService(
     override fun getThresholdByTestPlanVersionId(testPlanVersionId: Int): List<TestThresholdResponseDTO> {
         val thresholds = thresholdRepository.findByTestPlanVersionId(testPlanVersionId)
         return thresholds.map { threshold ->
-            TestThresholdMapper.toDto(threshold)
+            mapper.toDto(threshold)
         }
     }
 
@@ -41,7 +42,7 @@ class ThresholdService(
      */
     override fun getThresholdById(id: Int): TestThresholdResponseDTO? {
         val threshold = thresholdRepository.findById(id) ?: return null
-        return TestThresholdMapper.toDto(threshold)
+        return mapper.toDto(threshold)
     }
 
     /**
@@ -55,14 +56,14 @@ class ThresholdService(
             .findByName(request.thresholdType)
             ?.thresholdTypeId
             ?: throw IllegalArgumentException("Threshold type not found: ${request.thresholdType}")
-        val newThreshold = TestThresholdMapper.fromRequestDto(
+        val newThreshold = mapper.fromRequestDto(
             request,
             request.testPlanVersionTestPlanVersionId,
             thresholdTypeId
         )
         val thresholdId = thresholdRepository.save(newThreshold)
 
-        return TestThresholdMapper.toDto(
+        return mapper.toDto(
             newThreshold.copy(testThresholdId = thresholdId)
         )
     }

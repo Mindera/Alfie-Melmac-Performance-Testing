@@ -171,7 +171,7 @@ class LoaderService(
      * @return [DataConfig] object parsed from the configuration file.
      * @throws IllegalStateException if the configuration file is not found.
      */
-    private fun loadMetricsConfig(): DataConfig {
+    internal fun loadMetricsConfig(): DataConfig {
         val devFile = File("src/main/resources/data.json")
         val inputStream =
             when {

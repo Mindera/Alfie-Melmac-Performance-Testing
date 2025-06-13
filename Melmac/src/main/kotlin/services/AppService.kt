@@ -20,10 +20,14 @@ import mappers.AppVersionMapper
  *
  * @property appRepository Repository for app entities.
  * @property appVersionRepository Repository for app version entities.
+ * @property appMapper Mapper for converting App entities to AppResponseDTO.
+ * @property appVersionMapper Mapper for converting AppVersion entities to AppVersionResponseDTO.
  */
 class AppService(
         private val appRepository: IAppRepository,
-        private val appVersionRepository: IAppVersionRepository
+        private val appVersionRepository: IAppVersionRepository,
+        private val appMapper: AppMapper,
+        private val appVersionMapper: AppVersionMapper
 ) : IAppService {
 
     // --- DB Methods ---
@@ -35,7 +39,7 @@ class AppService(
      */
     override fun getAllAppsFromDatabase(): List<AppResponseDTO> {
         val apps = appRepository.findAll()
-        return apps.map { app -> AppMapper.toDto(app) }
+        return apps.map { app -> appMapper.toDto(app) }
     }
 
     /**
@@ -55,7 +59,7 @@ class AppService(
                         app.appId ?: throw IllegalStateException("App ID cannot be null")
                 )
 
-        return versions.map { version: AppVersion -> AppVersionMapper.toDto(version) }
+        return versions.map { version: AppVersion -> appVersionMapper.toDto(version) }
     }
 
     /**
@@ -70,7 +74,7 @@ class AppService(
                 appRepository.findById(appId)
                         ?: throw IllegalArgumentException("App with id '$appId' not found")
 
-        return AppMapper.toDto(app)
+        return appMapper.toDto(app)
     }
 
     /**
@@ -85,7 +89,7 @@ class AppService(
                 appVersionRepository.findById(appVersionId)
                         ?: throw IllegalArgumentException("App Version with id '$appVersionId' not found")
 
-        return AppVersionMapper.toDto(appVersion)
+        return appVersionMapper.toDto(appVersion)
     }
 
     /**
@@ -104,7 +108,7 @@ class AppService(
                 appRepository.findById(appVersion.appId)
                         ?: throw IllegalArgumentException("App with id '${appVersion.appId}' not found")
 
-        return AppMapper.toDto(app)
+        return appMapper.toDto(app)
     }
 
     // --- Folder Methods ---
@@ -132,7 +136,7 @@ class AppService(
         val appNames = files.map { it.name }.distinct()
 
         return appNames.mapIndexed { index, appName ->
-            AppMapper.toDto(App(appId = index + 1, appName = appName))
+            appMapper.toDto(App(appId = index + 1, appName = appName))
         }
     }
 
@@ -166,7 +170,7 @@ class AppService(
             )
         }
 
-        return AppMapper.toDto(App(appId = 1, appName = appName))
+        return appMapper.toDto(App(appId = 1, appName = appName))
     }
 
     /**
@@ -210,7 +214,7 @@ class AppService(
                     }
                             ?: "unknown"
 
-            AppVersionMapper.toDto(
+            appVersionMapper.toDto(
                 AppVersion(
                     appVersionId = index + 1,
                     appId = index + 1,
@@ -254,7 +258,7 @@ class AppService(
             )
         }
 
-        return AppVersionMapper.toDto(
+        return appVersionMapper.toDto(
             AppVersion(
                 appVersionId = 1,
                 appId = 1,

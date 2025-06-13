@@ -6,6 +6,7 @@ import repos.IRepos.*
 import services.IServices.ITestSuiteService
 import services.IServices.ITestExecutionService
 import java.time.LocalDateTime
+import java.time.LocalDate
 import mappers.TestPlanVersionMapper
 import mappers.TestThresholdMapper
 import mappers.TestMetricParameterMapper
@@ -37,6 +38,10 @@ class TestSuiteService(
     private val testThresholdRepository: IThresholdRepository,
     private val testMetricParameterRepository: ITestPlanMetricParameterValueRepository,
     private val testExecutionTypeParameterRepository: ITestPlanExecutionTypeParameterValueRepository,
+    private val testPlanVersionMapper: TestPlanVersionMapper,
+    private val testThresholdMapper: TestThresholdMapper,
+    private val testMetricParameterMapper: TestMetricParameterMapper,
+    private val testExecutionTypeParameterMapper: TestExecutionTypeParameterMapper
 ) : ITestSuiteService {
 
     /**
@@ -122,18 +127,18 @@ class TestSuiteService(
             testPlanVersionRepository.findById(planLink.testPlanVersionTestPlanVersionId)?.let { planVersion: TestPlanVersion ->
                 val thresholds = planVersion.testPlanVersionId?.let { id ->
                     testThresholdRepository.findByTestPlanVersionId(id)
-                        .map { TestThresholdMapper.toDto(it) }
+                        .map { testThresholdMapper.toDto(it) }
                 } ?: emptyList()
                 val metricParameters = planVersion.testPlanVersionId?.let { id ->
                     testMetricParameterRepository.findByTestPlanVersionId(id)
-                        .map { TestMetricParameterMapper.toDto(it) }
+                        .map { testMetricParameterMapper.toDto(it) }
                 } ?: emptyList()
                 val executionTypeParameters = planVersion.testPlanVersionId?.let { id ->
                     testExecutionTypeParameterRepository.findByTestPlanVersionId(id)
-                        .map { TestExecutionTypeParameterMapper.toDto(it) }
+                        .map { testExecutionTypeParameterMapper.toDto(it) }
                 } ?: emptyList()
 
-                TestPlanVersionMapper.toDto(
+                testPlanVersionMapper.toDto(
                     planVersion,
                     thresholds,
                     metricParameters,

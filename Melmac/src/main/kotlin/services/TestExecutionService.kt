@@ -34,18 +34,20 @@ class TestExecutionService(
         private val testThresholdRepository: IThresholdRepository,
         private val thresholdTypeRepository: IThresholdTypeRepository,
         private val testMetricOutputResultRepository: ITestMetricOutputResultRepository,
-        private val testRunner: ITestRunner
+        private val testRunner: ITestRunner,
+        private val testExecutionMapper: TestExecutionMapper,
+        private val testMetricOutputResultMapper: TestMetricOutputResultMapper
 ) : ITestExecutionService {
 
     override fun getAllTestExecutions(): List<TestExecutionResponseDTO> {
         return testExecutionRepository.findAll().map {
-            TestExecutionMapper.toDto(it)
+            testExecutionMapper.toDto(it)
         }
     }
 
     override fun getTestExecutionById(id: Int): TestExecutionResponseDTO? {
         val execution = testExecutionRepository.findById(id) ?: return null
-        return TestExecutionMapper.toDto(execution)
+        return testExecutionMapper.toDto(execution)
     }
 
     override fun runTestExecution(testPlanVersionId: Int): TestExecutionResponseDTO {
@@ -121,7 +123,7 @@ class TestExecutionService(
             }
 
         val configDTO =
-            TestExecutionMapper.toConfigDto(
+            testExecutionMapper.toConfigDto(
                 executionTypeName = executionType.executionTypeName,
                 metricName = metric.metricName,
                 metricParams = metricParams.associate { metricParam ->
@@ -186,7 +188,7 @@ class TestExecutionService(
             )
         }
 
-        return TestExecutionMapper.toDto(
+        return testExecutionMapper.toDto(
             testExecution.copy(testExecutionId = testExecutionId)
         )
     }

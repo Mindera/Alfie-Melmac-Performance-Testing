@@ -1,6 +1,7 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.8.0"
+    id("org.jetbrains.kotlin.jvm") version "2.1.0"
     id("application")
+    id("jacoco")
 }
 
 repositories {
@@ -20,22 +21,20 @@ dependencies {
     implementation("org.json:json:20231013")
 
     // Ktor server
-    implementation("io.ktor:ktor-server-core:2.3.0")
-    implementation("io.ktor:ktor-server-netty:2.3.0")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.0")
-    implementation("io.ktor:ktor-serialization-jackson:2.3.0")
-    implementation("io.ktor:ktor-server-status-pages:2.3.0")
-
+    implementation("io.ktor:ktor-server-core:3.1.0")
+    implementation("io.ktor:ktor-server-netty:3.1.0")
+    implementation("io.ktor:ktor-serialization-jackson:3.1.0")
+    implementation("io.ktor:ktor-server-status-pages:3.1.0")
+    implementation("io.ktor:ktor-server-content-negotiation:3.1.0")
     // SLF4J logging
     implementation("org.slf4j:slf4j-simple:2.0.9")
 
     // Koin DI
     implementation("io.insert-koin:koin-core:3.4.0")
     implementation("io.insert-koin:koin-ktor:3.4.0")
-    testImplementation("io.insert-koin:koin-test:3.4.0")
 
     // Microsoft SQL Server JDBC driver
-    implementation("com.microsoft.sqlserver:mssql-jdbc:12.6.1.jre11") // use jre17 if on Java 17+
+    implementation("com.microsoft.sqlserver:mssql-jdbc:12.6.1.jre11")
 
     // Compose for Desktop
     implementation("org.jetbrains.compose.desktop:desktop:1.4.0")
@@ -43,6 +42,14 @@ dependencies {
     // JUnit 5
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.9.3")
+    testImplementation("io.insert-koin:koin-test-junit5:3.5.3")
+    testImplementation("io.insert-koin:koin-test:3.4.0")
+
+    // Mocking
+    testImplementation("io.mockk:mockk:1.13.5")
+
+    // Ktor test engine
+    testImplementation("io.ktor:ktor-server-test-host:3.1.0")
 }
 
 application {
@@ -51,4 +58,32 @@ application {
 
 run {
     environment "io.ktor.development", "true"
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+        exceptionFormat = 'full'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+    afterTest { desc, result ->
+        println "Test: ${desc.className}.${desc.name} - ${result.resultType}"
+    }
+    finalizedBy(tasks.jacocoTestReport) // Generate report after tests
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }

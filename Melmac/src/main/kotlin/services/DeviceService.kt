@@ -18,11 +18,13 @@ import domain.Device
  * @property deviceRepository Repository for device entities.
  * @property osVersionRepository Repository for OS version entities.
  * @property osRepository Repository for OS entities.
+ * @property availableDeviceMapper Mapper for converting domain objects to DTOs.
  */
 class DeviceService (
-        private val deviceRepository: IDeviceRepository,
-        private val osVersionRepository: IOperSysVersionRepository,
-        private val osRepository: IOperSysRepository
+        internal val deviceRepository: IDeviceRepository,
+        internal val osVersionRepository: IOperSysVersionRepository,
+        internal val osRepository: IOperSysRepository,
+        internal val availableDeviceMapper: AvailableDeviceMapper
 ) : IDeviceService {
 
     /**
@@ -38,7 +40,7 @@ class DeviceService (
         val os = osRepository.findById(osVersion.operativeSystemOperSysId)
                 ?: return null
 
-        return AvailableDeviceMapper.toDto(
+        return availableDeviceMapper.toDto(
             device = device,
             osName = os.operSysName,
             osVersion = osVersion.version
@@ -93,7 +95,7 @@ class DeviceService (
      *
      * @return List of [AvailableDeviceDTO] for all devices.
      */
-    private fun fetchAllDevices(): List<AvailableDeviceDTO> {
+    internal fun fetchAllDevices(): List<AvailableDeviceDTO> {
         val iosDevices = fetchIOSDevices()
         val androidDevices = fetchAndroidDevices()
         return iosDevices + androidDevices
@@ -106,7 +108,7 @@ class DeviceService (
      * @param minVersionParts The minimum version as a list of integers.
      * @return Positive if versionStr >= minVersionParts, negative otherwise.
      */
-    private fun compareVersions(versionStr: String, minVersionParts: List<Int>): Int {
+    internal fun compareVersions(versionStr: String, minVersionParts: List<Int>): Int {
         val versionParts = versionStr.split(".").map { it.toIntOrNull() ?: 0 }
 
         for (i in 0 until maxOf(versionParts.size, minVersionParts.size)) {
@@ -125,7 +127,7 @@ class DeviceService (
      *
      * @return List of [AvailableDeviceDTO] for iOS devices.
      */
-    private fun fetchIOSDevices(): List<AvailableDeviceDTO> {
+    internal fun fetchIOSDevices(): List<AvailableDeviceDTO> {
         if (!Tools.isMac()) {
             return emptyList()
         }
@@ -168,7 +170,7 @@ class DeviceService (
      *
      * @return List of [AvailableDeviceDTO] for Android devices.
      */
-    private fun fetchAndroidDevices(): List<AvailableDeviceDTO> {
+    internal fun fetchAndroidDevices(): List<AvailableDeviceDTO> {
         val avds = readAVDsFromDirectory()
 
         return avds.map { avdName ->
@@ -188,7 +190,7 @@ class DeviceService (
      *
      * @return List of AVD names.
      */
-    private fun readAVDsFromDirectory(): List<String> {
+    internal fun readAVDsFromDirectory(): List<String> {
         val avdDir = File(System.getProperty("user.home"), ".android/avd")
 
         return avdDir.listFiles { file -> file.isFile && file.name.endsWith(".ini") }?.mapNotNull {
@@ -210,7 +212,7 @@ class DeviceService (
      * @param avdName The name of the AVD.
      * @return The OS version as a string, or "unknown" if not found.
      */
-    private fun readAndroidAVDVersion(avdName: String): String {
+    internal fun readAndroidAVDVersion(avdName: String): String {
         val iniFile = File(System.getProperty("user.home"), ".android/avd/$avdName.ini")
         if (!iniFile.exists()) return "unknown"
 

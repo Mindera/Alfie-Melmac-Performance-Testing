@@ -13,7 +13,8 @@ import mappers.TestMetricOutputResultMapper
  * @property repo Repository for TestMetricOutputResult entities.
  */
 class TestMetricOutputResultService(
-    private val repo: ITestMetricOutputResultRepository
+    private val repo: ITestMetricOutputResultRepository,
+    private val testMetricOutputResultMapper: TestMetricOutputResultMapper
 ) : ITestMetricOutputResultService {
 
     /**
@@ -21,9 +22,9 @@ class TestMetricOutputResultService(
      *
      * @return List of [TestMetricOutputResultResponseDTO] representing all output results.
      */
-    override suspend fun getAll(): List<TestMetricOutputResultResponseDTO> = 
+    override fun getAll(): List<TestMetricOutputResultResponseDTO> = 
         repo.findAll().map { outputResult: TestMetricOutputResult ->
-            TestMetricOutputResultMapper.toDto(outputResult)
+            testMetricOutputResultMapper.toDto(outputResult)
         }
 
     /**
@@ -32,8 +33,8 @@ class TestMetricOutputResultService(
      * @param testExecutionId The ID of the test execution.
      * @return List of [TestMetricOutputResultResponseDTO] for the given execution.
      */
-    override suspend fun getByExecutionId(testExecutionId: Int): List<TestMetricOutputResultResponseDTO> =
+    override fun getByExecutionId(testExecutionId: Int): List<TestMetricOutputResultResponseDTO> =
         repo.getByExecutionId(testExecutionId).map { outputResult: TestMetricOutputResult ->
-            TestMetricOutputResultMapper.toDto(outputResult)
+            testMetricOutputResultMapper.toDto(outputResult)
         }
 }

@@ -1,9 +1,9 @@
 package services
 
 import dtos.ThresholdTypeResponseDTO
+import mappers.ThresholdTypeMapper
 import repos.IRepos.IThresholdTypeRepository
 import services.IServices.IThresholdTypeService
-import mappers.ThresholdTypeMapper
 
 /**
  * Service implementation for managing Threshold Types.
@@ -12,8 +12,10 @@ import mappers.ThresholdTypeMapper
  *
  * @property thresholdTypeRepository Repository for ThresholdType entities.
  */
-class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRepository) :
-        IThresholdTypeService {
+class ThresholdTypeService(
+        private val thresholdTypeRepository: IThresholdTypeRepository,
+        private val thresholdTypeMapper: ThresholdTypeMapper
+) : IThresholdTypeService {
 
     /**
      * Retrieves all threshold types.
@@ -21,9 +23,7 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
      * @return List of [ThresholdTypeResponseDTO] representing all threshold types.
      */
     override fun getAll(): List<ThresholdTypeResponseDTO> {
-        return thresholdTypeRepository.findAll().map {
-            ThresholdTypeMapper.toDto(it)
-        }
+        return thresholdTypeRepository.findAll().map { thresholdTypeMapper.toDto(it) }
     }
 
     /**
@@ -33,9 +33,7 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
      * @return [ThresholdTypeResponseDTO] for the specified threshold type, or null if not found.
      */
     override fun getById(id: Int): ThresholdTypeResponseDTO? {
-        return thresholdTypeRepository.findById(id)?.let {
-            ThresholdTypeMapper.toDto(it)
-        }
+        return thresholdTypeRepository.findById(id)?.let { thresholdTypeMapper.toDto(it) }
     }
 
     /**
@@ -45,8 +43,6 @@ class ThresholdTypeService(private val thresholdTypeRepository: IThresholdTypeRe
      * @return [ThresholdTypeResponseDTO] for the specified threshold type, or null if not found.
      */
     override fun getByName(name: String): ThresholdTypeResponseDTO? {
-        return thresholdTypeRepository.findByName(name)?.let {
-            ThresholdTypeMapper.toDto(it)
-        }
+        return thresholdTypeRepository.findByName(name)?.let { thresholdTypeMapper.toDto(it) }
     }
 }

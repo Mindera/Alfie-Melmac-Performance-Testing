@@ -7,6 +7,7 @@ import controllers.IControllers.*
 import core.runners.*
 import ios.*
 import java.sql.DriverManager
+import mappers.*
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import repos.*
@@ -49,6 +50,29 @@ val appModule = module {
     }
 
     single<String>(qualifier = named("metricsConfigPath")) { "data.json" }
+
+    single { AppMapper }
+    single { AppVersionMapper }
+    single { AvailableDeviceMapper }
+    single { DeviceMapper }
+    single { ExecutionTypeMapper }
+    single { ExecutionTypeMetricMapper }
+    single { ExecutionTypeParameterMapper }
+    single { MetricMapper }
+    single { MetricOutputMapper }
+    single { MetricParameterMapper }
+    single { OperSysMapper }
+    single { OSVersionMapper }
+    single { SuiteExecutionMapper }
+    single { TestExecutionMapper }
+    single { TestExecutionTypeParameterMapper }
+    single { TestMetricOutputResultMapper }
+    single { TestMetricParameterMapper }
+    single { TestPlanMapper }
+    single { TestPlanVersionMapper }
+    single { TestSuiteMapper }
+    single { TestThresholdMapper }
+    single { ThresholdTypeMapper }
 
     // --- Repositories ---
 
@@ -95,11 +119,15 @@ val appModule = module {
     single<IDeviceRepository> { DeviceRepository(get()) }
     single<IOperSysRepository> { OperSysRepository(get()) }
     single<IOperSysVersionRepository> { OperSysVersionRepository(get()) }
-
-    // --- Services ---
-    single<IAppService> { AppService(get(), get()) }
-    single<IDeviceService> { DeviceService(get(), get(), get()) }
-    single<IMetricService> { MetricService(get(), get(), get(), get(), get()) }
+    single<IDeviceService> { DeviceService(get(), get(), get(), get()) }
+    single<IMetricService> {
+        MetricService(get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+    }
+    single<IAppService> { AppService(get(), get(), get(), get()) }
+    single<IDeviceService> { DeviceService(get(), get(), get(), get()) }
+    single<IMetricService> {
+        MetricService(get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+    }
     single<ILoaderService> {
         LoaderService(
                 get(),
@@ -133,11 +161,13 @@ val appModule = module {
                 get(),
                 get(),
                 get(),
+                get(),
+                get(),
                 get()
         )
     }
-    single<IThresholdService> { ThresholdService(get(), get()) }
-    single<IThresholdTypeService> { ThresholdTypeService(get()) }
+    single<IThresholdService> { ThresholdService(get(), get(), get()) }
+    single<IThresholdTypeService> { ThresholdTypeService(get(), get()) }
     single<ITestPlanService> {
         TestPlanService(
                 get(),
@@ -158,15 +188,33 @@ val appModule = module {
                 get(),
                 get(),
                 get(),
+                get(),
+                get(),
+                get(),
+                get(),
                 get()
         )
     }
-    single<ITestMetricOutputResultService> { TestMetricOutputResultService(get()) }
+    single<ITestMetricOutputResultService> { TestMetricOutputResultService(get(), get()) }
     single<ITestSuiteService> {
-        TestSuiteService(get(), get(), get(), get(), get(), get(), get(), get(), get())
+        TestSuiteService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get()
+        )
     }
     single<ITestPlanVersionService> {
-        TestPlanVersionService(get(), get(), get(), get(), get())
+        TestPlanVersionService(get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
 
     // --- Controllers ---

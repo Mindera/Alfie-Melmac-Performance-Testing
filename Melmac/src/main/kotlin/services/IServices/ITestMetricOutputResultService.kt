@@ -7,6 +7,6 @@ import dtos.TestMetricOutputResultResponseDTO
  * Provides methods to retrieve test metric output results by execution ID or all results.
  */
 interface ITestMetricOutputResultService {
-    suspend fun getAll(): List<TestMetricOutputResultResponseDTO>
-    suspend fun getByExecutionId(testExecutionId: Int): List<TestMetricOutputResultResponseDTO>
+    fun getAll(): List<TestMetricOutputResultResponseDTO>
+    fun getByExecutionId(testExecutionId: Int): List<TestMetricOutputResultResponseDTO>
 }
