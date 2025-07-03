@@ -4,10 +4,10 @@ left to right direction
 actor "Developer" as Dev
 
 rectangle "Melmac Performance Testing Framework" {
-    usecase "UC1: As a Developer, I want to create a Test Suite" as UC1
-    usecase "UC2: As a Developer, I want to create a Test Plan" as UC2
-    usecase "UC3: As a Developer, I want to run a Test Suite" as UC3
-    usecase "UC4: As a Developer, I want to run a Test Plan" as UC4
+    usecase "Create a Test Suite" as UC1
+    usecase "Create a Test Plan" as UC2
+    usecase "Run a Test Suite" as UC3
+    usecase "Run a Test Plan" as UC4
 }
 
 Dev --> UC1

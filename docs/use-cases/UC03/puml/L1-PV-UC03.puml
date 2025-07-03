@@ -19,20 +19,10 @@ skinparam package {
 actor Developer as D
 
 participant "System" as System
-participant "<<External>>\nDatabase" as DB
 
 activate D
 D -> System: Request to run Test Suite
 activate System
-loop For each Test Plan
-    ref over System
-            "See Test Plan Execution" at [../UC04/L1-PV-UC04.puml]
-    end ref
-end loop
-System -> DB: Save Test Suite Execution Results
-activate DB
-DB --> System: Test Suite Execution Results Saved
-deactivate DB
 System -> D: Test Suite Execution Completed
 deactivate System
 deactivate D

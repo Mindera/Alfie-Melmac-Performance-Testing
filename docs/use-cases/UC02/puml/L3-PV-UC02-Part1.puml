@@ -31,7 +31,7 @@ box "<<Container (C4)>> MelmacBE"
     participant "<<Repository>>\nAppRepository" as AppRepo
     participant "<<Repository>>\nAppVersionRepository" as AppVersionRepo
 end box
-participant "<<External>>\nDatabase" as DB
+participant "<<Container (C4)>>\nDatabase" as DB
 
 activate D
 D -> Controller: Asks to create a new Test Plan

@@ -21,13 +21,13 @@ actor Developer as D
 box "<<System>> Melmac Performance Testing Framework"
     participant "<<Container (C4)>>\nMelmacBE" as BE
     participant "<<Container (C4)>>\nDriverRunner" as DriverRunner
+    participant "<<Container (C4)>>\nDatabase" as DB
 end box
 
 participant "<<External>>\nAndroid Device" as AndroidDevice
 participant "<<External>>\nAUT (Android)" as AUTA
 participant "<<External>>\niOS Device" as iOSDevice
 participant "<<External>>\nAUT (iOS)" as AUTI
-participant "<<External>>\nDatabase" as DB
 
 activate D
 D -> BE: Request to run Test Plan

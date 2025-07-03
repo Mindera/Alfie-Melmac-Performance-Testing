@@ -19,7 +19,7 @@
                 <mxCell id="51" value="" style="swimlane;startSize=0;" parent="2" vertex="1">
                     <mxGeometry x="540" y="350" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="107" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+                <mxCell id="107" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="2" vertex="1">
                     <mxGeometry x="740" y="370" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="1" parent="0"/>
@@ -44,7 +44,7 @@
                         <mxPoint x="519.7647058823529" y="400" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="103" value="Execution Coordinator API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" vertex="1" connectable="0" parent="31">
+                <mxCell id="103" value="Execution Coordinator API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" parent="31" vertex="1" connectable="0">
                     <mxGeometry x="0.5499" y="-2" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -102,7 +102,7 @@
                         <mxPoint x="690" y="555" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="105" value="Execution&amp;nbsp;&lt;div&gt;Dispatcher&amp;nbsp;&lt;span style=&quot;&quot;&gt;API&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" vertex="1" connectable="0" parent="26">
+                <mxCell id="105" value="Execution&amp;nbsp;&lt;div&gt;Dispatcher&amp;nbsp;&lt;span style=&quot;&quot;&gt;API&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" parent="26" vertex="1" connectable="0">
                     <mxGeometry x="0.4364" y="1" relative="1" as="geometry">
                         <mxPoint x="29" as="offset"/>
                     </mxGeometry>
@@ -120,7 +120,7 @@
                         <mxPoint x="875" y="420" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="106" value="Engine API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" vertex="1" connectable="0" parent="36">
+                <mxCell id="106" value="Engine API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" parent="36" vertex="1" connectable="0">
                     <mxGeometry x="0.2" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -222,7 +222,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="104" value="Repository API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" vertex="1" connectable="0" parent="98">
+                <mxCell id="104" value="Repository API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=light-dark(#dae8fc, #ededed);" parent="98" vertex="1" connectable="0">
                     <mxGeometry x="0.6179" y="-2" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -232,7 +232,7 @@
                         <mxPoint x="872.5" y="715" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="108" value="Modules&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                <mxCell id="108" value="Modules&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
                     <mxGeometry x="766.25" y="230" width="217.5" height="115" as="geometry"/>
                 </mxCell>
                 <mxCell id="93" value="&amp;lt;&amp;lt;Component&amp;gt;&amp;gt;&lt;div&gt;Repository&lt;/div&gt;" style="html=1;dropTarget=0;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
@@ -252,7 +252,7 @@
                         <mxPoint x="1120" y="714.38" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="97" value="SQL Server" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                <mxCell id="97" value="SQL API" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="1125" y="700" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="22" value="&amp;lt;&amp;lt;Component&amp;gt;&amp;gt;&lt;div&gt;Platform Execution Engine&lt;/div&gt;" style="html=1;dropTarget=0;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
@@ -263,7 +263,7 @@
                         <mxPoint x="-27" y="7" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="109" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                <mxCell id="109" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
                     <mxGeometry x="766.25" y="210" width="43.75" height="20" as="geometry"/>
                 </mxCell>
             </root>

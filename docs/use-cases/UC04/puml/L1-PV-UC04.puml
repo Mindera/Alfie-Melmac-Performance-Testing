@@ -23,7 +23,6 @@ participant "<<External>>\nAndroid Device" as AndroidDevice
 participant "<<External>>\nAUT (Android)" as AUTA
 participant "<<External>>\niOS Device" as iOSDevice
 participant "<<External>>\nAUT (iOS)" as AUTI
-participant "<<External>>\nDatabase" as DB
 
 activate D
 D -> System: Request to run Test Plan
@@ -79,10 +78,6 @@ else Test Plan for iOS
     iOSDevice --> System: iOS Device Shutdown
     deactivate iOSDevice
     end alt
-    System -> DB: Save Test Plan Results
-    activate DB
-    DB --> System: Results Saved
-    deactivate DB
     System -> D: Test Plan Execution Completed
     deactivate System
     deactivate D

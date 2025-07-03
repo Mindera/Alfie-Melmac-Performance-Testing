@@ -20,8 +20,8 @@ actor Developer as D
 
 box "<<System>> Melmac Performance Testing Framework" 
     participant "<<Container (C4)>>\nMelmacBE" as BE
-end box 
-participant "<<External>>\nDatabase" as DB
+    participant "<<Container (C4)>>\nDatabase" as DB
+end box
 
 activate D
 D -> BE: Requests to create a new Test Suite

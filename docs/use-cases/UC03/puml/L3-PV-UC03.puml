@@ -29,7 +29,7 @@ box "<<Container (C4)>> MelmacBE"
     participant "<<Mapper>>\nSuiteExecutionMapper" as ExecutionMapper
     participant "<<DTO>>\nSuiteExecutionResponseDTO" as ResponseDTO
 end box
-participant "<<External>>\nDatabase" as DB
+participant "<<Container (C4)>>\nDatabase" as DB
 
 activate D
 D -> Controller: Request to run Test Suite

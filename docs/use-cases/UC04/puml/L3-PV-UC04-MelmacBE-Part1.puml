@@ -47,7 +47,7 @@ participant "<<Container (C4)>>\nDriverRunner" as DriverRunner
 participant "<<External>>\nAndroid Device" as AndroidDevice
 participant "<<External>>\nAUT (Android)" as AUTA
 participant "<<External>>\niOS Device" as iOSDevice
-participant "<<External>>\nDatabase" as DB
+participant "<<Container (C4)>>\nDatabase" as DB
 
 activate D
 D -> Controller: Asks to run Test Plan
